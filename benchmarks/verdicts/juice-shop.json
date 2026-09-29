@@ -1,0 +1,46 @@
+{
+  "target": "juice-shop",
+  "reviewer": "Claude (sesi ini) - perlu dikonfirmasi pemilik",
+  "verdicts": {
+    "b06e51ad0cac40f04859f362d7c8c6ff": {
+      "verdict": "tp",
+      "note": "komentar feedback dari API dirender tanpa sanitasi (stored XSS)"
+    },
+    "67b32444e51354c97abe4da9d923c30d": {
+      "verdict": "tp",
+      "note": "email pengguna dirender lewat bypassSecurityTrustHtml (stored XSS)"
+    },
+    "5658daba9f557d295cbd2140cdb2a3b4": {
+      "verdict": "tp",
+      "note": "komentar feedback di halaman admin (stored XSS)"
+    },
+    "1e2e14f91757af0c486a27bfc2c6efe0": {
+      "verdict": "fp",
+      "note": "gambar captcha dihasilkan server (SVG tepercaya), bukan input pengguna"
+    },
+    "e330df961a27effb2148b04376cc7d66": {
+      "verdict": "tp",
+      "note": "lastLoginIp dari JWT yang berasal dari header True-Client-IP (tantangan resmi XSS)"
+    },
+    "0a0e43b7fd3f91a3b7a871d75741002b": {
+      "verdict": "fp",
+      "note": "deskripsi tantangan statis dari server, bukan input pengguna"
+    },
+    "d7ff0cfa38413fac9fc38d61247aaaa0": {
+      "verdict": "tp",
+      "note": "orderId dari respons API yang berasal dari query id (reflected XSS)"
+    },
+    "248305bca10c31c629186898295463e8": {
+      "verdict": "fp",
+      "note": "eval atas ekspresi angka yang dibuat server (tidak dikendalikan penyerang)"
+    },
+    "b99333bdcb901c5f91eb8816a6fc8aa9": {
+      "verdict": "tp",
+      "note": "key dari body masuk ke nama berkas (dampak terbatas: hanya *.info.yml)"
+    },
+    "50e67023336b9fc2c81a3b72f536b26f": {
+      "verdict": "tp",
+      "note": "key dari body masuk ke nama berkas (dampak terbatas)"
+    }
+  }
+}

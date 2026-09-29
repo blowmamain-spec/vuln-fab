@@ -116,3 +116,23 @@ rules:
       - {metavariable: X, kind: not_regex, regex: "^(DOMPurify\\.sanitize|sanitizeHtml|sanitize|xss)\\("}
     fix: "Sanitize with DOMPurify.sanitize(...) or render text."
     tests: {vulnerable: [vuln.tsx], safe: [safe.tsx]}
+
+  - id: js-xss
+    stack: generic
+    languages: [javascript, typescript, tsx]
+    severity: high
+    confidence: medium
+    cwe: [CWE-79]
+    owasp: "A03:2021"
+    title: "Angular sanitizer bypass with non-constant data"
+    message: "bypassSecurityTrust* disables Angular's built-in sanitisation; non-constant data enables XSS."
+    pattern-either:
+      - "$S.bypassSecurityTrustHtml($X)"
+      - "$S.bypassSecurityTrustScript($X)"
+      - "$S.bypassSecurityTrustStyle($X)"
+      - "$S.bypassSecurityTrustUrl($X)"
+      - "$S.bypassSecurityTrustResourceUrl($X)"
+    where:
+      - {metavariable: X, kind: not_literal}
+    fix: "Do not bypass the sanitizer; render text or sanitise with DOMPurify first."
+    tests: {vulnerable: [vuln.ts], safe: [safe.ts]}

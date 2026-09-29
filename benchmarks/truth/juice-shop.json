@@ -1,0 +1,195 @@
+{
+  "target": "juice-shop",
+  "revision": "see benchmarks/targets.lock",
+  "exclude": [
+    "data/static/codefixes/**",
+    "test/**",
+    "frontend/src/**/*.spec.ts",
+    "cypress/**",
+    "**/*.spec.ts"
+  ],
+  "items": [
+    {
+      "id": "J001",
+      "kind": "vulnerable",
+      "file": "routes/search.ts",
+      "line_start": 23,
+      "line_end": 23,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "label resmi Juice Shop (vuln-code-snippet): unionSqlInjection/dbSchema"
+    },
+    {
+      "id": "J002",
+      "kind": "vulnerable",
+      "file": "routes/login.ts",
+      "line_start": 34,
+      "line_end": 34,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "label resmi Juice Shop (vuln-code-snippet): loginAdmin/Bender/Jim"
+    },
+    {
+      "id": "J003",
+      "kind": "vulnerable",
+      "file": "frontend/src/app/search-result/search-result.component.ts",
+      "line_start": 111,
+      "line_end": 111,
+      "class": "xss",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "label resmi Juice Shop (vuln-code-snippet): restfulXss"
+    },
+    {
+      "id": "J004",
+      "kind": "vulnerable",
+      "file": "frontend/src/app/search-result/search-result.component.ts",
+      "line_start": 144,
+      "line_end": 144,
+      "class": "xss",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "label resmi Juice Shop (vuln-code-snippet): localXss"
+    },
+    {
+      "id": "J005",
+      "kind": "vulnerable",
+      "file": "routes/profileImageUrlUpload.ts",
+      "line_start": 24,
+      "line_end": 24,
+      "class": "ssrf",
+      "cwe": [
+        "CWE-918"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "label reviewer (bukan resmi): ssrfChallenge, url dari body langsung ke fetch"
+    },
+    {
+      "id": "J006",
+      "kind": "vulnerable",
+      "file": "routes/userProfile.ts",
+      "line_start": 65,
+      "line_end": 65,
+      "class": "dynamic-eval",
+      "cwe": [
+        "CWE-95"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "label reviewer (bukan resmi): eval(code) dari username (SSTI/RCE)"
+    },
+    {
+      "id": "J007",
+      "kind": "vulnerable",
+      "file": "routes/coupon.ts",
+      "line_start": 18,
+      "line_end": 18,
+      "class": "idor",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": "B",
+      "in_scope": true,
+      "note": "label reviewer (bukan resmi): basket dicari dari id URL tanpa cek pemilik"
+    },
+    {
+      "id": "J008",
+      "kind": "vulnerable",
+      "file": "routes/updateProductReviews.ts",
+      "line_start": 18,
+      "line_end": 20,
+      "class": "nosqli",
+      "cwe": [
+        "CWE-943"
+      ],
+      "tier": "A",
+      "in_scope": false,
+      "note": "label resmi Juice Shop (vuln-code-snippet): noSqlReviews (kelas belum didukung)"
+    },
+    {
+      "id": "J009",
+      "kind": "vulnerable",
+      "file": "routes/redirect.ts",
+      "line_start": 18,
+      "line_end": 18,
+      "class": "redirect",
+      "cwe": [
+        "CWE-601"
+      ],
+      "tier": "A",
+      "in_scope": false,
+      "note": "label resmi Juice Shop (vuln-code-snippet): redirectChallenge terletak di lib/insecurity.ts (allow-list logika); di luar scope"
+    },
+    {
+      "id": "J010",
+      "kind": "decoy",
+      "file": "routes/fileServer.ts",
+      "line_start": 32,
+      "line_end": 32,
+      "class": "path-traversal",
+      "cwe": [
+        "CWE-22"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "label reviewer (bukan resmi): nama berkas dilarang mengandung '/', sehingga bukan traversal; paparan berkas memang tujuan tantangan (access control)"
+    },
+    {
+      "id": "J011",
+      "kind": "decoy",
+      "file": "routes/keyServer.ts",
+      "line_start": 14,
+      "line_end": 14,
+      "class": "path-traversal",
+      "cwe": [
+        "CWE-22"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "label reviewer (bukan resmi): nama berkas dilarang mengandung '/', sehingga bukan traversal; paparan berkas memang tujuan tantangan (access control)"
+    },
+    {
+      "id": "J012",
+      "kind": "decoy",
+      "file": "routes/logfileServer.ts",
+      "line_start": 14,
+      "line_end": 14,
+      "class": "path-traversal",
+      "cwe": [
+        "CWE-22"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "label reviewer (bukan resmi): nama berkas dilarang mengandung '/', sehingga bukan traversal; paparan berkas memang tujuan tantangan (access control)"
+    },
+    {
+      "id": "J013",
+      "kind": "decoy",
+      "file": "routes/quarantineServer.ts",
+      "line_start": 14,
+      "line_end": 14,
+      "class": "path-traversal",
+      "cwe": [
+        "CWE-22"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "label reviewer (bukan resmi): nama berkas dilarang mengandung '/', sehingga bukan traversal; paparan berkas memang tujuan tantangan (access control)"
+    }
+  ]
+}

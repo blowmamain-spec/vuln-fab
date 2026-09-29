@@ -129,13 +129,13 @@ class PythonLowerer(Lowerer):
         self.assign_to(target, dst, node)
 
     def s_if_statement(self, node: Node) -> None:
-        self.expr(node.child_by_field_name("condition"))
+        cond = self.expr(node.child_by_field_name("condition"))
         then = self.block(node.child_by_field_name("consequence"))
         other: tuple = ()  # type: ignore[type-arg]
         alternatives = node.children_by_field_name("alternative")
         if alternatives:
             other = self._elif_chain(alternatives)
-        self.emit(Branch(then, other, self.line(node)))
+        self.emit(Branch(then, other, self.line(node), cond))
 
     def _elif_chain(self, alternatives: list[Node]) -> tuple:  # type: ignore[type-arg]
         head, rest = alternatives[0], alternatives[1:]
@@ -143,10 +143,10 @@ class PythonLowerer(Lowerer):
             return self.block(head.child_by_field_name("body"))
 
         def run() -> None:
-            self.expr(head.child_by_field_name("condition"))
+            cond = self.expr(head.child_by_field_name("condition"))
             then = self.block(head.child_by_field_name("consequence"))
             other = self._elif_chain(rest) if rest else ()
-            self.emit(Branch(then, other, self.line(head)))
+            self.emit(Branch(then, other, self.line(head), cond))
 
         return self.capture(run)
 
@@ -221,12 +221,15 @@ class PythonLowerer(Lowerer):
                 name = alias = self.text(child)
             self.module.imports[alias] = (module, name)
 
-    def s_raise_statement(self, node: Node) -> None:
+    def s_assert_statement(self, node: Node) -> None:
         for child in self.named(node):
             self.expr(child)
 
-    s_assert_statement = s_raise_statement
-    s_delete_statement = s_raise_statement
+    s_delete_statement = s_assert_statement
+
+    def s_raise_statement(self, node: Node) -> None:
+        self.s_assert_statement(node)
+        self.emit(Return(None, self.line(node)))  # control does not continue
 
     def _params(self, node: Node | None) -> tuple[str, ...]:
         names: list[str] = []

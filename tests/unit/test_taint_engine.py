@@ -1,4 +1,5 @@
 """Intra-function taint engine: vulnerable/safe cases across Python, JS and PHP."""
+# ruff: noqa: E501
 
 from __future__ import annotations
 
@@ -198,3 +199,79 @@ def test_mapping_lookup_default_taints_result() -> None:
 def test_mapping_lookup_tainted_container_taints_result() -> None:
     code = "def f():\n    v = request.args.get('k')\n    eval(v)\n"
     assert hits(code, "python", TaintSpec.from_rule(["field request.args"], ["call eval"], [], []))
+
+
+VAL_JS = TaintSpec.from_rule(
+    ["field req.params"],
+    ["call res.sendFile arg0"],
+    [],
+    [],
+    None,
+    ["call *.includes", "call *.test"],
+)
+
+
+def _js_hits(code: str, spec: TaintSpec = VAL_JS):
+    return hits(code, "javascript", spec)
+
+
+def test_validator_in_negated_condition_clears_taint() -> None:
+    code = "function f(req,res){ const file = req.params.file; if (!file.includes('/')) { res.sendFile(file); } }\n"
+    assert not _js_hits(code)
+
+
+def test_validator_in_rejecting_condition_clears_taint() -> None:
+    code = (
+        "function f(req,res){ const file = req.params.file;\n"
+        "  if (file.includes('..')) { return; }\n  res.sendFile(file); }\n"
+    )
+    assert not _js_hits(code)
+
+
+def test_regex_test_validator() -> None:
+    code = "function f(req,res){ const f1 = req.params.f; if (/^\\w+$/.test(f1)) { res.sendFile(f1); } }\n"
+    assert not _js_hits(code)
+
+
+def test_validator_only_clears_its_own_operand() -> None:
+    code = (
+        "function f(req,res){ const a = req.params.a; const b = req.params.b;\n"
+        "  if (a.includes('/')) { return; }\n  res.sendFile(b); }\n"
+    )
+    assert _js_hits(code)
+
+
+def test_no_validators_configured_keeps_taint() -> None:
+    plain = TaintSpec.from_rule(["field req.params"], ["call res.sendFile arg0"], [], [])
+    code = "function f(req,res){ const file = req.params.file; if (!file.includes('/')) { res.sendFile(file); } }\n"
+    assert _js_hits(code, plain)
+
+
+def test_check_that_guards_nothing_keeps_taint_after_branch() -> None:
+    code = (
+        "function f(req,res){ const file = req.params.file; let seen = false;\n"
+        "  if (file.includes('x')) { seen = true; }\n  res.sendFile(file); }\n"
+    )
+    assert _js_hits(code)
+
+
+def test_throw_counts_as_terminating_arm() -> None:
+    code = (
+        "function f(req,res){ const file = req.params.file;\n"
+        "  if (file.includes('..')) { throw new Error('bad'); }\n  res.sendFile(file); }\n"
+    )
+    assert not _js_hits(code)
+
+
+def test_python_raise_terminates_and_php_throw() -> None:
+    py = TaintSpec.from_rule(
+        ["field request.args"], ["call open arg0"], [], [], None, ["call *.startswith"]
+    )
+    code = (
+        "def f():\n    p = request.args['p']\n    if not p.startswith('/srv/'):\n"
+        "        raise ValueError()\n    open(p)\n"
+    )
+    assert not hits(code, "python", py)
+    php = TaintSpec.from_rule(["var _GET"], ["call include"], [], [], None, ["call in_array"])
+    code = "<?php\nfunction f(){ $p = $_GET['p'];\n if (!in_array($p, ['a','b'])) { throw new Exception('x'); }\n include($p); }\n"
+    assert not hits(code, "php", php)

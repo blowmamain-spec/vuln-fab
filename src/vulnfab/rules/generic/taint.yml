@@ -37,6 +37,13 @@ rules:
   - call int
   - call float
   - call bool
+  validators:
+  - call re.match
+  - call re.fullmatch
+  - call *.isdigit
+  - call *.isalnum
+  - call *.isnumeric
+  - call *.fullmatch
   supersedes:
   - py-sql-execute-interp
   fix: Use parameterised queries / bound parameters.
@@ -79,6 +86,13 @@ rules:
   - call int
   - call shlex.quote
   - call pipes.quote
+  validators:
+  - call re.match
+  - call re.fullmatch
+  - call *.isdigit
+  - call *.isalnum
+  - call *.isnumeric
+  - call *.fullmatch
   supersedes:
   - py-os-system
   fix: Avoid the shell; pass an argument list and validate input.
@@ -119,6 +133,13 @@ rules:
   - call int
   - call float
   - call ast.literal_eval
+  validators:
+  - call re.match
+  - call re.fullmatch
+  - call *.isdigit
+  - call *.isalnum
+  - call *.isnumeric
+  - call *.fullmatch
   supersedes:
   - py-eval
   - py-exec
@@ -166,6 +187,17 @@ rules:
   - call secure_filename
   - call werkzeug.utils.secure_filename
   - call int
+  validators:
+  - call re.match
+  - call re.fullmatch
+  - call *.isdigit
+  - call *.isalnum
+  - call *.isnumeric
+  - call *.fullmatch
+  - call *.startswith
+  - call is_safe_url
+  - call url_has_allowed_host_and_scheme
+  - call os.path.isabs
   fix: Use a fixed base directory, reduce input to a basename and verify the resolved path.
   tests:
     vulnerable:
@@ -209,6 +241,17 @@ rules:
   - call httpx.post arg0
   sanitizers:
   - call int
+  validators:
+  - call re.match
+  - call re.fullmatch
+  - call *.isdigit
+  - call *.isalnum
+  - call *.isnumeric
+  - call *.fullmatch
+  - call *.startswith
+  - call is_safe_url
+  - call url_has_allowed_host_and_scheme
+  - call os.path.isabs
   fix: Allow-list hosts and schemes; never request user-supplied URLs directly.
   tests:
     vulnerable:
@@ -290,6 +333,13 @@ rules:
   - call bleach.clean
   - call conditional_escape
   - call int
+  validators:
+  - call re.match
+  - call re.fullmatch
+  - call *.isdigit
+  - call *.isalnum
+  - call *.isnumeric
+  - call *.fullmatch
   fix: Escape output for the HTML context or use a sanitising library.
   tests:
     vulnerable:
@@ -325,6 +375,13 @@ rules:
   - call jinja2.Template arg0
   sanitizers:
   - call int
+  validators:
+  - call re.match
+  - call re.fullmatch
+  - call *.isdigit
+  - call *.isalnum
+  - call *.isnumeric
+  - call *.fullmatch
   fix: Pass user data as template variables, never as template source.
   tests:
     vulnerable:
@@ -336,7 +393,7 @@ rules:
   stack: generic
   languages: *id001
   severity: medium
-  confidence: low
+  confidence: medium
   cwe:
   - CWE-601
   owasp: A01:2021
@@ -362,6 +419,17 @@ rules:
   - call url_for
   - call reverse
   - call int
+  validators:
+  - call re.match
+  - call re.fullmatch
+  - call *.isdigit
+  - call *.isalnum
+  - call *.isnumeric
+  - call *.fullmatch
+  - call *.startswith
+  - call is_safe_url
+  - call url_has_allowed_host_and_scheme
+  - call os.path.isabs
   fix: Redirect only to allow-listed or relative internal targets.
   tests:
     vulnerable:
@@ -447,6 +515,11 @@ rules:
   - field request.query
   - field request.body
   - field request.params
+  - field %arg*.query
+  - field %arg*.body
+  - field %arg*.params
+  - field %arg*.headers
+  - field %arg*.cookies
   sinks:
   - call *.query arg0
   - call *.raw arg0
@@ -457,6 +530,15 @@ rules:
   - call parseInt
   - call Number
   - call parseFloat
+  validators:
+  - call *.match
+  - call *.test
+  - call isNaN
+  - call Number.isInteger
+  - call Number.isNaN
+  - call validator.*
+  - call *.isInt
+  - call *.isNumeric
   fix: Use parameterised queries / bound parameters.
   tests:
     vulnerable:
@@ -484,6 +566,11 @@ rules:
   - field request.query
   - field request.body
   - field request.params
+  - field %arg*.query
+  - field %arg*.body
+  - field %arg*.params
+  - field %arg*.headers
+  - field %arg*.cookies
   sinks:
   - call exec arg0
   - call execSync arg0
@@ -496,6 +583,15 @@ rules:
   - call Number
   - call shellescape
   - call shell-quote.quote
+  validators:
+  - call *.match
+  - call *.test
+  - call isNaN
+  - call Number.isInteger
+  - call Number.isNaN
+  - call validator.*
+  - call *.isInt
+  - call *.isNumeric
   supersedes:
   - js-exec
   - ts-cmd-injection
@@ -526,6 +622,11 @@ rules:
   - field request.query
   - field request.body
   - field request.params
+  - field %arg*.query
+  - field %arg*.body
+  - field %arg*.params
+  - field %arg*.headers
+  - field %arg*.cookies
   sinks:
   - call eval arg0
   - call Function arg0
@@ -537,6 +638,15 @@ rules:
   - call parseInt
   - call Number
   - call JSON.parse
+  validators:
+  - call *.match
+  - call *.test
+  - call isNaN
+  - call Number.isInteger
+  - call Number.isNaN
+  - call validator.*
+  - call *.isInt
+  - call *.isNumeric
   supersedes:
   - js-eval
   - js-function-constructor
@@ -568,6 +678,11 @@ rules:
   - field request.query
   - field request.body
   - field request.params
+  - field %arg*.query
+  - field %arg*.body
+  - field %arg*.params
+  - field %arg*.headers
+  - field %arg*.cookies
   sinks:
   - call fs.readFile arg0
   - call fs.readFileSync arg0
@@ -585,6 +700,20 @@ rules:
   - call path.basename
   - call parseInt
   - call Number
+  validators:
+  - call *.match
+  - call *.test
+  - call isNaN
+  - call Number.isInteger
+  - call Number.isNaN
+  - call validator.*
+  - call *.isInt
+  - call *.isNumeric
+  - call *.includes
+  - call *.indexOf
+  - call *.startsWith
+  - call isRedirectAllowed
+  - call *.isRedirectAllowed
   fix: Use a fixed base directory, reduce input to a basename and verify the resolved path.
   tests:
     vulnerable:
@@ -612,6 +741,11 @@ rules:
   - field request.query
   - field request.body
   - field request.params
+  - field %arg*.query
+  - field %arg*.body
+  - field %arg*.params
+  - field %arg*.headers
+  - field %arg*.cookies
   sinks:
   - call axios.get arg0
   - call axios.post arg0
@@ -630,6 +764,20 @@ rules:
   sanitizers:
   - call parseInt
   - call Number
+  validators:
+  - call *.match
+  - call *.test
+  - call isNaN
+  - call Number.isInteger
+  - call Number.isNaN
+  - call validator.*
+  - call *.isInt
+  - call *.isNumeric
+  - call *.includes
+  - call *.indexOf
+  - call *.startsWith
+  - call isRedirectAllowed
+  - call *.isRedirectAllowed
   fix: Allow-list hosts and schemes; never request user-supplied URLs directly.
   tests:
     vulnerable:
@@ -657,6 +805,11 @@ rules:
   - field request.query
   - field request.body
   - field request.params
+  - field %arg*.query
+  - field %arg*.body
+  - field %arg*.params
+  - field %arg*.headers
+  - field %arg*.cookies
   sinks:
   - call serialize.unserialize arg0
   - call unserialize arg0
@@ -688,6 +841,11 @@ rules:
   - field request.query
   - field request.body
   - field request.params
+  - field %arg*.query
+  - field %arg*.body
+  - field %arg*.params
+  - field %arg*.headers
+  - field %arg*.cookies
   sinks:
   - assign *.innerHTML
   - assign *.outerHTML
@@ -710,6 +868,15 @@ rules:
   - call parseInt
   - call Number
   - call JSON.stringify
+  validators:
+  - call *.match
+  - call *.test
+  - call isNaN
+  - call Number.isInteger
+  - call Number.isNaN
+  - call validator.*
+  - call *.isInt
+  - call *.isNumeric
   supersedes:
   - js-innerhtml-assign
   - js-innerhtml-var
@@ -725,7 +892,7 @@ rules:
   stack: generic
   languages: *id002
   severity: medium
-  confidence: low
+  confidence: medium
   cwe:
   - CWE-601
   owasp: A01:2021
@@ -741,12 +908,31 @@ rules:
   - field request.query
   - field request.body
   - field request.params
+  - field %arg*.query
+  - field %arg*.body
+  - field %arg*.params
+  - field %arg*.headers
+  - field %arg*.cookies
   sinks:
   - call res.redirect arg0
   - call res.location arg0
   sanitizers:
   - call parseInt
   - call Number
+  validators:
+  - call *.match
+  - call *.test
+  - call isNaN
+  - call Number.isInteger
+  - call Number.isNaN
+  - call validator.*
+  - call *.isInt
+  - call *.isNumeric
+  - call *.includes
+  - call *.indexOf
+  - call *.startsWith
+  - call isRedirectAllowed
+  - call *.isRedirectAllowed
   fix: Redirect only to allow-listed or relative internal targets.
   tests:
     vulnerable:
@@ -775,6 +961,11 @@ rules:
   - field request.query
   - field request.body
   - field request.params
+  - field %arg*.query
+  - field %arg*.body
+  - field %arg*.params
+  - field %arg*.headers
+  - field %arg*.cookies
   sinks:
   - call *.findByPk arg0
   - call *.findById arg0
@@ -841,6 +1032,13 @@ rules:
   - call mysqli_real_escape_string
   - call pg_escape_string
   - call addslashes
+  validators:
+  - call is_numeric
+  - call ctype_digit
+  - call ctype_alnum
+  - call preg_match
+  - call filter_var
+  - call is_int
   supersedes:
   - php-sql-interp
   fix: Use parameterised queries / bound parameters.
@@ -878,6 +1076,13 @@ rules:
   - call escapeshellarg
   - call escapeshellcmd
   - call intval
+  validators:
+  - call is_numeric
+  - call ctype_digit
+  - call ctype_alnum
+  - call preg_match
+  - call filter_var
+  - call is_int
   supersedes:
   - php-exec-family
   fix: Avoid the shell; pass an argument list and validate input.
@@ -909,6 +1114,13 @@ rules:
   - call create_function arg1
   sanitizers:
   - call intval
+  validators:
+  - call is_numeric
+  - call ctype_digit
+  - call ctype_alnum
+  - call preg_match
+  - call filter_var
+  - call is_int
   supersedes:
   - php-eval
   fix: Never evaluate user input; use a parser or a fixed lookup.
@@ -952,6 +1164,18 @@ rules:
   sanitizers:
   - call basename
   - call intval
+  validators:
+  - call is_numeric
+  - call ctype_digit
+  - call ctype_alnum
+  - call preg_match
+  - call filter_var
+  - call is_int
+  - call in_array
+  - call strpos
+  - call str_starts_with
+  - call str_contains
+  - call array_key_exists
   supersedes:
   - php-include-request
   fix: Use a fixed base directory, reduce input to a basename and verify the resolved path.
@@ -988,6 +1212,18 @@ rules:
   - call *.request arg1
   sanitizers:
   - call intval
+  validators:
+  - call is_numeric
+  - call ctype_digit
+  - call ctype_alnum
+  - call preg_match
+  - call filter_var
+  - call is_int
+  - call in_array
+  - call strpos
+  - call str_starts_with
+  - call str_contains
+  - call array_key_exists
   fix: Allow-list hosts and schemes; never request user-supplied URLs directly.
   tests:
     vulnerable:
@@ -1056,6 +1292,13 @@ rules:
   - call esc_html
   - call e
   - call json_encode
+  validators:
+  - call is_numeric
+  - call ctype_digit
+  - call ctype_alnum
+  - call preg_match
+  - call filter_var
+  - call is_int
   supersedes:
   - php-echo-request
   fix: Escape output for the HTML context or use a sanitising library.
@@ -1069,7 +1312,7 @@ rules:
   stack: generic
   languages: *id003
   severity: medium
-  confidence: low
+  confidence: medium
   cwe:
   - CWE-601
   owasp: A01:2021
@@ -1087,6 +1330,18 @@ rules:
   - call wp_redirect arg0
   sanitizers:
   - call intval
+  validators:
+  - call is_numeric
+  - call ctype_digit
+  - call ctype_alnum
+  - call preg_match
+  - call filter_var
+  - call is_int
+  - call in_array
+  - call strpos
+  - call str_starts_with
+  - call str_contains
+  - call array_key_exists
   fix: Redirect only to allow-listed or relative internal targets.
   tests:
     vulnerable:

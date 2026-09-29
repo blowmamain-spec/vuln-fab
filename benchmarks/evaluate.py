@@ -8,6 +8,8 @@ Exit code 1 if there are unreviewed findings (unless --allow-unreviewed), or a g
 from __future__ import annotations
 
 import argparse
+import fnmatch
+import json
 import sys
 from pathlib import Path
 
@@ -32,11 +34,30 @@ def main() -> int:
     ap.add_argument("--min-precision", type=float)
     ap.add_argument("--min-recall", type=float)
     ap.add_argument("--max-decoy-hits", type=int)
+    ap.add_argument(
+        "--classes",
+        help="comma separated finding classes to evaluate (default: classes present in the truth)",
+    )
     args = ap.parse_args()
     try:
         target, truth = load_truth(HERE / "truth" / f"{args.target}.json")
         verdicts = load_verdicts(HERE / "verdicts" / f"{args.target}.json")
-        report = evaluate(target, truth, load_findings(args.findings), verdicts)
+        findings = load_findings(args.findings)
+        excludes = json.loads((HERE / "truth" / f"{args.target}.json").read_text()).get("exclude", [])
+        classes = (
+            set(args.classes.split(",")) if args.classes else {t.cls for t in truth}
+        )
+        kept = [
+            f
+            for f in findings
+            if f.cls in classes and not any(fnmatch.fnmatch(f.file, g) for g in excludes)
+        ]
+        print(
+            f"(evaluated {len(kept)} of {len(findings)} findings: classes={sorted(classes)}, "
+            f"excluded paths={excludes})",
+            file=sys.stderr,
+        )
+        report = evaluate(target, truth, kept, verdicts)
     except (EvaluationError, OSError, KeyError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2

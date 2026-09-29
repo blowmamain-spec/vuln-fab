@@ -213,16 +213,17 @@ class JavaScriptLowerer(Lowerer):
     def s_throw_statement(self, node: Node) -> None:
         for child in self.named(node):
             self.expr(child)
+        self.emit(Return(None, self.line(node)))  # control does not continue
 
     def s_if_statement(self, node: Node) -> None:
-        self.expr(node.child_by_field_name("condition"))
+        cond = self.expr(node.child_by_field_name("condition"))
         then = self._arm(node.child_by_field_name("consequence"))
         alt = node.child_by_field_name("alternative")
         other = ()
         if alt is not None:
             inner = self.named(alt)
             other = self._arm(inner[0]) if alt.type == "else_clause" and inner else self._arm(alt)
-        self.emit(Branch(then, other, self.line(node)))
+        self.emit(Branch(then, other, self.line(node), cond))
 
     def _arm(self, node: Node | None) -> tuple:  # type: ignore[type-arg]
         if node is None:

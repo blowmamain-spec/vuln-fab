@@ -136,13 +136,13 @@ class PhpLowerer(Lowerer):
         self.emit(Return(self.expr(kids[0]) if kids else None, self.line(node)))
 
     def s_if_statement(self, node: Node) -> None:
-        self.expr(node.child_by_field_name("condition"))
+        cond = self.expr(node.child_by_field_name("condition"))
         then = self._arm(node.child_by_field_name("body"))
         other = ()
         alternatives = node.children_by_field_name("alternative")
         if alternatives:
             other = self._alt_chain(alternatives)
-        self.emit(Branch(then, other, self.line(node)))
+        self.emit(Branch(then, other, self.line(node), cond))
 
     def _arm(self, node: Node | None) -> tuple:  # type: ignore[type-arg]
         if node is None:
@@ -155,9 +155,9 @@ class PhpLowerer(Lowerer):
             return self.block(head.child_by_field_name("body") or head)
 
         def run() -> None:
-            self.expr(head.child_by_field_name("condition"))
+            cond = self.expr(head.child_by_field_name("condition"))
             then = self._arm(head.child_by_field_name("body"))
-            self.emit(Branch(then, self._alt_chain(rest) if rest else (), self.line(head)))
+            self.emit(Branch(then, self._alt_chain(rest) if rest else (), self.line(head), cond))
 
         return self.capture(run)
 
@@ -370,6 +370,12 @@ class PhpLowerer(Lowerer):
         return self._function(node)
 
     x_arrow_function = x_anonymous_function
+
+    def x_throw_expression(self, node: Node) -> Operand:
+        for child in self.named(node):
+            self.expr(child)
+        self.emit(Return(None, self.line(node)))  # control does not continue
+        return Unknown("throw")
 
     def x_include_expression(self, node: Node) -> Operand:
         kids = self.named(node)

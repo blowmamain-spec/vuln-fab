@@ -118,7 +118,7 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
   *Lulus jika*: vuln + safe per rule.
 - [x] **WP-5.8 IDOR tier B (kerangka)** (M) — dep: 5.5. Model "sanitizer kepemilikan" (filter `owner=user`, `auth.uid()`), sink fetch-by-key, confidence ≤ medium, `tier: B`.
   *Lulus jika*: fixture fetch-by-pk dengan/tanpa filter pemilik membedakan benar.
-- [ ] **WP-5.9 Gate M2** (L) — dep: 5.7, 0.4. Evaluasi NodeGoat + Juice Shop (label dibuat dan di-review); `benchmarks/results/m2.md`; tag `v0.2.0`.
+- [x] **WP-5.9 Gate M2** (L) — dep: 5.7, 0.4. Evaluasi NodeGoat + Juice Shop (label dibuat dan di-review); `benchmarks/results/m2.md`; tag `v0.2.0`.
   *Lulus jika*: gate M2 di rencana Bagian 17 terpenuhi.
 
 ## Fase 6: Plugin Django

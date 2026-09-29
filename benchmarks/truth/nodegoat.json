@@ -1,0 +1,96 @@
+{
+  "target": "nodegoat",
+  "revision": "see benchmarks/targets.lock",
+  "exclude": [
+    "test/**",
+    "artifacts/**",
+    "app/assets/**",
+    "**/vendor/**"
+  ],
+  "items": [
+    {
+      "id": "N001",
+      "kind": "vulnerable",
+      "file": "app/routes/contributions.js",
+      "line_start": 32,
+      "line_end": 32,
+      "class": "dynamic-eval",
+      "cwe": [
+        "CWE-95"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "tutorial NodeGoat A1: eval() atas input body"
+    },
+    {
+      "id": "N002",
+      "kind": "vulnerable",
+      "file": "app/routes/contributions.js",
+      "line_start": 33,
+      "line_end": 33,
+      "class": "dynamic-eval",
+      "cwe": [
+        "CWE-95"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "tutorial NodeGoat A1: eval() atas input body"
+    },
+    {
+      "id": "N003",
+      "kind": "vulnerable",
+      "file": "app/routes/contributions.js",
+      "line_start": 34,
+      "line_end": 34,
+      "class": "dynamic-eval",
+      "cwe": [
+        "CWE-95"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "tutorial NodeGoat A1: eval() atas input body"
+    },
+    {
+      "id": "N004",
+      "kind": "vulnerable",
+      "file": "app/routes/index.js",
+      "line_start": 72,
+      "line_end": 72,
+      "class": "redirect",
+      "cwe": [
+        "CWE-601"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "tutorial NodeGoat A10: redirect tak tervalidasi (?url=)"
+    },
+    {
+      "id": "N005",
+      "kind": "vulnerable",
+      "file": "app/routes/research.js",
+      "line_start": 16,
+      "line_end": 16,
+      "class": "ssrf",
+      "cwe": [
+        "CWE-918"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "URL dari query dipakai langsung oleh needle.get"
+    },
+    {
+      "id": "N006",
+      "kind": "vulnerable",
+      "file": "app/data/allocations-dao.js",
+      "line_start": 73,
+      "line_end": 78,
+      "class": "nosqli",
+      "cwe": [
+        "CWE-943"
+      ],
+      "tier": "A",
+      "in_scope": false,
+      "note": "tutorial NodeGoat A1: injeksi $where (kelas belum didukung)"
+    }
+  ]
+}

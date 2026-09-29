@@ -16,7 +16,12 @@ SNIPPET_LIMIT = 300
 
 def spec_for(rule: TaintRule) -> TaintSpec:
     return TaintSpec.from_rule(
-        rule.sources, rule.sinks, rule.sanitizers, rule.propagators, rule.guards
+        rule.sources,
+        rule.sinks,
+        rule.sanitizers,
+        rule.propagators,
+        rule.guards,
+        rule.validators,
     )
 
 

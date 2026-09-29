@@ -98,6 +98,7 @@ class Branch:
     then: tuple[Instr, ...]
     other: tuple[Instr, ...]
     line: int
+    cond: Operand | None = None  # the tested value (lets analyses spot validation checks)
 
 
 @dataclass(frozen=True)

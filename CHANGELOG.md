@@ -9,13 +9,19 @@
 - 24 rule generik Python/JS/PHP.
 - Bug upstream ditemukan dan dihindari: py-tree-sitter 0.26.0 `Point` use-after-free (lihat docs/decisions).
 
-## Unreleased
+## 0.2.0 (M2: taint analysis)
 - TIR (WP-5.1) dan taint engine intra-fungsi (WP-5.2/5.3): DSL source/sink/sanitizer/propagator, rule `kind: taint` (tpy-sqli, tpy-cmdi, tjs-sqli), trace + hop `unresolved`.
 - Ringkasan fungsi intra-file (WP-5.4): param→return, param→sink, source→return; rekursi aman.
 - Taint antar-file (WP-5.5): resolusi import Python (absolut/relatif) dan JS/TS (ES import, alias `@/`, `require`, `exports.x`); PHP menyusul di fase Laravel.
 - Batas kerja taint + laporan pemotongan di coverage (WP-5.6).
 - 25 rule taint (WP-5.7): sqli, cmdi, codei, pathtrav, ssrf, deser, xss, redirect (+ ssti Python) untuk Python/JS-TS/PHP; menggantikan (supersedes) rule pola sejenis bila alirannya terbukti. Rule pola `ts-cmd-injection` tetap sebagai fallback tanpa aliran.
-- Berikutnya: IDOR tier B (5.8), gate M2 (5.9).
+- IDOR tier B via taint + *guards* kepemilikan (WP-5.8): `tpy-idor`, `tjs-idor`, `tphp-idor`.
+- *Validator* pada rule taint (cek di dalam `if` membersihkan operand), `throw`/`raise` sebagai jalur berhenti, semantik `map.get`.
+- Rule `js-xss` (Angular `bypassSecurityTrust*`).
+- Gate M2 terpenuhi pada Juice Shop dan NodeGoat; lihat `benchmarks/results/m2.md` (termasuk catatan bias).
+
+## Unreleased
+- Berikutnya: Fase 6 (Django) dan Fase 7 (Laravel).
 
 ## Spec
 Perubahan pada `docs/spec.md` dicatat di sini.

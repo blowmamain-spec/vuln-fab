@@ -54,6 +54,7 @@ DEFAULT_PROPAGATORS = (
     "*.trim", "*.toLowerCase", "*.toUpperCase", "*.append", "*.items", "*.values",
     "str", "String", "unicode", "sprintf", "vsprintf", "implode", "trim", "strtolower",
     "strtoupper", "str_replace", "substr", "json_decode", "json.loads", "JSON.parse",
+    "path.join", "path.resolve", "path.normalize", "os.path.join", "os.path.normpath",
     "base64_decode", "urldecode", "rawurldecode", "stripslashes", "array_merge", "dict", "list",
 )  # fmt: skip
 
@@ -177,10 +178,15 @@ def _merge(a: State, b: State) -> State:
     return out
 
 
+def _terminates(body: tuple[Instr, ...]) -> bool:
+    return bool(body) and isinstance(body[-1], Return)
+
+
 class FunctionAnalyzer:
     def __init__(self, ctx: _Ctx, fn: FunctionIR) -> None:
         self.ctx = ctx
         self.fn = fn
+        self.defs: dict[str, Instr] = {}
 
     # --- operands ---------------------------------------------------------------------------
 
@@ -229,6 +235,9 @@ class FunctionAnalyzer:
         return state
 
     def instr(self, instr: Instr, state: State) -> State:
+        dst = getattr(instr, "dst", None)
+        if isinstance(dst, Var) and isinstance(instr, (Call, Concat, Assign)):
+            self.defs[dst.name] = instr
         if self.ctx.budget is not None:
             self.ctx.steps += 1
             self.ctx.budget.tick(self.ctx.steps)
@@ -246,9 +255,7 @@ class FunctionAnalyzer:
         elif isinstance(instr, Call):
             self.call(instr, state)
         elif isinstance(instr, Branch):
-            a = self.block(instr.then, dict(state))
-            b = self.block(instr.other, dict(state))
-            state = _merge(a, b)
+            state = self.branch(instr, state)
         elif isinstance(instr, Loop):
             current = state
             for _ in range(MAX_LOOP_ROUNDS):
@@ -265,6 +272,65 @@ class FunctionAnalyzer:
                 if taint is not None:
                     self.ctx.returns.append(taint)
         return state
+
+    def branch(self, instr: Branch, state: State) -> State:
+        validated = self.validated_operands(instr)
+        if not validated:
+            then = self.block(instr.then, dict(state))
+            other = self.block(instr.other, dict(state))
+            return _merge(then, other)
+        # A validation check clears its operands inside both arms. After the branch they stay
+        # clean only if one arm cannot continue (early return / throw); otherwise the check
+        # guarded nothing we can see, so the original taint is restored.
+        cleared = dict(state)
+        for target in validated:
+            self.write(target, None, cleared)
+        a = self.block(instr.then, dict(cleared))
+        b = self.block(instr.other, dict(cleared))
+        a_ends, b_ends = _terminates(instr.then), _terminates(instr.other)
+        if a_ends and not b_ends:
+            return b
+        if b_ends and not a_ends:
+            return a
+        merged = _merge(a, b)
+        if not (a_ends and b_ends):
+            for target in validated:
+                path = access_path(target)
+                if path is not None and path in state and path not in merged:
+                    merged[path] = state[path]
+        return merged
+
+    def validated_operands(self, branch: Branch) -> list[Operand]:
+        """Operands of validator calls (rule ``validators``) inside the branch condition."""
+        validators = self.ctx.spec.validators
+        if not validators or branch.cond is None:
+            return []
+        found: list[Operand] = []
+        seen: set[str] = set()
+
+        def visit(op: Operand, depth: int) -> None:
+            if not isinstance(op, Var) or op.name in seen or depth > 5:
+                return
+            seen.add(op.name)
+            defn = self.defs.get(op.name)
+            if isinstance(defn, Call):
+                if any(m.kind == "call" and m.matches_name(defn.callee) for m in validators):
+                    found.extend(defn.args)
+                    found.extend(v for _, v in defn.kwargs)
+                    if defn.recv is not None:
+                        found.append(defn.recv)
+                    if "." in defn.callee:
+                        found.append(Var(defn.callee.rsplit(".", 1)[0]))
+                for arg in defn.args:
+                    visit(arg, depth + 1)
+            elif isinstance(defn, Concat):
+                for part in defn.parts:
+                    visit(part, depth + 1)
+            elif isinstance(defn, Assign):
+                visit(defn.src, depth + 1)
+
+        visit(branch.cond, 0)
+        return found
 
     def assign_sink(self, instr: Assign, taint: Taint | None) -> None:
         path = access_path(instr.dst)

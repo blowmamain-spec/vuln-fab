@@ -178,6 +178,7 @@ class TaintRule(_LanguageRule):
     sanitizers: list[str] = Field(default_factory=list)
     propagators: list[str] = Field(default_factory=list)
     guards: list[str] = Field(default_factory=list)  # ownership evidence (tier B, IDOR)
+    validators: list[str] = Field(default_factory=list)  # calls that validate when used in `if`
 
     @model_validator(mode="after")
     def _non_empty(self) -> TaintRule:
@@ -187,7 +188,12 @@ class TaintRule(_LanguageRule):
 
         try:
             TaintSpec.from_rule(
-                self.sources, self.sinks, self.sanitizers, self.propagators, self.guards
+                self.sources,
+                self.sinks,
+                self.sanitizers,
+                self.propagators,
+                self.guards,
+                self.validators,
             )
         except SpecError as exc:
             raise ValueError(str(exc)) from exc

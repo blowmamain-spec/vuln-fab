@@ -68,6 +68,9 @@ class TaintSpec:
     sanitizers: tuple[Matcher, ...]
     propagators: tuple[Matcher, ...]
     guards: tuple[Matcher, ...] = ()  # ownership evidence: a function that uses one is not reported
+    validators: tuple[
+        Matcher, ...
+    ] = ()  # calls used as `if` conditions that validate their operands
 
     @classmethod
     def from_rule(
@@ -77,6 +80,7 @@ class TaintSpec:
         sanitizers: list[str],
         propagators: list[str],
         guards: list[str] | None = None,
+        validators: list[str] | None = None,
     ) -> TaintSpec:
         return cls(
             tuple(parse_matcher(s) for s in sources),
@@ -84,6 +88,7 @@ class TaintSpec:
             tuple(parse_matcher(s) for s in sanitizers),
             tuple(parse_matcher(s) for s in propagators),
             tuple(parse_matcher(s) for s in guards or []),
+            tuple(parse_matcher(s) for s in validators or []),
         )
 
 
