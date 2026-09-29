@@ -1,0 +1,3 @@
+<h1>{{ task.title|safe }}</h1>  {# vuln: dj-template-safe #}
+<p>{{ comment.text|linebreaks|safe }}</p>
+<p>{{ user.bio|default:""|safe }}</p>  {# vuln: dj-template-safe #}

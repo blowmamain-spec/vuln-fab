@@ -1,0 +1,56 @@
+rules:
+  - id: dj-template-safe
+    kind: scanner
+    stack: django
+    scanner: "vulnfab.plugins.django.templates:safe_filter"
+    languages: [html]
+    severity: high
+    confidence: medium
+    cwe: [CWE-79]
+    owasp: "A03:2021"
+    title: "Template output marked safe"
+    message: "A template variable is rendered with |safe."
+    fix: "Remove |safe, or sanitise the value (bleach) before it is marked safe."
+    tests: {vulnerable: [vuln.html], safe: [safe.html]}
+
+  - id: dj-template-autoescape
+    kind: scanner
+    stack: django
+    scanner: "vulnfab.plugins.django.templates:autoescape_off"
+    languages: [html]
+    severity: high
+    confidence: medium
+    cwe: [CWE-79]
+    owasp: "A03:2021"
+    title: "Autoescape disabled in template"
+    message: "{% autoescape off %} disables HTML escaping."
+    fix: "Keep autoescape on; escape individual values explicitly if needed."
+    tests: {vulnerable: [vuln.html], safe: [safe.html]}
+
+  - id: dj-template-csrf
+    kind: scanner
+    stack: django
+    scanner: "vulnfab.plugins.django.templates:form_without_csrf"
+    languages: [html]
+    severity: medium
+    confidence: medium
+    cwe: [CWE-352]
+    owasp: "A01:2021"
+    title: "POST form without CSRF token"
+    message: "A POST form has no {% csrf_token %}."
+    fix: "Add {% csrf_token %} inside the form."
+    tests: {vulnerable: [vuln.html], safe: [safe.html]}
+
+  - id: dj-template-jscontext
+    kind: scanner
+    stack: django
+    scanner: "vulnfab.plugins.django.templates:script_context_output"
+    languages: [html]
+    severity: medium
+    confidence: low
+    cwe: [CWE-79]
+    owasp: "A03:2021"
+    title: "Template variable printed inside <script>"
+    message: "A variable is printed inside a script block without JS escaping."
+    fix: "Use |escapejs for strings or json_script for data."
+    tests: {vulnerable: [vuln.html], safe: [safe.html]}

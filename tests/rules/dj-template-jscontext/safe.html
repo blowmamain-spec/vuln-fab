@@ -1,0 +1,7 @@
+<script>
+  var name = "{{ user.name|escapejs }}";
+  var data = {{ payload|json_script:"p" }};
+  var n = {{ count|length }};
+</script>
+<script src="/static/app.js"></script>
+<p>{{ user.name }}</p>

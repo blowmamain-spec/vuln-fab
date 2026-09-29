@@ -127,7 +127,7 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
   *Lulus jika*: fixture app dengan operasi migration umum menghasilkan skema akhir benar.
 - [x] **WP-6.2 Entrypoint** (M) — dep: 5.5. `urls.py` → view (fungsi/CBV), `request.GET/POST/body/FILES/headers/COOKIES` sebagai source, decorator auth.
   *Lulus jika*: fixture URL nested/`include` menghasilkan entrypoint benar.
-- [ ] **WP-6.3 Parser template Django** (M) — dep: 0.3c. `|safe`, `{% autoescape off %}`, `mark_safe` dari konteks.
+- [x] **WP-6.3 Parser template Django** (M) — dep: 0.3c. `|safe`, `{% autoescape off %}`, `mark_safe` dari konteks.
   *Lulus jika*: fixture template dengan dan tanpa autoescape.
 - [ ] **WP-6.4 Model ORM & rule pack** (L) — dep: 6.2, 5.7. Sink `.raw()`/`.extra()`/`cursor.execute`, sanitizer ORM terparameter; rule settings (`DEBUG`, `ALLOWED_HOSTS`, `SECRET_KEY`), `csrf_exempt`, `ModelForm __all__`, view tanpa auth (tier A), `dj-idor-get-by-pk` (tier B), `dj-dynamic-dispatch-input`.
   *Lulus jika*: vuln + safe per rule.

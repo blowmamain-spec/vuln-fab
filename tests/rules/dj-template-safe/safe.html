@@ -1,0 +1,7 @@
+<h1>{{ task.title }}</h1>
+<p>{{ "<b>static</b>"|safe }}</p>
+<p>{{ comment.text|escape|safe }}</p>
+{# {{ hidden.value|safe }} #}
+{% comment %}
+  {{ also.hidden|safe }}
+{% endcomment %}
