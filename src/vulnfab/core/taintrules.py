@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 from vulnfab.core.lower import lower_file
-from vulnfab.core.models import Finding, ParsedFile
+from vulnfab.core.models import Finding, ParsedFile, Unresolved
 from vulnfab.core.rules import TaintRule
 from vulnfab.core.taint import ProjectAnalysis
 from vulnfab.core.taintspec import TaintSpec
@@ -19,7 +19,9 @@ def spec_for(rule: TaintRule) -> TaintSpec:
 
 
 def taint_findings(
-    rules: list[TaintRule], files: Iterable[ParsedFile]
+    rules: list[TaintRule],
+    files: Iterable[ParsedFile],
+    notes: list[Unresolved] | None = None,
 ) -> list[tuple[Finding, str]]:
     """Return ``(finding-without-fingerprint, enclosing-symbol)`` for a set of parsed files."""
     active = [r for r in rules if r.enabled]
@@ -34,7 +36,20 @@ def taint_findings(
             lowered[pf.path] = lower_file(pf)
     for rule in active:
         modules = [m for m in lowered.values() if m.language in rule.languages]
-        for hit in ProjectAnalysis(modules, spec_for(rule)).run():
+        analysis = ProjectAnalysis(modules, spec_for(rule))
+        hits = analysis.run()
+        if notes is not None:
+            notes.extend(
+                Unresolved(
+                    "taint_truncated",
+                    file,
+                    line,
+                    f"{rule.id}: analysis of {function} hit its work limit; "
+                    "flows through it are missed",
+                )
+                for file, function, line in analysis.truncated
+            )
+        for hit in hits:
             file_lines = lines.get(hit.file, [])
             text = file_lines[hit.line - 1].strip() if 0 < hit.line <= len(file_lines) else ""
             out.append(

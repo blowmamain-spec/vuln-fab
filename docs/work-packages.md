@@ -112,7 +112,7 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
   *Lulus jika*: kasus rekursi, fungsi saling memanggil, dan kedalaman melebihi batas tidak hang dan menambah `unresolved_hops`.
 - [x] **WP-5.5 Antar-file (5c) + call graph** (XL) — dep: 5.4. Resolusi import (Python module, TS import/export, PHP `use`/namespace), call graph, edge `unresolved`.
   *Lulus jika*: proyek fixture multi-file (3+ file) menghasilkan trace lintas file dengan urutan baris/berkas benar.
-- [ ] **WP-5.6 Batas & ketahanan** (M) — dep: 5.5. Timeout per file, batas path per sink, fixpoint loop ≤ 3, laporan `unresolved` di coverage.
+- [x] **WP-5.6 Batas & ketahanan** (M) — dep: 5.5. Timeout per file, batas path per sink, fixpoint loop ≤ 3, laporan `unresolved` di coverage.
   *Lulus jika*: file patologis (loop bersarang, grafik panggilan besar) selesai < batas dan melaporkan pemotongan.
 - [ ] **WP-5.7 Rule taint generik & TS** (L) — dep: 5.5. SQLi, XSS, command injection, path traversal, SSRF, deserialisasi untuk Python/TS/PHP dasar (tanpa model framework); pindahkan rule pola `ts-cmd-injection` ke taint.
   *Lulus jika*: vuln + safe per rule.

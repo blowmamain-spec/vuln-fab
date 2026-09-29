@@ -147,7 +147,7 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
             except CheckError as exc:
                 raise RuleLoadError([RuleError(plugin.name, 1, None, str(exc))]) from exc
         if plugin_taint:
-            raw.extend(taint_findings(plugin_taint, unit.files.values()))
+            raw.extend(taint_findings(plugin_taint, unit.files.values(), coverage.unresolved))
         for pf in unit.files.values():
             scanned.add(pf.path)
             if pf.has_syntax_errors:

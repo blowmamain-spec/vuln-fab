@@ -11,6 +11,7 @@ A value is *tainted* if data from a source may reach it. Propagation:
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 
@@ -41,6 +42,9 @@ from vulnfab.core.tir import (
 )
 
 MAX_TRACE = 14
+MAX_FUNCTION_STEPS = 200_000  # instruction visits for one function analysis
+MAX_PROJECT_STEPS = 5_000_000  # instruction visits for one rule over the whole project
+PROJECT_SECONDS = 60.0
 MAX_LOOP_ROUNDS = 3
 
 # Calls that keep data flowing without being a modelling gap (string plumbing).
@@ -119,6 +123,37 @@ Resolver = Callable[[str, FunctionIR], Resolved | None]
 MARKER = "\0param:"
 
 
+class BudgetExceeded(Exception):
+    pass
+
+
+class Budget:
+    """Shared work/time limits so pathological code cannot stall a scan (WP-5.6)."""
+
+    def __init__(
+        self,
+        max_steps: int = MAX_PROJECT_STEPS,
+        seconds: float | None = PROJECT_SECONDS,
+        function_steps: int = MAX_FUNCTION_STEPS,
+    ) -> None:
+        self.max_steps = max_steps
+        self.function_steps = function_steps
+        self.steps = 0
+        self.exhausted = False
+        self._end = None if seconds is None else time.monotonic() + seconds
+
+    def tick(self, local: int) -> None:
+        self.steps += 1
+        if self.exhausted or self.steps > self.max_steps:
+            self.exhausted = True
+            raise BudgetExceeded
+        if local > self.function_steps:
+            raise BudgetExceeded
+        if self.steps % 2048 == 0 and self._end is not None and time.monotonic() > self._end:
+            self.exhausted = True
+            raise BudgetExceeded
+
+
 @dataclass
 class _Ctx:
     spec: TaintSpec
@@ -128,6 +163,8 @@ class _Ctx:
     resolver: Resolver | None = None
     seeds: dict[str, Taint] = field(default_factory=dict)
     returns: list[Taint] = field(default_factory=list)
+    budget: Budget | None = None
+    steps: int = 0
 
 
 def _merge(a: State, b: State) -> State:
@@ -191,6 +228,9 @@ class FunctionAnalyzer:
         return state
 
     def instr(self, instr: Instr, state: State) -> State:
+        if self.ctx.budget is not None:
+            self.ctx.steps += 1
+            self.ctx.budget.tick(self.ctx.steps)
         if isinstance(instr, Assign):
             taint = self.read(instr.src, state, instr.line)
             if taint is not None and isinstance(instr.dst, (Var, Field)):
@@ -356,8 +396,12 @@ _BOUND = ("self.", "cls.", "this.", "$this.")
 class ProjectAnalysis:
     """Taint over a set of modules: summaries are shared across files through import resolution."""
 
-    def __init__(self, modules: list[ModuleIR], spec: TaintSpec) -> None:
+    def __init__(
+        self, modules: list[ModuleIR], spec: TaintSpec, budget: Budget | None = None
+    ) -> None:
         self.spec = spec
+        self.budget = budget or Budget()
+        self.truncated: list[tuple[str, str, int]] = []  # (file, function, line)
         self.stack: list[tuple[str, str]] = []
         self.index = ModuleIndex({m.file: m.language for m in modules})
         self.modules: dict[str, ModuleAnalysis] = {}
@@ -504,30 +548,46 @@ class ModuleAnalysis:
         file = self.module.file
         self.project.stack.append((file, fn.qualname))
         try:
-            base = _Ctx(self.spec, file, resolver=self.resolve)
-            FunctionAnalyzer(base, fn).run()
-            summary = Summary()
-            returned = [t for t in base.returns if not t.trace[0].detail.startswith(MARKER)]
-            if returned:
-                summary.source_return = min(returned, key=lambda t: t.hops)
-            to_return: set[int] = set()
-            for idx, param in enumerate(fn.params[:MAX_SUMMARY_PARAMS]):
-                marker = Taint((TraceStep(file, fn.line, "source", MARKER + param),))
-                ctx = _Ctx(self.spec, file, resolver=self.resolve, seeds={param: marker})
-                FunctionAnalyzer(ctx, fn).run()
-                if any(t.trace[0].detail == MARKER + param for t in ctx.returns):
-                    to_return.add(idx)
-                for hit in ctx.hits:
-                    if hit.trace and hit.trace[0].detail == MARKER + param:
-                        summary.to_sink.setdefault(idx, []).append(
-                            SinkRef(
-                                hit.line, hit.sink, hit.function, hit.file, hit.trace[1:], hit.hops
+            try:
+                base = _Ctx(self.spec, file, resolver=self.resolve, budget=self.project.budget)
+                FunctionAnalyzer(base, fn).run()
+                summary = Summary()
+                returned = [t for t in base.returns if not t.trace[0].detail.startswith(MARKER)]
+                if returned:
+                    summary.source_return = min(returned, key=lambda t: t.hops)
+                to_return: set[int] = set()
+                for idx, param in enumerate(fn.params[:MAX_SUMMARY_PARAMS]):
+                    marker = Taint((TraceStep(file, fn.line, "source", MARKER + param),))
+                    ctx = _Ctx(
+                        self.spec,
+                        file,
+                        resolver=self.resolve,
+                        seeds={param: marker},
+                        budget=self.project.budget,
+                    )
+                    FunctionAnalyzer(ctx, fn).run()
+                    if any(t.trace[0].detail == MARKER + param for t in ctx.returns):
+                        to_return.add(idx)
+                    for hit in ctx.hits:
+                        if hit.trace and hit.trace[0].detail == MARKER + param:
+                            summary.to_sink.setdefault(idx, []).append(
+                                SinkRef(
+                                    hit.line,
+                                    hit.sink,
+                                    hit.function,
+                                    hit.file,
+                                    hit.trace[1:],
+                                    hit.hops,
+                                )
                             )
-                        )
-            summary.to_return = frozenset(to_return)
-            self.hits[fn.qualname] = [
-                h for h in base.hits if not (h.trace and h.trace[0].detail.startswith(MARKER))
-            ]
+                summary.to_return = frozenset(to_return)
+                self.hits[fn.qualname] = [
+                    h for h in base.hits if not (h.trace and h.trace[0].detail.startswith(MARKER))
+                ]
+            except (BudgetExceeded, RecursionError):
+                self.project.truncated.append((file, fn.qualname, fn.line))
+                summary = Summary()
+                self.hits[fn.qualname] = []
         finally:
             self.project.stack.pop()
         self.summaries[fn.qualname] = summary
