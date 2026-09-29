@@ -30,7 +30,8 @@ def make_repo(root: Path) -> None:
     for i in range(12):
         (root / f"proj/v{i}.py").write_text(
             "import os\nfrom proj.util import run\n"
-            f"def view{i}(request):\n    run(request.GET['a'])\n    os.system('ls ' + request.GET['b'])\n"
+            f"def view{i}(request):\n    run(request.GET['a'])\n"
+            "    os.system('ls ' + request.GET['b'])\n"
         )
     (root / "proj/util.py").write_text("import os\n\ndef run(cmd):\n    os.system(cmd)\n")
     (root / "app.js").write_text("function h(req, db){ db.query('a' + req.query.id); }\n")
