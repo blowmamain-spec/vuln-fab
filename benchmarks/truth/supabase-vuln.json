@@ -1,0 +1,1014 @@
+{
+  "target": "supabase-vuln",
+  "revision": "lab-1",
+  "items": [
+    {
+      "id": "T001",
+      "kind": "vulnerable",
+      "file": "supabase/config.toml",
+      "line_start": 14,
+      "line_end": 14,
+      "class": "config-signup",
+      "cwe": [
+        "CWE-287"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "signup terbuka tanpa konfirmasi email"
+    },
+    {
+      "id": "D001",
+      "kind": "decoy",
+      "file": "supabase/config.toml",
+      "line_start": 19,
+      "line_end": 19,
+      "class": "config-signup",
+      "cwe": [
+        "CWE-287"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "signup SMS dimatikan dan konfirmasi wajib"
+    },
+    {
+      "id": "T002",
+      "kind": "vulnerable",
+      "file": "supabase/config.toml",
+      "line_start": 22,
+      "line_end": 23,
+      "class": "edge-no-jwt",
+      "cwe": [
+        "CWE-306"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "fungsi tanpa verifikasi JWT"
+    },
+    {
+      "id": "D002",
+      "kind": "decoy",
+      "file": "supabase/config.toml",
+      "line_start": 26,
+      "line_end": 27,
+      "class": "edge-no-jwt",
+      "cwe": [
+        "CWE-306"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "JWT diverifikasi"
+    },
+    {
+      "id": "D003",
+      "kind": "decoy",
+      "file": "supabase/functions/legacy-hook/index.ts",
+      "line_start": 6,
+      "line_end": 9,
+      "class": "service-role-client",
+      "cwe": [
+        "CWE-522"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "kunci service_role dipakai di server (edge function)"
+    },
+    {
+      "id": "D004",
+      "kind": "decoy",
+      "file": "supabase/functions/legacy-hook/index.ts",
+      "line_start": 11,
+      "line_end": 11,
+      "class": "table-no-rls",
+      "cwe": [
+        "CWE-862"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "klien service_role melewati RLS; bukan masalah RLS"
+    },
+    {
+      "id": "D005",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240101000000_init.sql",
+      "line_start": 6,
+      "line_end": 9,
+      "class": "rls-missing",
+      "cwe": [
+        "CWE-862"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "schema private tidak diekspos PostgREST"
+    },
+    {
+      "id": "D006",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240101000000_init.sql",
+      "line_start": 12,
+      "line_end": 18,
+      "class": "rls-missing",
+      "cwe": [
+        "CWE-862"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "RLS aktif"
+    },
+    {
+      "id": "D007",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240101000000_init.sql",
+      "line_start": 22,
+      "line_end": 24,
+      "class": "policy-true",
+      "cwe": [
+        "CWE-863"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "policy berbasis pemilik"
+    },
+    {
+      "id": "D008",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240101000000_init.sql",
+      "line_start": 22,
+      "line_end": 24,
+      "class": "policy-no-uid",
+      "cwe": [
+        "CWE-863"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "memakai auth.uid()"
+    },
+    {
+      "id": "D009",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240101000000_init.sql",
+      "line_start": 32,
+      "line_end": 39,
+      "class": "rls-missing",
+      "cwe": [
+        "CWE-862"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "RLS aktif"
+    },
+    {
+      "id": "D010",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240101000000_init.sql",
+      "line_start": 43,
+      "line_end": 45,
+      "class": "policy-no-uid",
+      "cwe": [
+        "CWE-863"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "memakai auth.uid()"
+    },
+    {
+      "id": "T003",
+      "kind": "vulnerable",
+      "file": "supabase/migrations/20240101000000_init.sql",
+      "line_start": 48,
+      "line_end": 53,
+      "class": "rls-missing",
+      "cwe": [
+        "CWE-862"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "tabel public tanpa RLS"
+    },
+    {
+      "id": "D011",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240101000000_init.sql",
+      "line_start": 56,
+      "line_end": 61,
+      "class": "rls-missing",
+      "cwe": [
+        "CWE-862"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "RLS aktif"
+    },
+    {
+      "id": "T004",
+      "kind": "vulnerable",
+      "file": "supabase/migrations/20240101000000_init.sql",
+      "line_start": 65,
+      "line_end": 67,
+      "class": "policy-true",
+      "cwe": [
+        "CWE-863"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "semua user terautentikasi bisa membaca semua invoice"
+    },
+    {
+      "id": "D012",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240101000000_init.sql",
+      "line_start": 70,
+      "line_end": 72,
+      "class": "policy-true",
+      "cwe": [
+        "CWE-863"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "berbasis pemilik"
+    },
+    {
+      "id": "D013",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240101000000_init.sql",
+      "line_start": 75,
+      "line_end": 82,
+      "class": "rls-missing",
+      "cwe": [
+        "CWE-862"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "RLS aktif"
+    },
+    {
+      "id": "T005",
+      "kind": "vulnerable",
+      "file": "supabase/migrations/20240101000000_init.sql",
+      "line_start": 85,
+      "line_end": 87,
+      "class": "policy-anon-write",
+      "cwe": [
+        "CWE-862"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "anon boleh UPDATE"
+    },
+    {
+      "id": "D014",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240101000000_init.sql",
+      "line_start": 90,
+      "line_end": 92,
+      "class": "policy-anon-write",
+      "cwe": [
+        "CWE-862"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "anon hanya membaca data publik"
+    },
+    {
+      "id": "D015",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240101000000_init.sql",
+      "line_start": 95,
+      "line_end": 97,
+      "class": "policy-true",
+      "cwe": [
+        "CWE-863"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "berbasis pemilik"
+    },
+    {
+      "id": "D016",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240101000000_init.sql",
+      "line_start": 100,
+      "line_end": 105,
+      "class": "rls-missing",
+      "cwe": [
+        "CWE-862"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "RLS aktif"
+    },
+    {
+      "id": "T006",
+      "kind": "vulnerable",
+      "file": "supabase/migrations/20240101000000_init.sql",
+      "line_start": 108,
+      "line_end": 110,
+      "class": "policy-user-metadata",
+      "cwe": [
+        "CWE-285"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "user_metadata dapat diubah oleh user"
+    },
+    {
+      "id": "D017",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240101000000_init.sql",
+      "line_start": 113,
+      "line_end": 115,
+      "class": "policy-user-metadata",
+      "cwe": [
+        "CWE-285"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "app_metadata hanya bisa diubah server"
+    },
+    {
+      "id": "D018",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240101000000_init.sql",
+      "line_start": 118,
+      "line_end": 125,
+      "class": "rls-missing",
+      "cwe": [
+        "CWE-862"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "RLS aktif"
+    },
+    {
+      "id": "T007",
+      "kind": "vulnerable",
+      "file": "supabase/migrations/20240101000000_init.sql",
+      "line_start": 128,
+      "line_end": 130,
+      "class": "policy-no-uid",
+      "cwe": [
+        "CWE-863"
+      ],
+      "tier": "B",
+      "in_scope": true,
+      "note": "tabel ber-user_id, policy tidak membatasi pemilik"
+    },
+    {
+      "id": "D019",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240101000000_init.sql",
+      "line_start": 133,
+      "line_end": 135,
+      "class": "policy-no-uid",
+      "cwe": [
+        "CWE-863"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "memakai auth.uid()"
+    },
+    {
+      "id": "D020",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240101000000_init.sql",
+      "line_start": 139,
+      "line_end": 142,
+      "class": "rls-missing",
+      "cwe": [
+        "CWE-862"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "RLS diaktifkan di migration 003"
+    },
+    {
+      "id": "T008",
+      "kind": "vulnerable",
+      "file": "supabase/migrations/20240102000000_functions_views_grants.sql",
+      "line_start": 2,
+      "line_end": 8,
+      "class": "definer-no-path",
+      "cwe": [
+        "CWE-426"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "SECURITY DEFINER tanpa search_path"
+    },
+    {
+      "id": "D021",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240102000000_functions_views_grants.sql",
+      "line_start": 11,
+      "line_end": 18,
+      "class": "definer-no-path",
+      "cwe": [
+        "CWE-426"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "search_path dikunci"
+    },
+    {
+      "id": "T009",
+      "kind": "vulnerable",
+      "file": "supabase/migrations/20240102000000_functions_views_grants.sql",
+      "line_start": 21,
+      "line_end": 29,
+      "class": "dynamic-sql",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "EXECUTE dengan konkatenasi parameter"
+    },
+    {
+      "id": "D022",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240102000000_functions_views_grants.sql",
+      "line_start": 33,
+      "line_end": 41,
+      "class": "dynamic-sql",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "format(%L) meng-quote parameter"
+    },
+    {
+      "id": "D023",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240102000000_functions_views_grants.sql",
+      "line_start": 45,
+      "line_end": 53,
+      "class": "dynamic-sql",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "parameter terikat lewat USING"
+    },
+    {
+      "id": "T010",
+      "kind": "vulnerable",
+      "file": "supabase/migrations/20240102000000_functions_views_grants.sql",
+      "line_start": 58,
+      "line_end": 65,
+      "class": "business-idor",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": "C",
+      "in_scope": false,
+      "note": "cancel_order tidak memeriksa pemilik"
+    },
+    {
+      "id": "T011",
+      "kind": "vulnerable",
+      "file": "supabase/migrations/20240102000000_functions_views_grants.sql",
+      "line_start": 68,
+      "line_end": 71,
+      "class": "view-no-invoker",
+      "cwe": [
+        "CWE-284"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "view berjalan dengan hak pemilik, melewati RLS"
+    },
+    {
+      "id": "D024",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240102000000_functions_views_grants.sql",
+      "line_start": 74,
+      "line_end": 77,
+      "class": "view-no-invoker",
+      "cwe": [
+        "CWE-284"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "security_invoker aktif"
+    },
+    {
+      "id": "T012",
+      "kind": "vulnerable",
+      "file": "supabase/migrations/20240102000000_functions_views_grants.sql",
+      "line_start": 80,
+      "line_end": 80,
+      "class": "grant-broad",
+      "cwe": [
+        "CWE-732"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "GRANT ALL ke anon"
+    },
+    {
+      "id": "D025",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240102000000_functions_views_grants.sql",
+      "line_start": 83,
+      "line_end": 83,
+      "class": "grant-broad",
+      "cwe": [
+        "CWE-732"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "SELECT untuk authenticated"
+    },
+    {
+      "id": "T013",
+      "kind": "vulnerable",
+      "file": "supabase/migrations/20240102000000_functions_views_grants.sql",
+      "line_start": 86,
+      "line_end": 86,
+      "class": "default-priv",
+      "cwe": [
+        "CWE-732"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "privilege bawaan terlalu longgar"
+    },
+    {
+      "id": "D026",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240102000000_functions_views_grants.sql",
+      "line_start": 89,
+      "line_end": 89,
+      "class": "default-priv",
+      "cwe": [
+        "CWE-732"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "hanya SELECT untuk authenticated"
+    },
+    {
+      "id": "T014",
+      "kind": "vulnerable",
+      "file": "supabase/migrations/20240103000000_storage_and_fixes.sql",
+      "line_start": 2,
+      "line_end": 2,
+      "class": "storage-public",
+      "cwe": [
+        "CWE-200"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "bucket invoices publik"
+    },
+    {
+      "id": "D027",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240103000000_storage_and_fixes.sql",
+      "line_start": 5,
+      "line_end": 5,
+      "class": "storage-public",
+      "cwe": [
+        "CWE-200"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "avatar memang publik"
+    },
+    {
+      "id": "D028",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240103000000_storage_and_fixes.sql",
+      "line_start": 8,
+      "line_end": 8,
+      "class": "storage-public",
+      "cwe": [
+        "CWE-200"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "bucket privat"
+    },
+    {
+      "id": "T015",
+      "kind": "vulnerable",
+      "file": "supabase/migrations/20240103000000_storage_and_fixes.sql",
+      "line_start": 11,
+      "line_end": 12,
+      "class": "storage-policy",
+      "cwe": [
+        "CWE-863"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "siapa pun bisa upload ke bucket invoices"
+    },
+    {
+      "id": "D029",
+      "kind": "decoy",
+      "file": "supabase/migrations/20240103000000_storage_and_fixes.sql",
+      "line_start": 15,
+      "line_end": 18,
+      "class": "storage-policy",
+      "cwe": [
+        "CWE-863"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "dibatasi folder milik user"
+    },
+    {
+      "id": "T016",
+      "kind": "vulnerable",
+      "file": "supabase/migrations/20240103000000_storage_and_fixes.sql",
+      "line_start": 26,
+      "line_end": 26,
+      "class": "rls-missing",
+      "cwe": [
+        "CWE-862"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "RLS dimatikan; keadaan akhir tanpa RLS"
+    },
+    {
+      "id": "T017",
+      "kind": "vulnerable",
+      "file": "supabase/seed.sql",
+      "line_start": 2,
+      "line_end": 3,
+      "class": "seed-secret",
+      "cwe": [
+        "CWE-798"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "akun admin dengan password hardcoded"
+    },
+    {
+      "id": "D030",
+      "kind": "decoy",
+      "file": "supabase/seed.sql",
+      "line_start": 6,
+      "line_end": 7,
+      "class": "seed-secret",
+      "cwe": [
+        "CWE-798"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "password dari pengaturan runtime"
+    },
+    {
+      "id": "D031",
+      "kind": "decoy",
+      "file": "supabase/seed.sql",
+      "line_start": 10,
+      "line_end": 11,
+      "class": "seed-secret",
+      "cwe": [
+        "CWE-798"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "data biasa"
+    },
+    {
+      "id": "D032",
+      "kind": "decoy",
+      "file": "web/.env.local",
+      "line_start": 3,
+      "line_end": 3,
+      "class": "service-role-client",
+      "cwe": [
+        "CWE-522"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "kunci anon memang publik"
+    },
+    {
+      "id": "T018",
+      "kind": "vulnerable",
+      "file": "web/.env.local",
+      "line_start": 5,
+      "line_end": 5,
+      "class": "service-role-client",
+      "cwe": [
+        "CWE-522"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "service_role di variabel NEXT_PUBLIC_*"
+    },
+    {
+      "id": "T019",
+      "kind": "vulnerable",
+      "file": "web/src/components/PostBody.tsx",
+      "line_start": 6,
+      "line_end": 7,
+      "class": "xss-dangerous-html",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "HTML dari props tanpa sanitasi"
+    },
+    {
+      "id": "D033",
+      "kind": "decoy",
+      "file": "web/src/components/PostBody.tsx",
+      "line_start": 11,
+      "line_end": 12,
+      "class": "xss-dangerous-html",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "disanitasi DOMPurify"
+    },
+    {
+      "id": "D034",
+      "kind": "decoy",
+      "file": "web/src/components/PostBody.tsx",
+      "line_start": 16,
+      "line_end": 17,
+      "class": "xss-dangerous-html",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "string statis"
+    },
+    {
+      "id": "T020",
+      "kind": "vulnerable",
+      "file": "web/src/lib/payments.ts",
+      "line_start": 2,
+      "line_end": 2,
+      "class": "secret-hardcoded",
+      "cwe": [
+        "CWE-798"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "secret literal (palsu)"
+    },
+    {
+      "id": "D035",
+      "kind": "decoy",
+      "file": "web/src/lib/payments.ts",
+      "line_start": 5,
+      "line_end": 5,
+      "class": "secret-hardcoded",
+      "cwe": [
+        "CWE-798"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "URL biasa"
+    },
+    {
+      "id": "D036",
+      "kind": "decoy",
+      "file": "web/src/lib/payments.ts",
+      "line_start": 8,
+      "line_end": 8,
+      "class": "secret-hardcoded",
+      "cwe": [
+        "CWE-798"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "placeholder"
+    },
+    {
+      "id": "D037",
+      "kind": "decoy",
+      "file": "web/src/lib/payments.ts",
+      "line_start": 11,
+      "line_end": 11,
+      "class": "secret-hardcoded",
+      "cwe": [
+        "CWE-798"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "dibaca dari environment"
+    },
+    {
+      "id": "D038",
+      "kind": "decoy",
+      "file": "web/src/lib/supabase.ts",
+      "line_start": 6,
+      "line_end": 6,
+      "class": "service-role-client",
+      "cwe": [
+        "CWE-522"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "kunci anon"
+    },
+    {
+      "id": "T021",
+      "kind": "vulnerable",
+      "file": "web/src/lib/supabase.ts",
+      "line_start": 9,
+      "line_end": 9,
+      "class": "service-role-client",
+      "cwe": [
+        "CWE-522"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "kunci service_role di kode frontend"
+    },
+    {
+      "id": "T022",
+      "kind": "vulnerable",
+      "file": "web/src/pages/api/calc.ts",
+      "line_start": 5,
+      "line_end": 5,
+      "class": "dynamic-eval",
+      "cwe": [
+        "CWE-95"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "eval atas input request"
+    },
+    {
+      "id": "D039",
+      "kind": "decoy",
+      "file": "web/src/pages/api/calc.ts",
+      "line_start": 7,
+      "line_end": 7,
+      "class": "dynamic-eval",
+      "cwe": [
+        "CWE-95"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "parsing JSON"
+    },
+    {
+      "id": "T023",
+      "kind": "vulnerable",
+      "file": "web/src/pages/api/export.ts",
+      "line_start": 7,
+      "line_end": 7,
+      "class": "cmd-injection",
+      "cwe": [
+        "CWE-78"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "input request masuk ke exec"
+    },
+    {
+      "id": "D040",
+      "kind": "decoy",
+      "file": "web/src/pages/api/export.ts",
+      "line_start": 9,
+      "line_end": 9,
+      "class": "cmd-injection",
+      "cwe": [
+        "CWE-78"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "execFile dengan argumen konstan"
+    },
+    {
+      "id": "D041",
+      "kind": "decoy",
+      "file": "web/src/pages/api/export.ts",
+      "line_start": 11,
+      "line_end": 11,
+      "class": "cmd-injection",
+      "cwe": [
+        "CWE-78"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "perintah literal"
+    },
+    {
+      "id": "T024",
+      "kind": "vulnerable",
+      "file": "web/src/pages/api/search.ts",
+      "line_start": 7,
+      "line_end": 10,
+      "class": "or-inject",
+      "cwe": [
+        "CWE-943"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "input masuk ke filter PostgREST .or()"
+    },
+    {
+      "id": "D042",
+      "kind": "decoy",
+      "file": "web/src/pages/api/search.ts",
+      "line_start": 12,
+      "line_end": 12,
+      "class": "or-inject",
+      "cwe": [
+        "CWE-943"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "filter terparameter"
+    },
+    {
+      "id": "D043",
+      "kind": "decoy",
+      "file": "web/src/pages/api/search.ts",
+      "line_start": 14,
+      "line_end": 14,
+      "class": "or-inject",
+      "cwe": [
+        "CWE-943"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "string konstan"
+    },
+    {
+      "id": "T025",
+      "kind": "vulnerable",
+      "file": "web/src/pages/audit.tsx",
+      "line_start": 5,
+      "line_end": 5,
+      "class": "table-no-rls",
+      "cwe": [
+        "CWE-862"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "klien anon membaca tabel tanpa RLS"
+    },
+    {
+      "id": "D044",
+      "kind": "decoy",
+      "file": "web/src/pages/audit.tsx",
+      "line_start": 7,
+      "line_end": 7,
+      "class": "table-no-rls",
+      "cwe": [
+        "CWE-862"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "tabel ber-RLS"
+    },
+    {
+      "id": "T026",
+      "kind": "vulnerable",
+      "file": "web/src/pages/invoices/[id].tsx",
+      "line_start": 5,
+      "line_end": 5,
+      "class": "idor-eq-id",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": "B",
+      "in_scope": true,
+      "note": "fetch by id dari request, policy tidak membatasi pemilik"
+    },
+    {
+      "id": "D045",
+      "kind": "decoy",
+      "file": "web/src/pages/invoices/[id].tsx",
+      "line_start": 7,
+      "line_end": 7,
+      "class": "idor-eq-id",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": "B",
+      "in_scope": true,
+      "note": "filter pemilik eksplisit"
+    },
+    {
+      "id": "D046",
+      "kind": "decoy",
+      "file": "web/src/pages/todos/[id].tsx",
+      "line_start": 5,
+      "line_end": 5,
+      "class": "idor-eq-id",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": "B",
+      "in_scope": true,
+      "note": "policy RLS membatasi ke pemilik"
+    }
+  ]
+}

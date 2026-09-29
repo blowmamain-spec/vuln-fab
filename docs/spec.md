@@ -214,11 +214,13 @@ Rule `pattern` tanpa satu pun file `safe` ditolak. Anotasi pada file uji: koment
 }
 ```
 
-Pencocokan temuan → label: file sama, rentang baris beririsan (toleransi ±3), dan `class` sama atau CWE beririsan. Temuan yang cocok dengan `vulnerable` = TP; cocok dengan `decoy` = FP; tidak cocok label apa pun = "tak berlabel" dan **wajib di-review**: verdict (`tp|fp|dup`) dicatat di `benchmarks/verdicts/<target>.json`. Gate memakai angka setelah semua temuan tak berlabel punya verdict; sebelum itu evaluator gagal dengan daftar yang belum di-review.
+Pencocokan temuan → label: file sama, rentang baris beririsan (toleransi ±3), dan `class` sama. `class` sebuah temuan diturunkan dari `rule_id` dengan membuang prefix stack (`sb-rls-missing` → `rls-missing`, `ts-table-no-rls` → `table-no-rls`). Untuk temuan tanpa `rule_id` bergaya itu (adaptor eksternal) dipakai CWE yang beririsan sebagai cadangan. Temuan yang cocok dengan `vulnerable` = TP; cocok dengan `decoy` = FP; tidak cocok label apa pun = "tak berlabel" dan **wajib di-review**: verdict (`tp|fp|dup`) dicatat di `benchmarks/verdicts/<target>.json`. Gate memakai angka setelah semua temuan tak berlabel punya verdict; sebelum itu evaluator gagal dengan daftar yang belum di-review.
 
 - Recall = TP unik / jumlah label `vulnerable` dalam scope.
 - Precision = TP / (TP + FP) atas temuan yang sudah di-review, per rule dan per tier.
 - Label di luar scope ditandai `"in_scope": false` dan tidak dihitung dalam recall.
+- Lokasi yang dilaporkan untuk `rls-missing` adalah statement yang menentukan keadaan RLS akhir (mis. `ALTER TABLE … DISABLE ROW LEVEL SECURITY`), atau `CREATE TABLE` bila RLS tidak pernah diubah.
+- Berkas lab boleh memuat penanda `@lab` (lihat `benchmarks/labs/supabase-vuln/README.md`); truth lab dihasilkan dari penanda itu oleh `benchmarks/labs/truth_from_markers.py`.
 
 ## 9. Batas sumber daya
 

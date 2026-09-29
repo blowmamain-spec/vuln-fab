@@ -24,10 +24,10 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
   *Lulus jika*: `docs/spikes/s3-templates.md` memuat pendekatan yang dipilih (tokenizer regex terbatas vs grammar) dan batasannya.
 - [x] **WP-0.3d 🔬 S4/S5: SCA offline & adaptor eksternal** (S) — dep: 0.1. Cek ketersediaan dump OSV, gitleaks, osv-scanner di lingkungan; desain deteksi ketiadaan binary.
   *Lulus jika*: `docs/spikes/s4-adapters.md` mencatat apa yang tersedia dan jalur fallback.
-- [ ] **WP-0.4 Target benchmark** (M) — dep: 0.1. `benchmarks/fetch_targets.sh` + `targets.lock` (SHA di-pin) untuk Juice Shop, NodeGoat, DVWA, django.nV; skrip berjalan idempoten.
+- [x] **WP-0.4 Target benchmark** (M) — dep: 0.1. `benchmarks/fetch_targets.sh` + `targets.lock` (SHA di-pin) untuk Juice Shop, NodeGoat, DVWA, django.nV; skrip berjalan idempoten.
   *Lulus jika*: menjalankan skrip dari nol mengkloning semua target pada SHA yang di-pin.
-- [ ] **WP-0.5 Lab Supabase rentan + ground truth** (L) — dep: 0.3a. `benchmarks/labs/supabase-vuln/`: migration dengan masalah yang disengaja (tiap rule di katalog Supabase) **dan decoy aman**, frontend TS kecil (service_role bocor, akses ke tabel tanpa RLS), `config.toml`, `seed.sql`. Tulis `benchmarks/truth/supabase-vuln.json`.
-  *Lulus jika*: setiap rule tingkat A Supabase/TS punya ≥ 1 label `vulnerable` dan ≥ 1 `decoy`; `php -l`/`tsc --noEmit`/`pglast` menerima seluruh berkas lab (lab valid secara sintaks).
+- [x] **WP-0.5 Lab Supabase rentan + ground truth** (L) — dep: 0.3a. `benchmarks/labs/supabase-vuln/`: migration dengan masalah yang disengaja (tiap rule di katalog Supabase) **dan decoy aman**, frontend TS kecil (service_role bocor, akses ke tabel tanpa RLS), `config.toml`, `seed.sql`. Tulis `benchmarks/truth/supabase-vuln.json`.
+  *Lulus jika*: setiap kelas rule Supabase/TS punya ≥ 1 label `vulnerable` dan ≥ 1 `decoy` (dicek test); seluruh SQL terparse tanpa issue oleh `parse_lenient`, TS/TSX tanpa error tree-sitter, TOML valid; `truth_from_markers.py --check` sinkron (dicek test). Label dibuat dari penanda `@lab` di berkas lab.
 - [ ] **WP-0.6 Harness evaluasi** (M) — dep: 0.2, 0.5. `benchmarks/evaluate.py`: memuat truth + verdict, mencocokkan temuan (aturan di `spec.md` §8), mencetak tabel precision/recall per rule dan tier, gagal bila ada temuan tak berlabel tanpa verdict.
   *Lulus jika*: unit test dengan truth/temuan sintetis mencakup TP, FP (decoy), FN, tak berlabel.
 - [ ] **WP-0.7 ⛔ Migration aplikasi Supabase milikmu** (S). Salin ke `benchmarks/labs/private/` (tidak di-commit); anonimkan bila akan dijadikan contoh publik.

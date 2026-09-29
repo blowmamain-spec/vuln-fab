@@ -1,0 +1,27 @@
+project_id = "supabase-vuln"
+
+[api]
+port = 54321
+schemas = ["public", "graphql_public"]
+
+[auth]
+site_url = "http://localhost:3000"
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+# @lab vuln config-signup cwe=CWE-287 tier=A :: signup terbuka tanpa konfirmasi email
+enable_confirmations = false
+
+[auth.sms]
+enable_signup = false
+# @lab decoy config-signup cwe=CWE-287 :: signup SMS dimatikan dan konfirmasi wajib
+enable_confirmations = true
+
+# @lab vuln edge-no-jwt cwe=CWE-306 tier=A lines=2 :: fungsi tanpa verifikasi JWT
+[functions.legacy-hook]
+verify_jwt = false
+
+# @lab decoy edge-no-jwt cwe=CWE-306 lines=2 :: JWT diverifikasi
+[functions.process-order]
+verify_jwt = true

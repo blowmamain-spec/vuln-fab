@@ -1,0 +1,5 @@
+# name  url  sha   (pinned; update deliberately and re-review ground truth)
+juice-shop  https://github.com/juice-shop/juice-shop.git  1618a611b173b4bf114028e6e02549950606e29d
+nodegoat    https://github.com/OWASP/NodeGoat.git         c5cb68a7084e4ae7dcc60e6a98768720a81841e8
+dvwa        https://github.com/digininja/DVWA.git         b496a5d3de6b967410155e1b7d3e51e9d035eb22
+django-nv   https://github.com/nVisium/django.nV.git      a48901f106da4888417339b7b44b8ed56b64c63f
