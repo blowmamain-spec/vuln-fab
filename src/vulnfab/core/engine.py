@@ -10,6 +10,7 @@ from vulnfab.core import cache as scan_cache
 from vulnfab.core import scoring
 from vulnfab.core.config import ScanConfig, load_config
 from vulnfab.core.fingerprint import FingerprintAllocator
+from vulnfab.core.gitdiff import GitError, affected_files, changed_files
 from vulnfab.core.loader import DEFAULT_MAX_FILE_BYTES, Repo
 from vulnfab.core.matcher import CompiledRule
 from vulnfab.core.models import (
@@ -55,6 +56,7 @@ class ScanOptions:
     schema_dump: Path | None = None
     use_cache: bool = False  # opt-in for library callers; the CLI enables it by default
     jobs: int = 1
+    since: str | None = None  # only report findings affected by changes since this git ref
 
 
 def _load_plugin_rules(selected: list[registry.Selected], extra: list[Path] | None) -> list[object]:
@@ -122,6 +124,14 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
 
     loaded = repo.load()
     texts = {f.path: f.text for f in loaded.files}
+    scope: tuple[set[str], set[str]] | None = None
+    if options.since:
+        try:
+            changed = changed_files(path, options.since)
+        except GitError as exc:
+            raise RuleLoadError([RuleError("--since", 1, None, str(exc))]) from exc
+        affected, _ = affected_files(changed, {f.path: (f.language, f.text) for f in loaded.files})
+        scope = (affected, changed)
     key = ""
     if options.use_cache:
         key = scan_cache.scan_key(
@@ -145,6 +155,7 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
                 scan_cache.coverage_from_json(hit["coverage"]),
                 options,
                 min_confidence,
+                scope,
             )
     coverage = Coverage(
         files_skipped=list(loaded.skipped),
@@ -282,7 +293,7 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
                 "coverage": scan_cache.coverage_to_json(coverage),
             },
         )
-    return _finish(path, selected, findings, coverage, options, min_confidence)
+    return _finish(path, selected, findings, coverage, options, min_confidence, scope)
 
 
 def _finish(
@@ -292,8 +303,17 @@ def _finish(
     coverage: Coverage,
     options: ScanOptions,
     min_confidence: Confidence,
+    scope: tuple[set[str], set[str]] | None = None,
 ) -> ScanResult:
-    """Steps that depend on the caller's options only (baseline, visibility threshold)."""
+    """Steps that depend on the caller's options only (baseline, visibility threshold, diff)."""
+    if scope is not None:
+        affected, changed = scope
+        # a finding is in scope if its file is affected or its data-flow path crosses a changed file
+        findings = [
+            f
+            for f in findings
+            if f.file in affected or any(step.file in changed for step in f.trace)
+        ]
     if options.write_baseline:
         write_baseline(options.write_baseline, findings)
     if options.baseline:

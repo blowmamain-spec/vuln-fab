@@ -89,6 +89,12 @@ def scan_command(
         bool, typer.Option("--no-cache", help="Do not read or write the result cache.")
     ] = False,
     jobs: Annotated[int, typer.Option("--jobs", "-j", min=1, help="Worker processes.")] = 1,
+    since: Annotated[
+        str | None,
+        typer.Option(
+            "--since", help="Only report findings affected by changes since this git ref."
+        ),
+    ] = None,
 ) -> None:
     """Scan a repository."""
     if not path.is_dir():
@@ -108,6 +114,7 @@ def scan_command(
         schema_dump=schema_dump,
         use_cache=not no_cache,
         jobs=jobs,
+        since=since,
     )
     try:
         result = scan(path, options)
