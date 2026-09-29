@@ -4,4 +4,4 @@ import shlex
 
 def handler(cursor):
     value = request.args["v"]
-    cursor.execute("select * from t where id = " + value)  # vuln: tpy-sqli
+    render_template_string("Hello " + value)  # vuln: tpy-ssti

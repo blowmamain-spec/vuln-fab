@@ -183,3 +183,18 @@ def test_same_sink_reported_once() -> None:
 def test_bad_matchers_rejected(bad: str) -> None:
     with pytest.raises(SpecError):
         parse_matcher(bad, sink=True)
+
+
+def test_mapping_lookup_key_does_not_taint_result() -> None:
+    code = "def f(m):\n    v = m.get(request.args['k'])\n    eval(v)\n"
+    assert not hits(code, "python", PY_SPEC)
+
+
+def test_mapping_lookup_default_taints_result() -> None:
+    code = "def f(m):\n    v = m.get('k', request.args['d'])\n    eval(v)\n"
+    assert hits(code, "python", PY_SPEC)
+
+
+def test_mapping_lookup_tainted_container_taints_result() -> None:
+    code = "def f():\n    v = request.args.get('k')\n    eval(v)\n"
+    assert hits(code, "python", TaintSpec.from_rule(["field request.args"], ["call eval"], [], []))

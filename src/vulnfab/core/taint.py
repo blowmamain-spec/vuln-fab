@@ -51,7 +51,7 @@ MAX_LOOP_ROUNDS = 3
 DEFAULT_PROPAGATORS = (
     "*.format", "*.join", "*.replace", "*.strip", "*.lstrip", "*.rstrip", "*.lower", "*.upper",
     "*.split", "*.encode", "*.decode", "*.concat", "*.slice", "*.substring", "*.toString",
-    "*.trim", "*.toLowerCase", "*.toUpperCase", "*.get", "*.append", "*.items", "*.values",
+    "*.trim", "*.toLowerCase", "*.toUpperCase", "*.append", "*.items", "*.values",
     "str", "String", "unicode", "sprintf", "vsprintf", "implode", "trim", "strtolower",
     "strtoupper", "str_replace", "substr", "json_decode", "json.loads", "JSON.parse",
     "base64_decode", "urldecode", "rawurldecode", "stripslashes", "array_merge", "dict", "list",
@@ -290,19 +290,30 @@ class FunctionAnalyzer:
         result: Taint | None
         if any(m.kind == "call" and m.matches_name(callee) for m in spec.sanitizers):
             result = None
-        elif any(m.kind == "call" and m.matches_name(callee) for m in spec.sources):
+        elif any(m.kind == "call" and m.matches_name(callee) for m in spec.sources) or matches_path(
+            spec.sources, "field", callee
+        ):
             result = Taint((TraceStep(self.ctx.file, instr.line, "source", f"{callee}(…)"),))
         elif resolved is not None:
             result = self.apply_summary(instr, resolved, in_args, in_kwargs)
         else:
-            inputs = [t for t in [*in_args, *in_kwargs.values(), in_recv] if t is not None]
+            if callee.endswith(".get") and in_args:
+                # mapping lookup: the *key* does not taint the result, the container/default do
+                container = callee[: -len(".get")]
+                lookup = in_recv or self.read(Var(container), state, instr.line)
+                rest = [*in_args[1:], *in_kwargs.values()]
+                inputs = [t for t in [lookup, *rest] if t is not None]
+            else:
+                inputs = [t for t in [*in_args, *in_kwargs.values(), in_recv] if t is not None]
             if not inputs:
                 result = None
             else:
                 first = min(inputs, key=lambda t: t.hops)
-                known = any(
-                    m.kind == "call" and m.matches_name(callee) for m in spec.propagators
-                ) or any(_glob(callee, g) for g in DEFAULT_PROPAGATORS)
+                known = (
+                    any(m.kind == "call" and m.matches_name(callee) for m in spec.propagators)
+                    or any(_glob(callee, g) for g in DEFAULT_PROPAGATORS)
+                    or callee.endswith(".get")
+                )
                 result = first if known else first.hop()
                 result = result.step(self.ctx.file, instr.line, "call", f"via {callee}(…)")
         self.write(instr.dst, result, state)
@@ -393,26 +404,136 @@ MAX_SUMMARY_DEPTH = 8
 _BOUND = ("self.", "cls.", "this.", "$this.")
 
 
+@dataclass(frozen=True)
+class FunctionFacts:
+    paths: frozenset[str]  # every variable/field access path read or written
+    callees: frozenset[str]
+    last_names: frozenset[str]  # final segment of each callee name
+
+
+FactCache = dict[tuple[str, str], FunctionFacts]  # (file, qualname) -> facts
+
+
+def function_facts(fn: FunctionIR, cache: FactCache) -> FunctionFacts:
+    """Rule-independent summary of a function body; ``cache`` may be shared across rules."""
+    key = (fn.file, fn.qualname)
+    cached = cache.get(key)
+    if cached is not None:
+        return cached
+    paths: set[str] = set()
+    callees: set[str] = set()
+
+    def add(op: Operand) -> None:
+        path = access_path(op)
+        if path is not None:
+            paths.add(path)
+
+    for instr in _walk(fn.body):
+        if isinstance(instr, Assign):
+            add(instr.src)
+            add(instr.dst)
+        elif isinstance(instr, Concat):
+            for part in instr.parts:
+                add(part)
+        elif isinstance(instr, Return) and instr.value is not None:
+            add(instr.value)
+        elif isinstance(instr, Call):
+            callees.add(instr.callee)
+            for arg in instr.args:
+                add(arg)
+            for _, value in instr.kwargs:
+                add(value)
+            if instr.recv is not None:
+                add(instr.recv)
+    facts = FunctionFacts(
+        frozenset(paths),
+        frozenset(callees),
+        frozenset(c.replace("::", ".").split(".")[-1] for c in callees),
+    )
+    cache[key] = facts
+    return facts
+
+
 class ProjectAnalysis:
     """Taint over a set of modules: summaries are shared across files through import resolution."""
 
     def __init__(
-        self, modules: list[ModuleIR], spec: TaintSpec, budget: Budget | None = None
+        self,
+        modules: list[ModuleIR],
+        spec: TaintSpec,
+        budget: Budget | None = None,
+        facts: FactCache | None = None,
     ) -> None:
         self.spec = spec
+        self.facts: FactCache = facts if facts is not None else {}
         self.budget = budget or Budget()
         self.truncated: list[tuple[str, str, int]] = []  # (file, function, line)
+        self._path_memo: dict[str, bool] = {}
+        self._callee_memo: dict[str, bool] = {}
         self.stack: list[tuple[str, str]] = []
         self.index = ModuleIndex({m.file: m.language for m in modules})
         self.modules: dict[str, ModuleAnalysis] = {}
         for m in modules:
             self.modules[m.file] = ModuleAnalysis(m, spec, self)
 
+    def _has_source(self, fn: FunctionIR, facts: FunctionFacts) -> bool:
+        spec = self.spec
+        if any(m.kind == "param" and m.matches_name(p) for m in spec.sources for p in fn.params):
+            return True
+        for path in facts.paths:
+            hit = self._path_memo.get(path)
+            if hit is None:
+                hit = matches_path(spec.sources, "field", path) or matches_path(
+                    spec.sources, "var", path
+                )
+                self._path_memo[path] = hit
+            if hit:
+                return True
+        for callee in facts.callees:
+            hit = self._callee_memo.get(callee)
+            if hit is None:
+                hit = any(
+                    m.kind == "call" and m.matches_name(callee) for m in spec.sources
+                ) or matches_path(spec.sources, "field", callee)
+                self._callee_memo[callee] = hit
+            if hit:
+                return True
+        return False
+
+    def entries(self) -> set[tuple[str, str]]:
+        """Functions whose own analysis can produce hits: they read a source directly or call
+        (by name) a function that returns/hides one. Everything else is only analysed lazily
+        when an entry calls it."""
+        facts: dict[tuple[str, str], tuple[bool, frozenset[str]]] = {}
+        for ma in self.modules.values():
+            for fn in ma.module.functions:
+                ff = function_facts(fn, self.facts)
+                facts[(ma.module.file, fn.qualname)] = (
+                    self._has_source(fn, ff),
+                    ff.last_names,
+                )
+        names: dict[str, list[tuple[str, str]]] = {}
+        for ma in self.modules.values():
+            for fn in ma.module.functions:
+                names.setdefault(fn.name, []).append((ma.module.file, fn.qualname))
+        entry = {k for k, (direct, _) in facts.items() if direct}
+        entry_names = {q.split(".")[-1] for _, q in entry}
+        changed = True
+        while changed:
+            changed = False
+            for key, (_, callees) in facts.items():
+                if key not in entry and callees & entry_names:
+                    entry.add(key)
+                    entry_names.add(key[1].split(".")[-1])
+                    changed = True
+        return entry
+
     def run(self) -> list[TaintHit]:
         out: list[TaintHit] = []
         seen: set[tuple[str, int, str]] = set()
+        entry = self.entries()
         for ma in self.modules.values():
-            for h in ma.run():
+            for h in ma.run(entry):
                 if (h.file, h.line, h.sink) not in seen:
                     seen.add((h.file, h.line, h.sink))
                     out.append(h)
@@ -593,9 +714,10 @@ class ModuleAnalysis:
         self.summaries[fn.qualname] = summary
         return summary
 
-    def run(self) -> list[TaintHit]:
+    def run(self, entry: set[tuple[str, str]] | None = None) -> list[TaintHit]:
         for fn in self.module.functions:
-            self.summary(fn)
+            if entry is None or (self.module.file, fn.qualname) in entry:
+                self.summary(fn)
         out: list[TaintHit] = []
         seen: set[tuple[str, int, str]] = set()
         for hits in self.hits.values():

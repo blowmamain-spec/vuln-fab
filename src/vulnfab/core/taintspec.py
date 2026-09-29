@@ -44,7 +44,10 @@ def parse_matcher(text: str, *, sink: bool = False) -> Matcher:
     parts = text.split()
     if len(parts) < 2 or parts[0] not in KINDS:
         raise SpecError(f"expected '<{'|'.join(KINDS)}> <glob> [arg]', got {text!r}")
-    kind, glob, rest = parts[0], parts[1], parts[2:]
+    kind, rest = parts[0], parts[1:]
+    glob, rest = rest[0], rest[1:]
+    if glob == "new" and rest:  # constructor callee names contain a space: "new Function"
+        glob, rest = f"new {rest[0]}", rest[1:]
     if len(rest) > 1:
         raise SpecError(f"too many words in {text!r}")
     arg = rest[0] if rest else None

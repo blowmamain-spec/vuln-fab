@@ -4,4 +4,4 @@ import shlex
 
 def handler(cursor):
     value = request.args["v"]
-    cursor.execute("select * from t where id = " + value)  # vuln: tpy-sqli
+    requests.get("https://api.example.com/x", params={"q": value})

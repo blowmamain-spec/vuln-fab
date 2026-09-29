@@ -1,49 +1,798 @@
+# Taint rules (no framework model). Family prefix: tpy- Python, tjs- JS/TS, tphp- PHP.
+# Class = id after the prefix (sqli, cmdi, ...). Sources/sinks: docs/spec.md section 7.
 rules:
-  - id: tpy-sqli
-    kind: taint
-    stack: generic
-    languages: [python]
-    severity: high
-    confidence: medium
-    cwe: [CWE-89]
-    owasp: "A03:2021"
-    title: "SQL injection (tainted data reaches a query)"
-    message: "Request data flows into a SQL statement without parameter binding."
-    sources: ["field request.args", "field request.form", "field request.GET", "field request.POST", "field request.json", "field request.values"]
-    sinks: ["call *.execute arg0", "call *.executemany arg0", "call *.raw arg0"]
-    sanitizers: ["call int", "call float", "call bool"]
-    supersedes: [py-sql-execute-interp]
-    fix: "Use parameterised queries: cursor.execute(sql, params)."
-    tests: {vulnerable: [vuln.py], safe: [safe.py]}
-
-  - id: tpy-cmdi
-    kind: taint
-    stack: generic
-    languages: [python]
-    severity: high
-    confidence: medium
-    cwe: [CWE-78]
-    owasp: "A03:2021"
-    title: "OS command injection (tainted data reaches a shell)"
-    message: "Request data flows into an OS command."
-    sources: ["field request.args", "field request.form", "field request.GET", "field request.POST", "field request.json", "field request.values"]
-    sinks: ["call os.system arg0", "call os.popen arg0", "call subprocess.getoutput arg0"]
-    sanitizers: ["call int", "call shlex.quote"]
-    fix: "Pass an argument list to subprocess without shell=True; validate input."
-    tests: {vulnerable: [vuln.py], safe: [safe.py]}
-
-  - id: tjs-sqli
-    kind: taint
-    stack: generic
-    languages: [javascript, typescript, tsx]
-    severity: high
-    confidence: medium
-    cwe: [CWE-89]
-    owasp: "A03:2021"
-    title: "SQL injection (tainted data reaches a query)"
-    message: "Request data flows into a SQL statement without parameter binding."
-    sources: ["field req.query", "field req.body", "field req.params"]
-    sinks: ["call *.query arg0", "call *.raw arg0", "call *.execute arg0"]
-    sanitizers: ["call parseInt", "call Number", "call parseFloat"]
-    fix: "Use placeholders: db.query('... WHERE id = $1', [id])."
-    tests: {vulnerable: [vuln.js], safe: [safe.js]}
+- id: tpy-sqli
+  kind: taint
+  stack: generic
+  languages: &id001
+  - python
+  severity: high
+  confidence: medium
+  cwe:
+  - CWE-89
+  owasp: A03:2021
+  title: SQL injection (tainted data reaches a query)
+  message: Untrusted input flows into a SQL statement without parameter binding.
+  sources: &id002
+  - field *request.args
+  - field *request.form
+  - field *request.GET
+  - field *request.POST
+  - field *request.json
+  - field *request.values
+  - field *request.data
+  - field *request.cookies
+  - field *request.headers
+  - field *request.files
+  - call input
+  - field sys.argv
+  sinks:
+  - call *.execute arg0
+  - call *.executemany arg0
+  - call *.raw arg0
+  - call text arg0
+  - call RawSQL arg0
+  - call *.read_sql arg0
+  sanitizers:
+  - call int
+  - call float
+  - call bool
+  supersedes:
+  - py-sql-execute-interp
+  fix: Use parameterised queries / bound parameters.
+  tests:
+    vulnerable:
+    - vuln.py
+    safe:
+    - safe.py
+- id: tpy-cmdi
+  kind: taint
+  stack: generic
+  languages: *id001
+  severity: critical
+  confidence: medium
+  cwe:
+  - CWE-78
+  owasp: A03:2021
+  title: OS command injection (tainted data reaches a shell)
+  message: Untrusted input flows into an OS command.
+  sources: *id002
+  sinks:
+  - call os.system arg0
+  - call os.popen arg0
+  - call subprocess.getoutput arg0
+  - call subprocess.getstatusoutput arg0
+  - call commands.getoutput arg0
+  sanitizers:
+  - call int
+  - call shlex.quote
+  - call pipes.quote
+  supersedes:
+  - py-os-system
+  fix: Avoid the shell; pass an argument list and validate input.
+  tests:
+    vulnerable:
+    - vuln.py
+    safe:
+    - safe.py
+- id: tpy-codei
+  kind: taint
+  stack: generic
+  languages: *id001
+  severity: critical
+  confidence: medium
+  cwe:
+  - CWE-95
+  owasp: A03:2021
+  title: Code injection (tainted data reaches eval)
+  message: Untrusted input flows into dynamic code evaluation.
+  sources: *id002
+  sinks:
+  - call eval arg0
+  - call exec arg0
+  - call compile arg0
+  sanitizers:
+  - call int
+  - call float
+  - call ast.literal_eval
+  supersedes:
+  - py-eval
+  - py-exec
+  fix: Never evaluate user input; use a parser or a fixed lookup.
+  tests:
+    vulnerable:
+    - vuln.py
+    safe:
+    - safe.py
+- id: tpy-pathtrav
+  kind: taint
+  stack: generic
+  languages: *id001
+  severity: high
+  confidence: medium
+  cwe:
+  - CWE-22
+  owasp: A03:2021
+  title: Path traversal (tainted data reaches a file path)
+  message: Untrusted input flows into a file system path.
+  sources: *id002
+  sinks:
+  - call open arg0
+  - call send_file arg0
+  - call send_from_directory arg1
+  - call os.remove arg0
+  - call os.unlink arg0
+  - call shutil.copy arg0
+  - call os.listdir arg0
+  - call FileResponse arg0
+  sanitizers:
+  - call os.path.basename
+  - call secure_filename
+  - call werkzeug.utils.secure_filename
+  - call int
+  fix: Use a fixed base directory, reduce input to a basename and verify the resolved path.
+  tests:
+    vulnerable:
+    - vuln.py
+    safe:
+    - safe.py
+- id: tpy-ssrf
+  kind: taint
+  stack: generic
+  languages: *id001
+  severity: high
+  confidence: medium
+  cwe:
+  - CWE-918
+  owasp: A10:2021
+  title: SSRF (tainted data reaches an outgoing request)
+  message: Untrusted input flows into the URL of a server-side request.
+  sources: *id002
+  sinks:
+  - call requests.get arg0
+  - call requests.post arg0
+  - call requests.put arg0
+  - call requests.delete arg0
+  - call requests.head arg0
+  - call requests.request arg1
+  - call urllib.request.urlopen arg0
+  - call urlopen arg0
+  - call httpx.get arg0
+  - call httpx.post arg0
+  sanitizers:
+  - call int
+  fix: Allow-list hosts and schemes; never request user-supplied URLs directly.
+  tests:
+    vulnerable:
+    - vuln.py
+    safe:
+    - safe.py
+- id: tpy-deser
+  kind: taint
+  stack: generic
+  languages: *id001
+  severity: high
+  confidence: medium
+  cwe:
+  - CWE-502
+  owasp: A03:2021
+  title: Insecure deserialization (tainted data reaches a deserializer)
+  message: Untrusted input flows into an unsafe deserializer.
+  sources: *id002
+  sinks:
+  - call pickle.loads arg0
+  - call pickle.load arg0
+  - call cPickle.loads arg0
+  - call marshal.loads arg0
+  - call yaml.unsafe_load arg0
+  - call jsonpickle.decode arg0
+  - call dill.loads arg0
+  supersedes:
+  - py-pickle-loads
+  fix: Use a data-only format (JSON) and validate the result.
+  tests:
+    vulnerable:
+    - vuln.py
+    safe:
+    - safe.py
+- id: tpy-xss
+  kind: taint
+  stack: generic
+  languages: *id001
+  severity: medium
+  confidence: medium
+  cwe:
+  - CWE-79
+  owasp: A03:2021
+  title: Cross-site scripting (tainted data reaches HTML output)
+  message: Untrusted input flows into HTML output without escaping.
+  sources: *id002
+  sinks:
+  - call Markup arg0
+  - call mark_safe arg0
+  - call HttpResponse arg0
+  sanitizers:
+  - call escape
+  - call html.escape
+  - call markupsafe.escape
+  - call bleach.clean
+  - call conditional_escape
+  - call int
+  fix: Escape output for the HTML context or use a sanitising library.
+  tests:
+    vulnerable:
+    - vuln.py
+    safe:
+    - safe.py
+- id: tpy-ssti
+  kind: taint
+  stack: generic
+  languages: *id001
+  severity: high
+  confidence: medium
+  cwe:
+  - CWE-1336
+  owasp: A03:2021
+  title: Template injection (tainted data reaches a template)
+  message: Untrusted input flows into a template source.
+  sources: *id002
+  sinks:
+  - call render_template_string arg0
+  - call jinja2.Template arg0
+  sanitizers:
+  - call int
+  fix: Pass user data as template variables, never as template source.
+  tests:
+    vulnerable:
+    - vuln.py
+    safe:
+    - safe.py
+- id: tpy-redirect
+  kind: taint
+  stack: generic
+  languages: *id001
+  severity: medium
+  confidence: low
+  cwe:
+  - CWE-601
+  owasp: A01:2021
+  title: Open redirect (tainted data reaches a redirect)
+  message: Untrusted input flows into a redirect target.
+  sources: *id002
+  sinks:
+  - call redirect arg0
+  - call HttpResponseRedirect arg0
+  sanitizers:
+  - call url_for
+  - call reverse
+  - call int
+  fix: Redirect only to allow-listed or relative internal targets.
+  tests:
+    vulnerable:
+    - vuln.py
+    safe:
+    - safe.py
+- id: tjs-sqli
+  kind: taint
+  stack: generic
+  languages: &id003
+  - javascript
+  - typescript
+  - tsx
+  severity: high
+  confidence: medium
+  cwe:
+  - CWE-89
+  owasp: A03:2021
+  title: SQL injection (tainted data reaches a query)
+  message: Untrusted input flows into a SQL statement without parameter binding.
+  sources: &id004
+  - field req.query
+  - field req.body
+  - field req.params
+  - field req.headers
+  - field req.cookies
+  - call req.param
+  - field request.query
+  - field request.body
+  - field request.params
+  sinks:
+  - call *.query arg0
+  - call *.raw arg0
+  - call *.execute arg0
+  - call *.$queryRawUnsafe arg0
+  - call *.$executeRawUnsafe arg0
+  sanitizers:
+  - call parseInt
+  - call Number
+  - call parseFloat
+  fix: Use parameterised queries / bound parameters.
+  tests:
+    vulnerable:
+    - vuln.js
+    safe:
+    - safe.js
+- id: tjs-cmdi
+  kind: taint
+  stack: generic
+  languages: *id003
+  severity: critical
+  confidence: medium
+  cwe:
+  - CWE-78
+  owasp: A03:2021
+  title: OS command injection (tainted data reaches a shell)
+  message: Untrusted input flows into an OS command.
+  sources: *id004
+  sinks:
+  - call exec arg0
+  - call execSync arg0
+  - call child_process.exec arg0
+  - call child_process.execSync arg0
+  - call cp.exec arg0
+  - call shelljs.exec arg0
+  sanitizers:
+  - call parseInt
+  - call Number
+  - call shellescape
+  - call shell-quote.quote
+  supersedes:
+  - js-exec
+  - ts-cmd-injection
+  fix: Avoid the shell; pass an argument list and validate input.
+  tests:
+    vulnerable:
+    - vuln.js
+    safe:
+    - safe.js
+- id: tjs-codei
+  kind: taint
+  stack: generic
+  languages: *id003
+  severity: critical
+  confidence: medium
+  cwe:
+  - CWE-95
+  owasp: A03:2021
+  title: Code injection (tainted data reaches eval)
+  message: Untrusted input flows into dynamic code evaluation.
+  sources: *id004
+  sinks:
+  - call eval arg0
+  - call Function arg0
+  - call new Function arg0
+  - call vm.runInNewContext arg0
+  - call vm.runInThisContext arg0
+  - call vm.runInContext arg0
+  sanitizers:
+  - call parseInt
+  - call Number
+  - call JSON.parse
+  supersedes:
+  - js-eval
+  - js-function-constructor
+  - ts-dynamic-eval
+  fix: Never evaluate user input; use a parser or a fixed lookup.
+  tests:
+    vulnerable:
+    - vuln.js
+    safe:
+    - safe.js
+- id: tjs-pathtrav
+  kind: taint
+  stack: generic
+  languages: *id003
+  severity: high
+  confidence: medium
+  cwe:
+  - CWE-22
+  owasp: A03:2021
+  title: Path traversal (tainted data reaches a file path)
+  message: Untrusted input flows into a file system path.
+  sources: *id004
+  sinks:
+  - call fs.readFile arg0
+  - call fs.readFileSync arg0
+  - call fs.createReadStream arg0
+  - call fs.writeFile arg0
+  - call fs.writeFileSync arg0
+  - call fs.unlink arg0
+  - call fs.unlinkSync arg0
+  - call fs.appendFile arg0
+  - call res.sendFile arg0
+  - call res.download arg0
+  - call fs.promises.readFile arg0
+  - call fsp.readFile arg0
+  sanitizers:
+  - call path.basename
+  - call parseInt
+  - call Number
+  fix: Use a fixed base directory, reduce input to a basename and verify the resolved path.
+  tests:
+    vulnerable:
+    - vuln.js
+    safe:
+    - safe.js
+- id: tjs-ssrf
+  kind: taint
+  stack: generic
+  languages: *id003
+  severity: high
+  confidence: medium
+  cwe:
+  - CWE-918
+  owasp: A10:2021
+  title: SSRF (tainted data reaches an outgoing request)
+  message: Untrusted input flows into the URL of a server-side request.
+  sources: *id004
+  sinks:
+  - call axios.get arg0
+  - call axios.post arg0
+  - call axios.put arg0
+  - call axios.delete arg0
+  - call axios arg0
+  - call fetch arg0
+  - call http.get arg0
+  - call https.get arg0
+  - call http.request arg0
+  - call got arg0
+  - call got.get arg0
+  - call needle.get arg0
+  - call superagent.get arg0
+  - call request.get arg0
+  sanitizers:
+  - call parseInt
+  - call Number
+  fix: Allow-list hosts and schemes; never request user-supplied URLs directly.
+  tests:
+    vulnerable:
+    - vuln.js
+    safe:
+    - safe.js
+- id: tjs-deser
+  kind: taint
+  stack: generic
+  languages: *id003
+  severity: high
+  confidence: medium
+  cwe:
+  - CWE-502
+  owasp: A03:2021
+  title: Insecure deserialization (tainted data reaches a deserializer)
+  message: Untrusted input flows into an unsafe deserializer.
+  sources: *id004
+  sinks:
+  - call serialize.unserialize arg0
+  - call unserialize arg0
+  - call v8.deserialize arg0
+  fix: Use a data-only format (JSON) and validate the result.
+  tests:
+    vulnerable:
+    - vuln.js
+    safe:
+    - safe.js
+- id: tjs-xss
+  kind: taint
+  stack: generic
+  languages: *id003
+  severity: medium
+  confidence: medium
+  cwe:
+  - CWE-79
+  owasp: A03:2021
+  title: Cross-site scripting (tainted data reaches HTML output)
+  message: Untrusted input flows into HTML output without escaping.
+  sources: *id004
+  sinks:
+  - assign *.innerHTML
+  - assign *.outerHTML
+  - call document.write arg0
+  - call document.writeln arg0
+  - call *.insertAdjacentHTML arg1
+  - call res.send arg0
+  - call res.write arg0
+  sanitizers:
+  - call escapeHtml
+  - call escape
+  - call DOMPurify.sanitize
+  - call sanitizeHtml
+  - call xss
+  - call encodeURIComponent
+  - call he.encode
+  - call he.escape
+  - call validator.escape
+  - call _.escape
+  - call parseInt
+  - call Number
+  - call JSON.stringify
+  supersedes:
+  - js-innerhtml-assign
+  - js-innerhtml-var
+  - js-document-write
+  fix: Escape output for the HTML context or use a sanitising library.
+  tests:
+    vulnerable:
+    - vuln.js
+    safe:
+    - safe.js
+- id: tjs-redirect
+  kind: taint
+  stack: generic
+  languages: *id003
+  severity: medium
+  confidence: low
+  cwe:
+  - CWE-601
+  owasp: A01:2021
+  title: Open redirect (tainted data reaches a redirect)
+  message: Untrusted input flows into a redirect target.
+  sources: *id004
+  sinks:
+  - call res.redirect arg0
+  - call res.location arg0
+  sanitizers:
+  - call parseInt
+  - call Number
+  fix: Redirect only to allow-listed or relative internal targets.
+  tests:
+    vulnerable:
+    - vuln.js
+    safe:
+    - safe.js
+- id: tphp-sqli
+  kind: taint
+  stack: generic
+  languages: &id005
+  - php
+  severity: high
+  confidence: medium
+  cwe:
+  - CWE-89
+  owasp: A03:2021
+  title: SQL injection (tainted data reaches a query)
+  message: Untrusted input flows into a SQL statement without parameter binding.
+  sources: &id006
+  - var _GET
+  - var _POST
+  - var _REQUEST
+  - var _COOKIE
+  - var _FILES
+  sinks:
+  - call mysqli_query arg1
+  - call mysql_query arg0
+  - call pg_query arg1
+  - call mysqli_multi_query arg1
+  - call mysqli_real_query arg1
+  - call *.query arg0
+  - call *.exec arg0
+  - call DB::raw arg0
+  - call DB::select arg0
+  - call DB::statement arg0
+  - call DB::unprepared arg0
+  - call *.whereRaw arg0
+  - call *.selectRaw arg0
+  - call *.orderByRaw arg0
+  - call *.havingRaw arg0
+  sanitizers:
+  - call intval
+  - call floatval
+  - call mysqli_real_escape_string
+  - call pg_escape_string
+  - call addslashes
+  supersedes:
+  - php-sql-interp
+  fix: Use parameterised queries / bound parameters.
+  tests:
+    vulnerable:
+    - vuln.php
+    safe:
+    - safe.php
+- id: tphp-cmdi
+  kind: taint
+  stack: generic
+  languages: *id005
+  severity: critical
+  confidence: medium
+  cwe:
+  - CWE-78
+  owasp: A03:2021
+  title: OS command injection (tainted data reaches a shell)
+  message: Untrusted input flows into an OS command.
+  sources: *id006
+  sinks:
+  - call system arg0
+  - call exec arg0
+  - call shell_exec arg0
+  - call passthru arg0
+  - call popen arg0
+  - call proc_open arg0
+  - call pcntl_exec arg0
+  sanitizers:
+  - call escapeshellarg
+  - call escapeshellcmd
+  - call intval
+  supersedes:
+  - php-exec-family
+  fix: Avoid the shell; pass an argument list and validate input.
+  tests:
+    vulnerable:
+    - vuln.php
+    safe:
+    - safe.php
+- id: tphp-codei
+  kind: taint
+  stack: generic
+  languages: *id005
+  severity: critical
+  confidence: medium
+  cwe:
+  - CWE-95
+  owasp: A03:2021
+  title: Code injection (tainted data reaches eval)
+  message: Untrusted input flows into dynamic code evaluation.
+  sources: *id006
+  sinks:
+  - call eval arg0
+  - call assert arg0
+  - call create_function arg1
+  sanitizers:
+  - call intval
+  supersedes:
+  - php-eval
+  fix: Never evaluate user input; use a parser or a fixed lookup.
+  tests:
+    vulnerable:
+    - vuln.php
+    safe:
+    - safe.php
+- id: tphp-pathtrav
+  kind: taint
+  stack: generic
+  languages: *id005
+  severity: high
+  confidence: medium
+  cwe:
+  - CWE-22
+  owasp: A03:2021
+  title: Path traversal (tainted data reaches a file path)
+  message: Untrusted input flows into a file system path.
+  sources: *id006
+  sinks:
+  - call include arg0
+  - call include_once arg0
+  - call require arg0
+  - call require_once arg0
+  - call file_get_contents arg0
+  - call fopen arg0
+  - call readfile arg0
+  - call file arg0
+  - call file_put_contents arg0
+  - call unlink arg0
+  - call move_uploaded_file arg1
+  - call copy arg0
+  - call highlight_file arg0
+  - call show_source arg0
+  sanitizers:
+  - call basename
+  - call intval
+  supersedes:
+  - php-include-request
+  fix: Use a fixed base directory, reduce input to a basename and verify the resolved path.
+  tests:
+    vulnerable:
+    - vuln.php
+    safe:
+    - safe.php
+- id: tphp-ssrf
+  kind: taint
+  stack: generic
+  languages: *id005
+  severity: high
+  confidence: medium
+  cwe:
+  - CWE-918
+  owasp: A10:2021
+  title: SSRF (tainted data reaches an outgoing request)
+  message: Untrusted input flows into the URL of a server-side request.
+  sources: *id006
+  sinks:
+  - call curl_init arg0
+  - call get_headers arg0
+  - call simplexml_load_file arg0
+  - call Http::get arg0
+  - call Http::post arg0
+  - call Http::put arg0
+  - call Http::delete arg0
+  - call *.request arg1
+  sanitizers:
+  - call intval
+  fix: Allow-list hosts and schemes; never request user-supplied URLs directly.
+  tests:
+    vulnerable:
+    - vuln.php
+    safe:
+    - safe.php
+- id: tphp-deser
+  kind: taint
+  stack: generic
+  languages: *id005
+  severity: high
+  confidence: medium
+  cwe:
+  - CWE-502
+  owasp: A03:2021
+  title: Insecure deserialization (tainted data reaches a deserializer)
+  message: Untrusted input flows into an unsafe deserializer.
+  sources: *id006
+  sinks:
+  - call unserialize arg0
+  - call yaml_parse arg0
+  - call igbinary_unserialize arg0
+  - call maybe_unserialize arg0
+  supersedes:
+  - php-unserialize
+  fix: Use a data-only format (JSON) and validate the result.
+  tests:
+    vulnerable:
+    - vuln.php
+    safe:
+    - safe.php
+- id: tphp-xss
+  kind: taint
+  stack: generic
+  languages: *id005
+  severity: medium
+  confidence: medium
+  cwe:
+  - CWE-79
+  owasp: A03:2021
+  title: Cross-site scripting (tainted data reaches HTML output)
+  message: Untrusted input flows into HTML output without escaping.
+  sources: *id006
+  sinks:
+  - call echo args
+  - call print arg0
+  - call printf arg0
+  - call die arg0
+  - call exit arg0
+  sanitizers:
+  - call htmlspecialchars
+  - call htmlentities
+  - call strip_tags
+  - call intval
+  - call urlencode
+  - call esc_html
+  - call e
+  - call json_encode
+  supersedes:
+  - php-echo-request
+  fix: Escape output for the HTML context or use a sanitising library.
+  tests:
+    vulnerable:
+    - vuln.php
+    safe:
+    - safe.php
+- id: tphp-redirect
+  kind: taint
+  stack: generic
+  languages: *id005
+  severity: medium
+  confidence: low
+  cwe:
+  - CWE-601
+  owasp: A01:2021
+  title: Open redirect (tainted data reaches a redirect)
+  message: Untrusted input flows into a redirect target.
+  sources: *id006
+  sinks:
+  - call redirect arg0
+  - call Redirect::to arg0
+  - call wp_redirect arg0
+  sanitizers:
+  - call intval
+  fix: Redirect only to allow-listed or relative internal targets.
+  tests:
+    vulnerable:
+    - vuln.php
+    safe:
+    - safe.php

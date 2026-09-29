@@ -2,7 +2,7 @@ import os
 
 
 def handler(request):
-    expr = request.GET["expr"]
+    expr = request.expr_text
     return eval(expr)
 
 

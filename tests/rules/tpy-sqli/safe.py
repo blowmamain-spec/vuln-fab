@@ -1,7 +1,8 @@
-def view(cursor):
-    uid = int(request.args["id"])
-    cursor.execute("select * from t where id = " + str(uid))
+import os
+import shlex
 
 
-def bound(cursor):
-    cursor.execute("select * from t where id = %s", (request.args["id"],))
+def handler(cursor):
+    value = request.args["v"]
+    cursor.execute("select * from t where id = %s", (value,))
+    cursor.execute("select * from t where id = " + str(int(value)))

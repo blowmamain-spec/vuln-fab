@@ -2,6 +2,6 @@ import os
 import shlex
 
 
-def run():
-    host = shlex.quote(request.args["host"])
-    os.system("ping " + host)
+def handler(cursor):
+    value = request.args["v"]
+    os.system("ping " + shlex.quote(value))

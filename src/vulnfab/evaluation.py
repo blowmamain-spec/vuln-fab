@@ -41,9 +41,19 @@ class FindingRef:
         return finding_class(self.rule_id)
 
 
+# Taint rules use short class names; pattern rules (and the ground-truth labels) use long ones.
+CLASS_ALIASES = {
+    "codei": "dynamic-eval",
+    "cmdi": "cmd-injection",
+    "deser": "deserialization",
+    "pathtrav": "path-traversal",
+}
+
+
 def finding_class(rule_id: str) -> str:
     """``sb-rls-missing`` -> ``rls-missing`` (strip the stack prefix)."""
-    return rule_id.split("-", 1)[1] if "-" in rule_id else rule_id
+    cls = rule_id.split("-", 1)[1] if "-" in rule_id else rule_id
+    return CLASS_ALIASES.get(cls, cls)
 
 
 @dataclass

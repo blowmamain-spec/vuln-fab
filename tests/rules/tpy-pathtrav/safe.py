@@ -4,4 +4,4 @@ import shlex
 
 def handler(cursor):
     value = request.args["v"]
-    cursor.execute("select * from t where id = " + value)  # vuln: tpy-sqli
+    open("/data/" + os.path.basename(value)).read()

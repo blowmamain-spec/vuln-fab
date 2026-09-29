@@ -7,7 +7,7 @@ from collections.abc import Iterable
 from vulnfab.core.lower import lower_file
 from vulnfab.core.models import Finding, ParsedFile, Unresolved
 from vulnfab.core.rules import TaintRule
-from vulnfab.core.taint import ProjectAnalysis
+from vulnfab.core.taint import FactCache, ProjectAnalysis
 from vulnfab.core.taintspec import TaintSpec
 from vulnfab.core.tir import ModuleIR
 
@@ -34,9 +34,10 @@ def taint_findings(
     for pf in parsed:
         if any(pf.language in r.languages for r in active):
             lowered[pf.path] = lower_file(pf)
+    facts: FactCache = {}
     for rule in active:
         modules = [m for m in lowered.values() if m.language in rule.languages]
-        analysis = ProjectAnalysis(modules, spec_for(rule))
+        analysis = ProjectAnalysis(modules, spec_for(rule), facts=facts)
         hits = analysis.run()
         if notes is not None:
             notes.extend(

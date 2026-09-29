@@ -13,7 +13,9 @@
 - TIR (WP-5.1) dan taint engine intra-fungsi (WP-5.2/5.3): DSL source/sink/sanitizer/propagator, rule `kind: taint` (tpy-sqli, tpy-cmdi, tjs-sqli), trace + hop `unresolved`.
 - Ringkasan fungsi intra-file (WP-5.4): param→return, param→sink, source→return; rekursi aman.
 - Taint antar-file (WP-5.5): resolusi import Python (absolut/relatif) dan JS/TS (ES import, alias `@/`, `require`, `exports.x`); PHP menyusul di fase Laravel.
-- Berikutnya: batas/robustness (5.6), rule taint (5.7).
+- Batas kerja taint + laporan pemotongan di coverage (WP-5.6).
+- 25 rule taint (WP-5.7): sqli, cmdi, codei, pathtrav, ssrf, deser, xss, redirect (+ ssti Python) untuk Python/JS-TS/PHP; menggantikan (supersedes) rule pola sejenis bila alirannya terbukti. Rule pola `ts-cmd-injection` tetap sebagai fallback tanpa aliran.
+- Berikutnya: IDOR tier B (5.8), gate M2 (5.9).
 
 ## Spec
 Perubahan pada `docs/spec.md` dicatat di sini.

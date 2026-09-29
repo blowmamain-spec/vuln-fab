@@ -1,6 +1,7 @@
 import os
+import shlex
 
 
-def run():
-    host = request.args["host"]
-    os.system("ping " + host)  # vuln: tpy-cmdi
+def handler(cursor):
+    value = request.args["v"]
+    os.system("ping " + value)  # vuln: tpy-cmdi
