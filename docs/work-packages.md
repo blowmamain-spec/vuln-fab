@@ -54,13 +54,13 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
   *Lulus jika*: test adversarial (`__import__`, atribut dunder, komprehensi berat) semuanya ditolak.
 - [x] **WP-2.3 Kompiler pola snippet → matcher** (L) — dep: 0.3b, 1.1. Metavariable, `...`, `pattern-not`, `pattern-inside`, `where`; adaptor tree-sitter Python/TS/PHP.
   *Lulus jika*: ≥ 30 kasus per bahasa (cocok/tidak cocok/tepi) lulus.
-- [ ] **WP-2.4 Harness test rule** (M) — dep: 2.1, 2.3. Anotasi `# vuln: <id>`; `vulnfab rules test`; cek CI "rule tanpa test gagal".
+- [x] **WP-2.4 Harness test rule** (M) — dep: 2.1, 2.3. Anotasi `# vuln: <id>`; `vulnfab rules test`; cek CI "rule tanpa test gagal".
   *Lulus jika*: rule sengaja rusak (safe menghasilkan temuan) membuat harness gagal dengan pesan jelas.
-- [ ] **WP-2.5 Suppression & baseline** (M) — dep: 1.4. `# nosec`, `.vulnfab.yml`, `--baseline`/`--write-baseline`.
+- [x] **WP-2.5 Suppression & baseline** (M) — dep: 1.4. `# nosec`, `.vulnfab.yml`, `--baseline`/`--write-baseline`.
   *Lulus jika*: baseline menyembunyikan temuan lama dan tetap menampilkan yang baru setelah baris bergeser.
 - [ ] **WP-2.6 Rule generik awal (15-20)** (L) — dep: 2.4. Python (`eval`/`exec`, `pickle`, `subprocess shell=True`, `yaml.load`, hash lemah), PHP (`eval`, `unserialize`, `exec`), JS/TS (`eval`, `child_process` literal). Tiap rule: vuln + safe.
   *Lulus jika*: `vulnfab rules test` hijau; CI gate "tiap rule punya test" aktif.
-- [ ] **WP-2.7 Scoring & dedup** (S) — dep: 1.3. Sesuai `spec.md` §4.
+- [x] **WP-2.7 Scoring & dedup** (S) — dep: 1.3. Sesuai `spec.md` §4.
   *Lulus jika*: test untuk urutan prioritas, penurunan confidence, `supersedes`.
 
 ## Fase 3: Plugin Supabase/Postgres (inti produk)

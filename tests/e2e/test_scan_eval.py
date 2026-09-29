@@ -30,7 +30,8 @@ def _run_json(path: Path, *args: str) -> tuple[int, dict]:  # type: ignore[type-
 def test_finds_eval_with_correct_lines() -> None:
     result = scan(FIXTURE)
     found = sorted((f.file, f.line) for f in result.findings)
-    assert found == [("app.py", 6), ("app.py", 12), ("app.py", 12), ("syntax_error.py", 2)]
+    # eval("1 + 1") is a literal argument and is intentionally not reported
+    assert found == [("app.py", 6), ("app.py", 12), ("syntax_error.py", 2)]
     assert all(f.rule_id == "py-eval" for f in result.findings)
     assert result.coverage.syntax_errors == ["syntax_error.py"]
     assert result.stacks == ["generic"]
@@ -40,7 +41,7 @@ def test_fingerprints_unique_and_stable_under_line_shift(tmp_path: Path) -> None
     repo = tmp_path / "r"
     shutil.copytree(FIXTURE, repo)
     before = {f.fingerprint for f in scan(repo).findings}
-    assert len(before) == 4
+    assert len(before) == 3
     app_py = repo / "app.py"
     app_py.write_text("# added\n\n\n" + app_py.read_text())
     after = {f.fingerprint for f in scan(repo).findings}
@@ -81,7 +82,7 @@ def test_min_confidence_hides_and_reports(tmp_path: Path) -> None:
     code, data = _run_json(FIXTURE, "--min-confidence", "high")
     assert code == 0
     assert data["findings"] == []
-    assert data["coverage"]["hidden_low_confidence"] == 4
+    assert data["coverage"]["hidden_low_confidence"] == 3
 
 
 def test_pathological_files_do_not_crash_or_hang(tmp_path: Path) -> None:

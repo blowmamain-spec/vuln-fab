@@ -91,7 +91,7 @@
     },
     "coverage": {
       "type": "object",
-      "required": ["files_scanned", "files_skipped", "files_ignored", "files_unsupported", "syntax_errors", "unresolved", "assumptions", "adapters", "hidden_low_confidence"],
+      "required": ["files_scanned", "files_skipped", "files_ignored", "files_unsupported", "syntax_errors", "unresolved", "assumptions", "adapters", "hidden_low_confidence", "suppressed_nosec", "suppressed_baseline", "suppressed_config"],
       "additionalProperties": false,
       "properties": {
         "files_scanned": {"type": "integer", "minimum": 0},
@@ -102,7 +102,10 @@
         "unresolved": {"type": "array", "items": {"$ref": "#/$defs/unresolved"}},
         "assumptions": {"type": "array", "items": {"type": "string"}},
         "adapters": {"type": "array", "items": {"$ref": "#/$defs/adapter"}},
-        "hidden_low_confidence": {"type": "integer", "minimum": 0}
+        "hidden_low_confidence": {"type": "integer", "minimum": 0},
+        "suppressed_nosec": {"type": "integer", "minimum": 0},
+        "suppressed_baseline": {"type": "integer", "minimum": 0},
+        "suppressed_config": {"type": "integer", "minimum": 0}
       }
     }
   }

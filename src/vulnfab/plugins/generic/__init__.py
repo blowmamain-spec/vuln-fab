@@ -57,4 +57,4 @@ class GenericPlugin:
         return []
 
     def rule_packs(self) -> list[Path]:
-        return []
+        return [Path(__file__).resolve().parents[2] / "rules" / "generic"]

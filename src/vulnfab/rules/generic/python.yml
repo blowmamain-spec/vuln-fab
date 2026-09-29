@@ -1,0 +1,17 @@
+rules:
+  - id: py-eval
+    stack: generic
+    languages: [python]
+    severity: high
+    confidence: medium
+    cwe: [CWE-95]
+    owasp: "A03:2021"
+    title: "Use of eval()"
+    message: "eval() executes arbitrary code. Avoid it with non-constant input."
+    pattern: "eval($X)"
+    where:
+      - {metavariable: X, kind: not_literal}
+    fix: "Avoid eval(); use ast.literal_eval or an explicit parser."
+    tests:
+      vulnerable: [vuln.py]
+      safe: [safe.py]

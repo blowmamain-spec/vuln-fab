@@ -29,6 +29,9 @@ class Coverage:
     assumptions: list[str] = field(default_factory=list)
     adapters: list[AdapterStatus] = field(default_factory=list)
     hidden_low_confidence: int = 0
+    suppressed_nosec: int = 0
+    suppressed_baseline: int = 0
+    suppressed_config: int = 0
 
 
 @dataclass
