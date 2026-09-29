@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
@@ -12,6 +13,7 @@ from vulnfab.core.config import ScanConfig, load_config
 from vulnfab.core.fingerprint import FingerprintAllocator
 from vulnfab.core.gitdiff import GitError, affected_files, changed_files
 from vulnfab.core.loader import DEFAULT_MAX_FILE_BYTES, Repo
+from vulnfab.core.lower import lower_file
 from vulnfab.core.matcher import CompiledRule
 from vulnfab.core.models import (
     Confidence,
@@ -21,9 +23,17 @@ from vulnfab.core.models import (
     ParsedUnit,
     SchemaModel,
     SkippedFile,
+    SourceFile,
 )
 from vulnfab.core.parallel import pmap
-from vulnfab.core.parsing import Deadline, TimeoutExceeded, clear_parse_cache
+from vulnfab.core.parsing import (
+    Deadline,
+    ParseFailure,
+    TimeoutExceeded,
+    clear_parse_cache,
+    parse_file_cached,
+)
+from vulnfab.core.provenance import line_is_benign
 from vulnfab.core.report import Coverage, ScanResult
 from vulnfab.core.ruleengine import compile_pattern_rules, findings_for_file
 from vulnfab.core.rules import (
@@ -39,6 +49,7 @@ from vulnfab.core.scannerrules import ScannerError, run_scanner_rules
 from vulnfab.core.schemarules import CheckError, run_crosscheck_rules, run_schema_rules
 from vulnfab.core.suppress import PerFileIgnores, is_nosec, load_baseline, write_baseline
 from vulnfab.core.taintrules import taint_findings
+from vulnfab.core.tir import ModuleIR
 from vulnfab.plugins import registry
 
 DEFAULT_FILE_TIMEOUT = 10.0
@@ -98,6 +109,34 @@ def _pattern_task(path: str, shared: dict[str, Any]) -> list[tuple[Finding, str]
         return findings_for_file(shared["rules"], shared["files"][path], Deadline(timeout))
     except TimeoutExceeded:
         return SkippedFile(path, "timeout", f"exceeded {timeout:g}s")
+
+
+def _benign_checker(files: list[SourceFile]) -> Callable[[Finding], bool]:
+    """Is the flagged call's argument built only from constants and pure calls? (cached per file)"""
+    by_path = {f.path: f for f in files}
+    lowered: dict[str, ModuleIR | None] = {}
+
+    def module_of(path: str) -> ModuleIR | None:
+        if path not in lowered:
+            sf = by_path.get(path)
+            try:
+                lowered[path] = lower_file(parse_file_cached(sf)) if sf else None
+            except (ParseFailure, ValueError):
+                lowered[path] = None
+        return lowered[path]
+
+    def check(finding: Finding) -> bool:
+        module = module_of(finding.file)
+        if module is None:
+            return False
+        for fn in module.functions:
+            if fn.line <= finding.line <= max(fn.end_line, fn.line) and line_is_benign(
+                fn, finding.line
+            ):
+                return True
+        return False
+
+    return check
 
 
 def _scan(path: Path, options: ScanOptions) -> ScanResult:
@@ -261,6 +300,9 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
         findings.append(replace(finding, fingerprint=fingerprint))
     findings = scoring.dedupe(findings)
     findings = scoring.apply_supersedes(findings, supersedes)
+    weak = scoring.weak_pattern_rules(supersedes, {r.id: set(r.languages) for r in taint_rules})
+    if weak:
+        findings = scoring.demote_benign(findings, _benign_checker(loaded.files), weak)
 
     # config: per-file ignores and severity overrides
     ignores = PerFileIgnores(config.per_file_ignores)

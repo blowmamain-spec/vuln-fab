@@ -120,7 +120,7 @@ rules:
   - id: js-xss
     stack: generic
     languages: [javascript, typescript, tsx]
-    severity: high
+    severity: medium
     confidence: medium
     cwe: [CWE-79]
     owasp: "A03:2021"

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import replace
 
 from vulnfab.core.models import Confidence, Finding, Severity
@@ -60,3 +61,33 @@ def apply_supersedes(findings: list[Finding], supersedes: dict[str, list[str]]) 
 
 def sort_by_priority(findings: list[Finding]) -> list[Finding]:
     return sorted(findings, key=lambda f: (-f.priority, f.file, f.line, f.rule_id))
+
+
+BENIGN_NOTE = (
+    " (the argument is built only from constants and pure computations, so it is not"
+    " attacker-controlled; confidence lowered)"
+)
+
+
+def weak_pattern_rules(
+    supersedes: dict[str, list[str]], coverage: dict[str, set[str]]
+) -> dict[str, set[str]]:
+    """Pattern rule id -> languages in which a taint rule already judges the same call."""
+    weak: dict[str, set[str]] = {}
+    for winner, losers in supersedes.items():
+        if winner in coverage:
+            for loser in losers:
+                weak.setdefault(loser, set()).update(coverage[winner])
+    return weak
+
+
+def demote_benign(
+    findings: list[Finding], benign: Callable[[Finding], bool], weak: dict[str, set[str]]
+) -> list[Finding]:
+    """Lower "non-constant argument" heuristics whose argument is provably benign."""
+    out: list[Finding] = []
+    for f in findings:
+        if f.rule_id in weak and f.confidence is not Confidence.LOW and benign(f):
+            f = replace(f, confidence=f.confidence.lowered(1), message=f.message + BENIGN_NOTE)
+        out.append(f)
+    return out

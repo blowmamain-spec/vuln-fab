@@ -35,6 +35,7 @@ class FindingRef:
     end_line: int
     fingerprint: str
     tier: str | None
+    severity: str | None = None
 
     @property
     def cls(self) -> str:
@@ -87,6 +88,7 @@ class Report:
     unreviewed: list[FindingRef] = field(default_factory=list)
     out_of_scope_hits: list[FindingRef] = field(default_factory=list)
     duplicates: int = 0
+    by_rule: dict[str, Counts] = field(default_factory=dict)  # tp/fp per rule id
 
 
 def load_truth(path: Path) -> tuple[str, list[TruthItem]]:
@@ -142,6 +144,7 @@ def load_findings(path: Path) -> list[FindingRef]:
                 end_line=f.get("end_line", f["line"]),
                 fingerprint=fingerprint,
                 tier=f.get("tier"),
+                severity=f.get("severity"),
             )
         )
     return findings
@@ -183,6 +186,13 @@ def evaluate(
             for c in counts(t.cls, t.tier):
                 c.labels_total += 1
 
+    def rule_count(f: FindingRef, positive: bool) -> None:
+        c = report.by_rule.setdefault(f.rule_id, Counts())
+        if positive:
+            c.tp += 1
+        else:
+            c.fp += 1
+
     for f in findings:
         match = _best_match(f, truth)
         if match is None:
@@ -192,6 +202,7 @@ def evaluate(
             elif verdict == "dup":
                 report.duplicates += 1
             else:
+                rule_count(f, verdict == "tp")
                 for c in counts(f.cls, f.tier):
                     if verdict == "tp":
                         c.tp += 1
@@ -199,15 +210,18 @@ def evaluate(
                         c.fp += 1
             continue
         if match.kind == "decoy":
+            rule_count(f, False)
             report.decoy_hits.append((f, match))
             for c in counts(f.cls, match.tier or f.tier):
                 c.fp += 1
         elif not match.in_scope:
             report.out_of_scope_hits.append(f)
         elif match.id in hit_labels:
+            rule_count(f, True)
             report.duplicates += 1
         else:
             hit_labels.add(match.id)
+            rule_count(f, True)
             for c in counts(f.cls, match.tier or f.tier):
                 c.tp += 1
                 c.labels_hit += 1

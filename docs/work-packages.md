@@ -158,7 +158,7 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
 
 ## Fase 9: Kualitas dan akurasi
 
-- [ ] **WP-9.1 Benchmark otomatis semua target** (M) — dep: 5.9, 7.5. Satu perintah menjalankan evaluasi semua target dan menulis tabel per rule.
+- [x] **WP-9.1 Benchmark otomatis semua target** (M) — dep: 5.9, 7.5. Satu perintah menjalankan evaluasi semua target dan menulis tabel per rule.
   *Lulus jika*: `benchmarks/run_all.sh` menghasilkan `benchmarks/results/latest.md` tanpa langkah manual.
 - [ ] **WP-9.2 `vulnfab triage`** (S) — dep: 2.5. Simpan verdict (fingerprint → tp/fp/dup) yang dibaca evaluator.
   *Lulus jika*: verdict tersimpan dan mengubah hasil evaluator.
