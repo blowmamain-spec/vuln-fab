@@ -24,7 +24,13 @@ vulnfab = "vulnfab.cli:app"
 [project.entry-points."vulnfab.plugins"]
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff>=0.5", "mypy>=1.10", "types-pyyaml"]
+dev = [
+    "pytest>=8",
+    "ruff>=0.5",
+    "mypy>=1.10",
+    "types-pyyaml",
+    "jsonschema>=4.26.0",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -40,7 +46,7 @@ addopts = "-q"
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-extend-exclude = ["benchmarks/targets", "benchmarks/labs", "tests/rules", "docs", "*.md"]
+extend-exclude = ["benchmarks/targets", "benchmarks/labs", "tests/rules", "tests/e2e/fixtures", "docs", "*.md"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM"]

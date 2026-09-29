@@ -37,13 +37,13 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
 
 - [x] **WP-1.1 Loader** (M) — dep: 0.2. Walk repo, `.vulnfabignore`, abaikan `node_modules`/`vendor`/`.git`/`benchmarks/targets`, batas ukuran, hash SHA-256, deteksi bahasa dari ekstensi, `RepoView`.
   *Lulus jika*: test pada direktori sintetis (ignore, symlink loop, file besar, biner).
-- [ ] **WP-1.2 Detektor stack + registry plugin** (S) — dep: 1.1. Penemuan plugin via entry point + folder bawaan; deteksi file penanda; dukungan monorepo (banyak stack).
+- [x] **WP-1.2 Detektor stack + registry plugin** (S) — dep: 1.1. Penemuan plugin via entry point + folder bawaan; deteksi file penanda; dukungan monorepo (banyak stack).
   *Lulus jika*: test repo sintetis multi-stack memilih plugin yang benar.
-- [ ] **WP-1.3 Reporter JSON + console + coverage** (M) — dep: 0.2. Sesuai `spec.md` §2; bagian Coverage & limitations selalu ada; HTML di-escape (bila ada).
-  *Lulus jika*: keluaran JSON tervalidasi terhadap JSON Schema dari `models`; snapshot console.
-- [ ] **WP-1.4 CLI `scan` + batas sumber daya** (M) — dep: 1.1-1.3. Opsi di `spec.md` §1 yang relevan, exit code, timeout per file (proses terisolasi atau `signal`/thread dengan batas), kegagalan file dicatat sebagai `skipped`.
+- [x] **WP-1.3 Reporter JSON + console + coverage** (M) — dep: 0.2. Sesuai `spec.md` §2; bagian Coverage & limitations selalu ada; HTML di-escape (bila ada).
+  *Lulus jika*: keluaran JSON tervalidasi terhadap `docs/schema/scan-output.schema.json` (dicek `jsonschema` di test); snapshot e2e.
+- [x] **WP-1.4 CLI `scan` + batas sumber daya** (M) — dep: 1.1-1.3. Opsi di `spec.md` §1 yang relevan, exit code, timeout per file (proses terisolasi atau `signal`/thread dengan batas), kegagalan file dicatat sebagai `skipped`.
   *Lulus jika*: file patologis (sangat dalam, sangat besar, biner) tidak membuat `scan` crash atau hang; exit code sesuai spec.
-- [ ] **WP-1.5 Rule sepele end-to-end** (S) — dep: 1.4. Hardcode satu deteksi `eval()` Python untuk menguji pipeline (akan digantikan rule YAML di Fase 2).
+- [x] **WP-1.5 Rule sepele end-to-end** (S) — dep: 1.4. Hardcode satu deteksi `eval()` Python untuk menguji pipeline (akan digantikan rule YAML di Fase 2).
   *Lulus jika*: e2e menghasilkan Finding dengan file dan baris benar; snapshot tersimpan.
 
 ## Fase 2: Rule engine

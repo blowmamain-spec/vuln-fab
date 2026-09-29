@@ -19,7 +19,7 @@ Opsi `scan`:
 
 | Opsi | Default | Keterangan |
 |---|---|---|
-| `--format` | `console` | `console`, `json`, `sarif`, `html` (boleh diulang) |
+| `--format` | `console` | `console`, `json`, `sarif`, `html`. Sebelum WP-10.1 hanya `console` dan `json`, satu format per eksekusi; bisa diulang setelah itu |
 | `--output PATH` | stdout | Untuk `json`/`sarif`/`html` |
 | `--stack NAME` | auto | Paksa plugin tertentu (boleh diulang) |
 | `--min-confidence` | `medium` | `low` menampilkan tier C dan temuan unresolved-heavy |
@@ -45,7 +45,11 @@ Opsi `scan`:
   "findings": [ /* Finding */ ],
   "coverage": {
     "files_scanned": 120,
-    "files_skipped": [{"file": "x.ts", "reason": "too_large|timeout|parse_error|ignored"}],
+    "files_skipped": [{"file": "x.ts", "reason": "too_large|binary|unreadable|symlink|parse_error|timeout", "detail": "…"}],
+    "files_ignored": 12,          // jumlah entri yang dibuang oleh ignore (dir/berkas)
+    "files_unsupported": 30,      // berkas yang bahasanya tidak dikenali
+    "syntax_errors": ["a.py"],    // dianalisis sebagian (tree-sitter tetap memberi pohon)
+    "hidden_low_confidence": 0,   // temuan yang disembunyikan oleh --min-confidence
     "unresolved": [{"kind": "dynamic_call|dynamic_sql|do_block|import", "file": "…", "line": 10, "detail": "…"}],
     "assumptions": ["schema derived from migrations only (no drift check)"],
     "adapters": [{"name": "gitleaks", "status": "missing|ok|error"}]
@@ -225,3 +229,5 @@ Pencocokan temuan → label: file sama, rentang baris beririsan (toleransi ±3),
 ## 9. Batas sumber daya
 
 Default: file ≤ 1 MiB, kedalaman AST ≤ 512, timeout 10 s per file per tahap, kedalaman taint antar-fungsi ≤ 8, iterasi fixpoint loop ≤ 3, jumlah path taint per sink ≤ 50. Pelanggaran → catat di `coverage.files_skipped`/`unresolved`, jangan crash dan jangan berhenti membisu.
+
+Catatan: parsing tree-sitter tidak dapat diinterupsi dari Python, sehingga dibatasi oleh ukuran file dan `MAX_AST_DEPTH`; timeout per file berlaku untuk traversal/analisis milik vulnfab (`Deadline` kooperatif). Berkas dengan AST lebih dalam dari batas (mis. rantai `a+b+c+…` puluhan ribu suku) dilewati dengan `parse_error` (`ast_too_deep`).

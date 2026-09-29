@@ -1,0 +1,104 @@
+{
+  "coverage": {
+    "adapters": [],
+    "assumptions": [],
+    "files_ignored": 0,
+    "files_scanned": 4,
+    "files_skipped": [],
+    "files_unsupported": 0,
+    "hidden_low_confidence": 0,
+    "syntax_errors": [
+      "syntax_error.py"
+    ],
+    "unresolved": []
+  },
+  "findings": [
+    {
+      "confidence": "medium",
+      "cwe": [
+        "CWE-95"
+      ],
+      "end_line": 6,
+      "file": "app.py",
+      "fingerprint": "b24cf5fbc862d76c8700b9cbb1ce00b1",
+      "fix": "Avoid eval(); use ast.literal_eval or an explicit parser.",
+      "line": 6,
+      "owasp": "A03:2021",
+      "rule_id": "py-eval",
+      "severity": "high",
+      "snippet": "eval(expr)",
+      "tier": null,
+      "title": "Use of eval()",
+      "trace": [],
+      "unresolved_hops": 0
+    },
+    {
+      "confidence": "medium",
+      "cwe": [
+        "CWE-95"
+      ],
+      "end_line": 12,
+      "file": "app.py",
+      "fingerprint": "637069630da1244abf5b0fe3cedd297c",
+      "fix": "Avoid eval(); use ast.literal_eval or an explicit parser.",
+      "line": 12,
+      "owasp": "A03:2021",
+      "rule_id": "py-eval",
+      "severity": "high",
+      "snippet": "eval(text)",
+      "tier": null,
+      "title": "Use of eval()",
+      "trace": [],
+      "unresolved_hops": 0
+    },
+    {
+      "confidence": "medium",
+      "cwe": [
+        "CWE-95"
+      ],
+      "end_line": 12,
+      "file": "app.py",
+      "fingerprint": "a397715d9cb44ebb7fc3d69c8aa98a53",
+      "fix": "Avoid eval(); use ast.literal_eval or an explicit parser.",
+      "line": 12,
+      "owasp": "A03:2021",
+      "rule_id": "py-eval",
+      "severity": "high",
+      "snippet": "eval(\"1 + 1\")",
+      "tier": null,
+      "title": "Use of eval()",
+      "trace": [],
+      "unresolved_hops": 0
+    },
+    {
+      "confidence": "medium",
+      "cwe": [
+        "CWE-95"
+      ],
+      "end_line": 2,
+      "file": "syntax_error.py",
+      "fingerprint": "f746895f912b537175e24617c7f3d07b",
+      "fix": "Avoid eval(); use ast.literal_eval or an explicit parser.",
+      "line": 2,
+      "owasp": "A03:2021",
+      "rule_id": "py-eval",
+      "severity": "high",
+      "snippet": "eval(x)",
+      "tier": null,
+      "title": "Use of eval()",
+      "trace": [],
+      "unresolved_hops": 0
+    }
+  ],
+  "schema_version": 1,
+  "target": {
+    "path": "<root>",
+    "stacks": [
+      "generic"
+    ]
+  },
+  "tool": {
+    "name": "vulnfab",
+    "version": "0.1.0"
+  }
+}

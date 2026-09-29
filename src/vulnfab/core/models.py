@@ -147,17 +147,27 @@ class Unresolved:
     detail: str = ""
 
 
+@dataclass(frozen=True)
+class SkippedFile:
+    file: str
+    reason: str  # too_large | binary | unreadable | symlink | parse_error | timeout
+    detail: str = ""
+
+
 @dataclass
 class ParsedFile:
     path: str
     language: str
     tree: Any = None  # tree-sitter Tree (or plugin-specific parse result)
+    source: bytes = b""
+    has_syntax_errors: bool = False
 
 
 @dataclass
 class ParsedUnit:
     files: dict[str, ParsedFile] = field(default_factory=dict)
     unresolved: list[Unresolved] = field(default_factory=list)
+    skipped: list[SkippedFile] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

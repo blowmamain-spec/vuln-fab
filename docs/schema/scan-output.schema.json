@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/vulnfab/scan-output.schema.json",
+  "title": "vulnfab scan output (schema_version 1)",
+  "type": "object",
+  "required": ["schema_version", "tool", "target", "findings", "coverage"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": 1},
+    "tool": {
+      "type": "object",
+      "required": ["name", "version"],
+      "additionalProperties": false,
+      "properties": {"name": {"const": "vulnfab"}, "version": {"type": "string"}}
+    },
+    "target": {
+      "type": "object",
+      "required": ["path", "stacks"],
+      "additionalProperties": false,
+      "properties": {"path": {"type": "string"}, "stacks": {"type": "array", "items": {"type": "string"}}}
+    },
+    "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
+    "coverage": {"$ref": "#/$defs/coverage"}
+  },
+  "$defs": {
+    "severity": {"enum": ["critical", "high", "medium", "low", "info"]},
+    "confidence": {"enum": ["high", "medium", "low"]},
+    "traceStep": {
+      "type": "object",
+      "required": ["file", "line", "kind", "detail"],
+      "additionalProperties": false,
+      "properties": {
+        "file": {"type": "string"},
+        "line": {"type": "integer", "minimum": 1},
+        "kind": {"enum": ["source", "propagate", "call", "return", "sink", "schema", "policy"]},
+        "detail": {"type": "string"}
+      }
+    },
+    "finding": {
+      "type": "object",
+      "required": ["rule_id", "title", "cwe", "owasp", "severity", "confidence", "tier", "file", "line", "end_line", "snippet", "trace", "unresolved_hops", "fix", "fingerprint"],
+      "additionalProperties": false,
+      "properties": {
+        "rule_id": {"type": "string", "pattern": "^[a-z]+-[a-z0-9-]+$"},
+        "title": {"type": "string"},
+        "cwe": {"type": "array", "items": {"type": "string", "pattern": "^CWE-[0-9]+$"}},
+        "owasp": {"type": ["string", "null"]},
+        "severity": {"$ref": "#/$defs/severity"},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "tier": {"enum": ["A", "B", "C", null]},
+        "file": {"type": "string"},
+        "line": {"type": "integer", "minimum": 1},
+        "end_line": {"type": "integer", "minimum": 1},
+        "snippet": {"type": "string"},
+        "trace": {"type": "array", "items": {"$ref": "#/$defs/traceStep"}},
+        "unresolved_hops": {"type": "integer", "minimum": 0},
+        "fix": {"type": ["string", "null"]},
+        "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{32}$"}
+      }
+    },
+    "skipped": {
+      "type": "object",
+      "required": ["file", "reason", "detail"],
+      "additionalProperties": false,
+      "properties": {
+        "file": {"type": "string"},
+        "reason": {"enum": ["too_large", "binary", "unreadable", "symlink", "parse_error", "timeout"]},
+        "detail": {"type": "string"}
+      }
+    },
+    "unresolved": {
+      "type": "object",
+      "required": ["kind", "file", "line", "detail"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"type": "string"},
+        "file": {"type": "string"},
+        "line": {"type": "integer", "minimum": 0},
+        "detail": {"type": "string"}
+      }
+    },
+    "adapter": {
+      "type": "object",
+      "required": ["name", "status", "detail"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string"},
+        "status": {"enum": ["ok", "missing", "error"]},
+        "detail": {"type": "string"}
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "required": ["files_scanned", "files_skipped", "files_ignored", "files_unsupported", "syntax_errors", "unresolved", "assumptions", "adapters", "hidden_low_confidence"],
+      "additionalProperties": false,
+      "properties": {
+        "files_scanned": {"type": "integer", "minimum": 0},
+        "files_skipped": {"type": "array", "items": {"$ref": "#/$defs/skipped"}},
+        "files_ignored": {"type": "integer", "minimum": 0},
+        "files_unsupported": {"type": "integer", "minimum": 0},
+        "syntax_errors": {"type": "array", "items": {"type": "string"}},
+        "unresolved": {"type": "array", "items": {"$ref": "#/$defs/unresolved"}},
+        "assumptions": {"type": "array", "items": {"type": "string"}},
+        "adapters": {"type": "array", "items": {"$ref": "#/$defs/adapter"}},
+        "hidden_low_confidence": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

@@ -8,7 +8,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from vulnfab.core.models import SourceFile
+from vulnfab.core.models import SkippedFile, SourceFile
 
 DEFAULT_MAX_FILE_BYTES = 1024 * 1024
 IGNORE_FILE = ".vulnfabignore"
@@ -147,13 +147,6 @@ class IgnoreMatcher:
 
 
 # --- repository view ------------------------------------------------------------------------
-
-
-@dataclass(frozen=True)
-class SkippedFile:
-    file: str
-    reason: str  # too_large | binary | unreadable | symlink | parse_error | timeout
-    detail: str = ""
 
 
 @dataclass
