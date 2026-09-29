@@ -35,7 +35,7 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
 
 ## Fase 1: Pipeline dasar
 
-- [ ] **WP-1.1 Loader** (M) — dep: 0.2. Walk repo, `.vulnfabignore`, abaikan `node_modules`/`vendor`/`.git`/`benchmarks/targets`, batas ukuran, hash SHA-256, deteksi bahasa dari ekstensi, `RepoView`.
+- [x] **WP-1.1 Loader** (M) — dep: 0.2. Walk repo, `.vulnfabignore`, abaikan `node_modules`/`vendor`/`.git`/`benchmarks/targets`, batas ukuran, hash SHA-256, deteksi bahasa dari ekstensi, `RepoView`.
   *Lulus jika*: test pada direktori sintetis (ignore, symlink loop, file besar, biner).
 - [ ] **WP-1.2 Detektor stack + registry plugin** (S) — dep: 1.1. Penemuan plugin via entry point + folder bawaan; deteksi file penanda; dukungan monorepo (banyak stack).
   *Lulus jika*: test repo sintetis multi-stack memilih plugin yang benar.
