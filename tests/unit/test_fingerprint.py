@@ -20,7 +20,7 @@ def test_changes_when_code_changes() -> None:
 
 def test_comment_markers_inside_strings_are_kept() -> None:
     assert "# not a comment" in normalize_snippet('x = "# not a comment"')
-    assert normalize_snippet("i-- \n j") == "i j" or normalize_snippet("i--\nj") == "i j"
+    assert normalize_snippet("i-- comment\nj") == "i j"
     assert normalize_snippet("a--b") == "a--b"
 
 

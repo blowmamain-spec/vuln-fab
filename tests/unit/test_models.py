@@ -48,4 +48,4 @@ def test_schema_model_serialises_sets() -> None:
     model = SchemaModel(tables={"public.t": Table(name="t", rls_enabled=True)})
     data = to_jsonable(model)
     assert data["tables"]["public.t"]["rls_enabled"] is True
-    assert data["tables"]["public.t"]["qualified_name" if False else "schema"] == "public"
+    assert data["tables"]["public.t"]["schema"] == "public"

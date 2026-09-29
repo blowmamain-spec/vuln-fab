@@ -54,3 +54,33 @@ def test_only_sqlparser_imports_pglast() -> None:
             if any(n == "pglast" or n.startswith("pglast.") for n in names):
                 offenders.append(str(path))
     assert offenders == []
+
+
+def test_lenient_recovers_from_bad_statement() -> None:
+    sql = "CREATE TABLE a (id int);\nCREATE TABL b;\nCREATE TABLE c (id int);\n"
+    result = PglastParser().parse_lenient(sql)
+    assert [s.kind for s in result.statements] == ["CreateStmt", "CreateStmt"]
+    assert [s.line for s in result.statements] == [1, 3]
+    assert len(result.issues) == 1
+    assert result.issues[0].line == 2
+
+
+def test_lenient_ignores_psql_meta_and_dollar_quotes() -> None:
+    sql = (
+        "\\set pgpass `echo x`\n"
+        "CREATE FUNCTION f() RETURNS void AS $$ BEGIN PERFORM 1; END; $$ LANGUAGE plpgsql;\n"
+        "ALTER USER u WITH PASSWORD :'pgpass';\n"
+        "CREATE TABLE t (id int);\n"
+    )
+    result = PglastParser().parse_lenient(sql)
+    assert [s.kind for s in result.statements] == ["CreateFunctionStmt", "CreateStmt"]
+    assert [i.line for i in result.issues] == [3]
+    assert result.statements[0].line == 2
+
+
+def test_split_respects_strings_comments_and_dollars() -> None:
+    from vulnfab.core.sqlparser import split_statements
+
+    sql = "select ';'; -- a;b\nselect $q$;$q$; /* ; */ select 1;"
+    parts = [c.strip() for _, c in split_statements(sql)]
+    assert parts == ["select ';';", "-- a;b\nselect $q$;$q$;", "/* ; */ select 1;"]

@@ -16,13 +16,13 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
   *Lulus jika*: `uv run vulnfab --version` mencetak versi; ruff, mypy, pytest hijau lokal; workflow CI valid.
 - [x] **WP-0.2 Model & kontrak** (M) — dep: 0.1. `core/models.py` (Finding, TraceStep, IR dan SchemaModel sesuai `spec.md`), `plugins/base.py` (Protocol), `core/sqlparser.py` (antarmuka + impl. `pglast`), `core/fingerprint.py`.
   *Lulus jika*: test serialisasi JSON; test fingerprint (stabil terhadap sisipan baris/komentar, berubah bila kode berubah); mypy strict bersih; hanya `sqlparser.py` yang meng-import `pglast` (dicek test).
-- [ ] **WP-0.3a 🔬 S1: pglast pada migration nyata** (S) — dep: 0.2. Parse migration dari repo `supabase/supabase` (contoh) dan lab awal: policy, `ALTER TABLE … ENABLE RLS`, `DO $$`, plpgsql.
+- [x] **WP-0.3a 🔬 S1: pglast pada migration nyata** (S) — dep: 0.2. Parse migration dari repo `supabase/supabase` (contoh) dan lab awal: policy, `ALTER TABLE … ENABLE RLS`, `DO $$`, plpgsql.
   *Lulus jika*: `docs/spikes/s1-pglast.md` mencatat statement yang gagal/tidak tertangani dan keputusan go/no-go.
-- [ ] **WP-0.3b 🔬 S2: matcher snippet + metavariable** (M) — dep: 0.1. Prototipe: parse snippet pola dengan tree-sitter yang sama dan cocokkan `$X`/`...` pada Python, TS, PHP.
+- [x] **WP-0.3b 🔬 S2: matcher snippet + metavariable** (M) — dep: 0.1. Prototipe: parse snippet pola dengan tree-sitter yang sama dan cocokkan `$X`/`...` pada Python, TS, PHP.
   *Lulus jika*: `docs/spikes/s2-matcher.md` + prototipe lulus 10 kasus per bahasa; keputusan mempertahankan D4.
-- [ ] **WP-0.3c 🔬 S3: parsing template** (S) — dep: 0.1. Kelayakan parser sederhana untuk Django template (`|safe`, `autoescape`) dan Blade (`{!! !!}`).
+- [x] **WP-0.3c 🔬 S3: parsing template** (S) — dep: 0.1. Kelayakan parser sederhana untuk Django template (`|safe`, `autoescape`) dan Blade (`{!! !!}`).
   *Lulus jika*: `docs/spikes/s3-templates.md` memuat pendekatan yang dipilih (tokenizer regex terbatas vs grammar) dan batasannya.
-- [ ] **WP-0.3d 🔬 S4/S5: SCA offline & adaptor eksternal** (S) — dep: 0.1. Cek ketersediaan dump OSV, gitleaks, osv-scanner di lingkungan; desain deteksi ketiadaan binary.
+- [x] **WP-0.3d 🔬 S4/S5: SCA offline & adaptor eksternal** (S) — dep: 0.1. Cek ketersediaan dump OSV, gitleaks, osv-scanner di lingkungan; desain deteksi ketiadaan binary.
   *Lulus jika*: `docs/spikes/s4-adapters.md` mencatat apa yang tersedia dan jalur fallback.
 - [ ] **WP-0.4 Target benchmark** (M) — dep: 0.1. `benchmarks/fetch_targets.sh` + `targets.lock` (SHA di-pin) untuk Juice Shop, NodeGoat, DVWA, django.nV; skrip berjalan idempoten.
   *Lulus jika*: menjalankan skrip dari nol mengkloning semua target pada SHA yang di-pin.
