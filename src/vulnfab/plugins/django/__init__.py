@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterable
+from dataclasses import dataclass
 from pathlib import Path
 
 from vulnfab.core.models import (
@@ -23,7 +24,7 @@ from vulnfab.core.models import (
 )
 from vulnfab.core.parsing import ParseFailure, parse_file_cached
 from vulnfab.plugins.base import RepoView
-from vulnfab.plugins.django import pyconf
+from vulnfab.plugins.django import pyconf, urlconf
 
 _SETTINGS_RE = re.compile(r"(?:^|.*/)settings(?:\.py|/[^/]+\.py)$")
 _MODELS_RE = re.compile(r"(?:^|.*/)models(?:\.py|/[^/]+\.py)$")
@@ -187,7 +188,27 @@ class DjangoPlugin:
     # --- contract stubs (filled in as the plugin grows) --------------------------------------
 
     def entrypoints(self, unit: ParsedUnit) -> list[Entrypoint]:
-        return []
+        texts = {
+            path: pf.source.decode("utf-8", errors="replace")
+            for path, pf in unit.files.items()
+            if pf.language == "python" and not _skip(path)
+        }
+        index = urlconf.build_index(texts)
+        conf = _project_settings(texts)
+        resolver = urlconf.ViewResolver(
+            index, drf_default_auth=conf.drf_default_auth, login_middleware=conf.login_middleware
+        )
+        roots = _root_modules(index, conf.root_urlconf)
+        found: list[Entrypoint] = []
+        for route in urlconf.walk_urls(index, roots, resolver):
+            entry = urlconf.to_entrypoint(route)
+            if entry is not None:
+                found.append(entry)
+            elif route.unresolved:
+                unit.unresolved.append(
+                    Unresolved("django_view", route.file, route.line, route.unresolved)
+                )
+        return found
 
     def data_access(self, unit: ParsedUnit) -> list[DataAccess]:
         return []
@@ -207,3 +228,55 @@ class DjangoPlugin:
         if filename.startswith("models"):
             return "app/models.py"
         return None
+
+
+@dataclass
+class _ProjectConf:
+    root_urlconf: str | None = None
+    drf_default_auth: bool = False
+    login_middleware: bool = False
+
+
+def _project_settings(texts: dict[str, str]) -> _ProjectConf:
+    conf = _ProjectConf()
+    for path, text in texts.items():
+        if not _SETTINGS_RE.match(path):
+            continue
+        read = pyconf.read_settings(text)
+        if read is None:
+            continue
+        root = read.values.get("ROOT_URLCONF")
+        if isinstance(root, str):
+            conf.root_urlconf = root
+        for name in ("MIDDLEWARE", "MIDDLEWARE_CLASSES"):
+            middleware = read.values.get(name)
+            if isinstance(middleware, (list, tuple)) and any(
+                isinstance(m, str) and m.endswith("LoginRequiredMiddleware") for m in middleware
+            ):
+                conf.login_middleware = True
+        rest = read.values.get("REST_FRAMEWORK")
+        if isinstance(rest, dict):
+            perms = rest.get("DEFAULT_PERMISSION_CLASSES")
+            if isinstance(perms, (list, tuple)) and perms:
+                conf.drf_default_auth = not any(
+                    isinstance(p, str) and p.endswith("AllowAny") for p in perms
+                )
+    return conf
+
+
+def _root_modules(index: urlconf.UrlIndex, root_urlconf: str | None) -> list[urlconf.Module]:
+    if root_urlconf:
+        module = index.by_dotted(root_urlconf)
+        if module is not None:
+            return [module]
+    modules = index.url_modules()
+    included: set[str] = set()
+    for module in modules:
+        imports = urlconf._imports(module, index)
+        for route in urlconf._collect_routes(module):
+            if route.include is not None:
+                child = urlconf._resolve_include(route, index, imports)
+                if child is not None:
+                    included.add(child.path)
+    roots = [m for m in modules if m.path not in included]
+    return roots or modules

@@ -236,8 +236,9 @@ class ScannerRule(_RuleBase):
 
 class CrosscheckRule(_RuleBase):
     kind: Literal["crosscheck"]
-    facts: Literal["DataAccess"]
+    facts: Literal["DataAccess", "Entrypoint"]
     check: str
+    model: str | None = None  # plugin whose SchemaModel is used (default: the rule's own stack)
 
     @field_validator("check")
     @classmethod

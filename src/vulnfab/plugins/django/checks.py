@@ -6,9 +6,10 @@ import re
 from collections.abc import Iterator
 from typing import Any
 
-from vulnfab.core.models import Confidence, ConfigDoc
+from vulnfab.core.models import Confidence, ConfigDoc, TraceStep
 from vulnfab.core.schemarules import CheckContext, SchemaHit
 from vulnfab.plugins.django.pyconf import Dynamic, is_dynamic
+from vulnfab.plugins.django.urlconf import PUBLIC_NAME
 
 _DEV_FILE = re.compile(
     r"(?:^|[/_.-])(dev|develop|development|local|test|tests|testing|ci|debug|docker-dev)(?:[/_.-]|$)",
@@ -247,3 +248,32 @@ def password_validators_missing(ctx: CheckContext) -> Iterator[SchemaHit]:
                 symbol=f"{doc.path}:AUTH_PASSWORD_VALIDATORS",
                 confidence=Confidence.LOW,
             )
+
+
+def view_no_auth(ctx: CheckContext) -> Iterator[SchemaHit]:
+    """URL-mapped views that neither require login nor check the user, yet touch data."""
+    seen: set[tuple[str, str]] = set()
+    for entry in ctx.entrypoints:
+        if entry.auth is None or entry.auth.required is not False:
+            continue
+        if PUBLIC_NAME.match(entry.handler) or (entry.file, entry.handler) in seen:
+            continue
+        seen.add((entry.file, entry.handler))
+        if "writes" in entry.traits:
+            what, confidence = "changes data", Confidence.MEDIUM
+        elif "reads-data" in entry.traits and entry.params:
+            what, confidence = "returns data selected by a URL parameter", Confidence.MEDIUM
+        else:
+            continue
+        yield SchemaHit(
+            entry.file,
+            entry.line,
+            entry.line,
+            f"View {entry.handler} (route {entry.route or '?'}) {what} but has no login/permission "
+            "decorator or mixin and does not inspect request.user.",
+            trace=(TraceStep(entry.route_file, entry.route_line, "call", f"route {entry.route}"),)
+            if entry.route_file
+            else (),
+            symbol=f"{entry.file}:{entry.handler}",
+            confidence=confidence,
+        )

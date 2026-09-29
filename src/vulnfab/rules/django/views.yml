@@ -1,0 +1,15 @@
+rules:
+  - id: dj-view-no-auth
+    kind: crosscheck
+    stack: django
+    facts: Entrypoint
+    check: "vulnfab.plugins.django.checks:view_no_auth"
+    severity: high
+    confidence: medium
+    tier: A
+    cwe: [CWE-306, CWE-862]
+    owasp: "A01:2021"
+    title: "View that reads or changes data without authentication"
+    message: "A URL-mapped view handles data but has no authentication or permission check."
+    fix: "Add @login_required / LoginRequiredMixin (or permission_classes) and check ownership."
+    tests: {vulnerable: [vuln.py], safe: [safe.py]}

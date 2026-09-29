@@ -9,7 +9,14 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from typing import Any
 
-from vulnfab.core.models import Confidence, DataAccess, Finding, SchemaModel, TraceStep
+from vulnfab.core.models import (
+    Confidence,
+    DataAccess,
+    Entrypoint,
+    Finding,
+    SchemaModel,
+    TraceStep,
+)
 from vulnfab.core.rules import SCHEMA_CONDITION_NAMES, CrosscheckRule, SchemaRule
 from vulnfab.core.safeexpr import compile_expression
 from vulnfab.plugins.base import RepoView
@@ -41,6 +48,7 @@ class CheckContext:
     rule: SchemaRule | CrosscheckRule
     extras: dict[str, Any] = field(default_factory=dict)
     facts: list[DataAccess] = field(default_factory=list)
+    entrypoints: list[Entrypoint] = field(default_factory=list)
 
     def snippet(self, file: str, line: int, end_line: int) -> str:
         try:
@@ -174,14 +182,18 @@ def run_schema_rules(
 
 
 def run_crosscheck_rules(
-    rules: Iterable[CrosscheckRule], facts: list[DataAccess], model: SchemaModel, repo: RepoView
+    rules: Iterable[CrosscheckRule],
+    facts: list[DataAccess],
+    model: SchemaModel,
+    repo: RepoView,
+    entrypoints: list[Entrypoint] | None = None,
 ) -> list[tuple[Finding, str]]:
-    """Rules that relate code-level facts (`DataAccess`) to the schema model."""
+    """Rules that relate code-level facts (`DataAccess`, `Entrypoint`) to the schema model."""
     out: list[tuple[Finding, str]] = []
     for rule in rules:
         if not rule.enabled:
             continue
-        ctx = CheckContext(model, repo, rule, facts=facts)
+        ctx = CheckContext(model, repo, rule, facts=facts, entrypoints=entrypoints or [])
         out.extend(_to_findings(rule, ctx, list(load_check(rule.check)(ctx))))
     return out
 

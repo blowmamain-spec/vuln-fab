@@ -116,6 +116,10 @@ class Entrypoint:
     handler: str
     params: tuple[str, ...] = ()
     auth: AuthInfo | None = None
+    route: str = ""  # URL pattern as written (prefixes of include() joined)
+    route_file: str = ""
+    route_line: int = 0
+    traits: tuple[str, ...] = ()  # writes | reads-data | csrf-exempt ...
 
 
 @dataclass(frozen=True)

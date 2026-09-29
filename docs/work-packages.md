@@ -125,7 +125,7 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
 
 - [x] **WP-6.1 Parse & schema dari models/migrations** (L) — dep: 5.1. `models.py`/`migrations/*.py` (pembacaan struktural, tanpa mengeksekusi) → SchemaModel; kolom sensitif.
   *Lulus jika*: fixture app dengan operasi migration umum menghasilkan skema akhir benar.
-- [ ] **WP-6.2 Entrypoint** (M) — dep: 5.5. `urls.py` → view (fungsi/CBV), `request.GET/POST/body/FILES/headers/COOKIES` sebagai source, decorator auth.
+- [x] **WP-6.2 Entrypoint** (M) — dep: 5.5. `urls.py` → view (fungsi/CBV), `request.GET/POST/body/FILES/headers/COOKIES` sebagai source, decorator auth.
   *Lulus jika*: fixture URL nested/`include` menghasilkan entrypoint benar.
 - [ ] **WP-6.3 Parser template Django** (M) — dep: 0.3c. `|safe`, `{% autoescape off %}`, `mark_safe` dari konteks.
   *Lulus jika*: fixture template dengan dan tanpa autoescape.

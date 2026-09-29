@@ -174,6 +174,13 @@ def _engine_lines(
 
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
+        extra = base / "_repo"  # extra files that make the stack plugin activate
+        if extra.is_dir():
+            for f in extra.rglob("*"):
+                if f.is_file():
+                    dest_file = root / f.relative_to(extra)
+                    dest_file.parent.mkdir(parents=True, exist_ok=True)
+                    dest_file.write_text(f.read_text(encoding="utf-8"), encoding="utf-8")
         schema = base / "schema.sql"
         if schema.is_file():
             migration = root / "supabase" / "migrations" / "20240101000000_schema.sql"

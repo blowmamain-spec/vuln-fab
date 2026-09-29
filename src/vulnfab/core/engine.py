@@ -13,6 +13,7 @@ from vulnfab.core.matcher import CompiledRule
 from vulnfab.core.models import (
     Confidence,
     DataAccess,
+    Entrypoint,
     Finding,
     ParsedUnit,
     SchemaModel,
@@ -115,6 +116,7 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
     scanned: set[str] = set()
     raw: list[tuple[Finding, str]] = []
     facts: list[DataAccess] = []
+    entrypoints: dict[str, list[Entrypoint]] = {}
     schemas: dict[str, SchemaModel] = {}
 
     for sel in selected:
@@ -123,6 +125,7 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
         plugin_taint = [r for r in taint_rules if r.stack == plugin.name]
         unit: ParsedUnit = plugin.parse([f for f in loaded.files if f.language in plugin.languages])
         facts.extend(plugin.data_access(unit))
+        entrypoints[plugin.name] = plugin.entrypoints(unit)
         coverage.files_skipped.extend(unit.skipped)
         coverage.unresolved.extend(unit.unresolved)
         schema = plugin.extract_schema(repo)
@@ -170,13 +173,23 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
     try:
         raw.extend(run_scanner_rules([r for r in scanner_rules if r.stack in active], loaded.files))
         cross = [r for r in crosscheck_rules if r.stack in active]
-        model = schemas.get("supabase")
-        if cross and model is None:
-            coverage.assumptions.append(
-                "Cross-check rules were skipped: no database schema was found to compare with."
+        skipped: dict[str, list[str]] = {}
+        for rule in cross:
+            source = rule.model or rule.stack
+            model = schemas.get(source)
+            if model is None and rule.facts == "Entrypoint":
+                model = SchemaModel()  # entrypoint rules do not need a database schema
+            if model is None:
+                skipped.setdefault(source, []).append(rule.id)
+                continue
+            raw.extend(
+                run_crosscheck_rules([rule], facts, model, repo, entrypoints.get(rule.stack, []))
             )
-        elif cross and model is not None:
-            raw.extend(run_crosscheck_rules(cross, facts, model, repo))
+        for source, ids in skipped.items():
+            coverage.assumptions.append(
+                f"Cross-check rules were skipped ({', '.join(ids)}): no {source} schema was "
+                "found to compare with."
+            )
     except (CheckError, ScannerError) as exc:
         raise RuleLoadError([RuleError("engine", 1, None, str(exc))]) from exc
 
