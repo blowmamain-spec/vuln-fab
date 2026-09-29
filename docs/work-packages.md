@@ -14,7 +14,7 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
 
 - [x] **WP-0.1 Scaffold repo** (S). Lisensi GPL-3.0-or-later, `pyproject.toml` (uv, Python ≥ 3.11), `src/vulnfab/`, ruff, mypy (strict untuk `core/`), pytest, `.gitignore` (termasuk `benchmarks/targets/`, `benchmarks/labs/private/`), README stub, `THIRD_PARTY_LICENSES.md`, workflow CI GitHub Actions, `CHANGELOG.md`.
   *Lulus jika*: `uv run vulnfab --version` mencetak versi; ruff, mypy, pytest hijau lokal; workflow CI valid.
-- [ ] **WP-0.2 Model & kontrak** (M) — dep: 0.1. `core/models.py` (Finding, TraceStep, IR dan SchemaModel sesuai `spec.md`), `plugins/base.py` (Protocol), `core/sqlparser.py` (antarmuka + impl. `pglast`), `core/fingerprint.py`.
+- [x] **WP-0.2 Model & kontrak** (M) — dep: 0.1. `core/models.py` (Finding, TraceStep, IR dan SchemaModel sesuai `spec.md`), `plugins/base.py` (Protocol), `core/sqlparser.py` (antarmuka + impl. `pglast`), `core/fingerprint.py`.
   *Lulus jika*: test serialisasi JSON; test fingerprint (stabil terhadap sisipan baris/komentar, berubah bila kode berubah); mypy strict bersih; hanya `sqlparser.py` yang meng-import `pglast` (dicek test).
 - [ ] **WP-0.3a 🔬 S1: pglast pada migration nyata** (S) — dep: 0.2. Parse migration dari repo `supabase/supabase` (contoh) dan lab awal: policy, `ALTER TABLE … ENABLE RLS`, `DO $$`, plpgsql.
   *Lulus jika*: `docs/spikes/s1-pglast.md` mencatat statement yang gagal/tidak tertangani dan keputusan go/no-go.
