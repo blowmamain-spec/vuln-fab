@@ -24,6 +24,7 @@ from vulnfab.core.models import (
     Unresolved,
 )
 from vulnfab.core.parsing import ParseFailure, parse_file_cached
+from vulnfab.core.sensitive import SENSITIVE_NAME
 from vulnfab.plugins.base import RepoView
 from vulnfab.plugins.django import pyconf, urlconf
 
@@ -179,7 +180,7 @@ class DjangoPlugin:
                             nullable=f.null,
                             unique=f.unique,
                             sensitive_hint=bool(
-                                pyconf.SENSITIVE_NAME.search(f.name) and f.kind in _SENSITIVE_KINDS
+                                SENSITIVE_NAME.search(f.name) and f.kind in _SENSITIVE_KINDS
                             ),
                             references=f.target,
                         )

@@ -247,6 +247,9 @@ class Table:
     rls_line: int = 0
     rls_end_line: int = 0
     external: bool = False  # not created by the scanned migrations (e.g. storage.objects)
+    extras: dict[str, Any] = field(
+        default_factory=dict
+    )  # plugin-specific facts (Eloquent $hidden...)
 
     @property
     def qualified_name(self) -> str:

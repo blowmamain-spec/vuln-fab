@@ -178,6 +178,12 @@ def _merge(a: State, b: State) -> State:
     return out
 
 
+def _receiver_is_source(spec: TaintSpec, callee: str) -> bool:
+    """``request.args.get`` reads from the source ``request.args`` (the method name is excluded)."""
+    receiver = callee.rsplit(".", 1)[0] if "." in callee else None
+    return receiver is not None and matches_path(spec.sources, "field", receiver)
+
+
 def _terminates(body: tuple[Instr, ...]) -> bool:
     return bool(body) and isinstance(body[-1], Return)
 
@@ -590,7 +596,7 @@ class ProjectAnalysis:
             if hit is None:
                 hit = any(
                     m.kind == "call" and m.matches_name(callee) for m in spec.sources
-                ) or matches_path(spec.sources, "field", callee)
+                ) or _receiver_is_source(spec, callee)
                 self._callee_memo[callee] = hit
             if hit:
                 return True

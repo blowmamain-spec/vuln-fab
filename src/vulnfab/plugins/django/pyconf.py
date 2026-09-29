@@ -3,14 +3,8 @@
 from __future__ import annotations
 
 import ast
-import re
 from dataclasses import dataclass
 from typing import Any
-
-SENSITIVE_NAME = re.compile(
-    r"(passw(or)?d|passwd|secret|token|api_?key|private_?key|ssn|credit_?card|card_?number|cvv|otp)",
-    re.IGNORECASE,
-)
 
 
 @dataclass(frozen=True)
