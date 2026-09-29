@@ -67,16 +67,23 @@ class TaintSpec:
     sinks: tuple[Matcher, ...]
     sanitizers: tuple[Matcher, ...]
     propagators: tuple[Matcher, ...]
+    guards: tuple[Matcher, ...] = ()  # ownership evidence: a function that uses one is not reported
 
     @classmethod
     def from_rule(
-        cls, sources: list[str], sinks: list[str], sanitizers: list[str], propagators: list[str]
+        cls,
+        sources: list[str],
+        sinks: list[str],
+        sanitizers: list[str],
+        propagators: list[str],
+        guards: list[str] | None = None,
     ) -> TaintSpec:
         return cls(
             tuple(parse_matcher(s) for s in sources),
             tuple(parse_matcher(s, sink=True) for s in sinks),
             tuple(parse_matcher(s) for s in sanitizers),
             tuple(parse_matcher(s) for s in propagators),
+            tuple(parse_matcher(s) for s in guards or []),
         )
 
 

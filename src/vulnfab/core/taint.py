@@ -165,6 +165,7 @@ class _Ctx:
     returns: list[Taint] = field(default_factory=list)
     budget: Budget | None = None
     steps: int = 0
+    guarded: bool = False
 
 
 def _merge(a: State, b: State) -> State:
@@ -349,6 +350,8 @@ class FunctionAnalyzer:
         return min(candidates, key=lambda t: t.hops) if candidates else None
 
     def report_ref(self, entered: Taint, ref: SinkRef) -> None:
+        if self.ctx.guarded:
+            return
         key = (ref.line, ref.sink + "@" + ref.file)
         if key in self.ctx.seen:
             return
@@ -375,6 +378,8 @@ class FunctionAnalyzer:
         return args[index] if index < len(args) else None
 
     def report(self, line: int, taint: Taint, sink: str) -> None:
+        if self.ctx.guarded:
+            return
         key = (line, sink)
         if key in self.ctx.seen:
             return
@@ -470,11 +475,36 @@ class ProjectAnalysis:
         self.truncated: list[tuple[str, str, int]] = []  # (file, function, line)
         self._path_memo: dict[str, bool] = {}
         self._callee_memo: dict[str, bool] = {}
+        self._guarded: dict[tuple[str, str], bool] = {}
         self.stack: list[tuple[str, str]] = []
         self.index = ModuleIndex({m.file: m.language for m in modules})
         self.modules: dict[str, ModuleAnalysis] = {}
         for m in modules:
             self.modules[m.file] = ModuleAnalysis(m, spec, self)
+
+    def guarded(self, fn: FunctionIR) -> bool:
+        """Does ``fn`` reference any ownership evidence (rule ``guards``)?"""
+        guards = self.spec.guards
+        if not guards:
+            return False
+        key = (fn.file, fn.qualname)
+        found = self._guarded.get(key)
+        if found is None:
+            facts = function_facts(fn, self.facts)
+            found = (
+                any(m.kind == "param" and m.matches_name(p) for m in guards for p in fn.params)
+                or any(
+                    matches_path(guards, "field", p) or matches_path(guards, "var", p)
+                    for p in facts.paths
+                )
+                or any(
+                    any(m.kind == "call" and m.matches_name(c) for m in guards)
+                    or matches_path(guards, "field", c)
+                    for c in facts.callees
+                )
+            )
+            self._guarded[key] = found
+        return found
 
     def _has_source(self, fn: FunctionIR, facts: FunctionFacts) -> bool:
         spec = self.spec
@@ -670,7 +700,14 @@ class ModuleAnalysis:
         self.project.stack.append((file, fn.qualname))
         try:
             try:
-                base = _Ctx(self.spec, file, resolver=self.resolve, budget=self.project.budget)
+                guarded = self.project.guarded(fn)
+                base = _Ctx(
+                    self.spec,
+                    file,
+                    resolver=self.resolve,
+                    budget=self.project.budget,
+                    guarded=guarded,
+                )
                 FunctionAnalyzer(base, fn).run()
                 summary = Summary()
                 returned = [t for t in base.returns if not t.trace[0].detail.startswith(MARKER)]
@@ -685,6 +722,7 @@ class ModuleAnalysis:
                         resolver=self.resolve,
                         seeds={param: marker},
                         budget=self.project.budget,
+                        guarded=guarded,
                     )
                     FunctionAnalyzer(ctx, fn).run()
                     if any(t.trace[0].detail == MARKER + param for t in ctx.returns):

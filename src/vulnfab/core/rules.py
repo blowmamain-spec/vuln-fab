@@ -177,6 +177,7 @@ class TaintRule(_LanguageRule):
     sinks: list[str]
     sanitizers: list[str] = Field(default_factory=list)
     propagators: list[str] = Field(default_factory=list)
+    guards: list[str] = Field(default_factory=list)  # ownership evidence (tier B, IDOR)
 
     @model_validator(mode="after")
     def _non_empty(self) -> TaintRule:
@@ -185,7 +186,9 @@ class TaintRule(_LanguageRule):
         from vulnfab.core.taintspec import SpecError, TaintSpec
 
         try:
-            TaintSpec.from_rule(self.sources, self.sinks, self.sanitizers, self.propagators)
+            TaintSpec.from_rule(
+                self.sources, self.sinks, self.sanitizers, self.propagators, self.guards
+            )
         except SpecError as exc:
             raise ValueError(str(exc)) from exc
         return self

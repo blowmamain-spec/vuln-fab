@@ -13,7 +13,7 @@ rules:
   owasp: A03:2021
   title: SQL injection (tainted data reaches a query)
   message: Untrusted input flows into a SQL statement without parameter binding.
-  sources: &id002
+  sources:
   - field *request.args
   - field *request.form
   - field *request.GET
@@ -56,7 +56,19 @@ rules:
   owasp: A03:2021
   title: OS command injection (tainted data reaches a shell)
   message: Untrusted input flows into an OS command.
-  sources: *id002
+  sources:
+  - field *request.args
+  - field *request.form
+  - field *request.GET
+  - field *request.POST
+  - field *request.json
+  - field *request.values
+  - field *request.data
+  - field *request.cookies
+  - field *request.headers
+  - field *request.files
+  - call input
+  - field sys.argv
   sinks:
   - call os.system arg0
   - call os.popen arg0
@@ -86,7 +98,19 @@ rules:
   owasp: A03:2021
   title: Code injection (tainted data reaches eval)
   message: Untrusted input flows into dynamic code evaluation.
-  sources: *id002
+  sources:
+  - field *request.args
+  - field *request.form
+  - field *request.GET
+  - field *request.POST
+  - field *request.json
+  - field *request.values
+  - field *request.data
+  - field *request.cookies
+  - field *request.headers
+  - field *request.files
+  - call input
+  - field sys.argv
   sinks:
   - call eval arg0
   - call exec arg0
@@ -115,7 +139,19 @@ rules:
   owasp: A03:2021
   title: Path traversal (tainted data reaches a file path)
   message: Untrusted input flows into a file system path.
-  sources: *id002
+  sources:
+  - field *request.args
+  - field *request.form
+  - field *request.GET
+  - field *request.POST
+  - field *request.json
+  - field *request.values
+  - field *request.data
+  - field *request.cookies
+  - field *request.headers
+  - field *request.files
+  - call input
+  - field sys.argv
   sinks:
   - call open arg0
   - call send_file arg0
@@ -147,7 +183,19 @@ rules:
   owasp: A10:2021
   title: SSRF (tainted data reaches an outgoing request)
   message: Untrusted input flows into the URL of a server-side request.
-  sources: *id002
+  sources:
+  - field *request.args
+  - field *request.form
+  - field *request.GET
+  - field *request.POST
+  - field *request.json
+  - field *request.values
+  - field *request.data
+  - field *request.cookies
+  - field *request.headers
+  - field *request.files
+  - call input
+  - field sys.argv
   sinks:
   - call requests.get arg0
   - call requests.post arg0
@@ -178,7 +226,19 @@ rules:
   owasp: A03:2021
   title: Insecure deserialization (tainted data reaches a deserializer)
   message: Untrusted input flows into an unsafe deserializer.
-  sources: *id002
+  sources:
+  - field *request.args
+  - field *request.form
+  - field *request.GET
+  - field *request.POST
+  - field *request.json
+  - field *request.values
+  - field *request.data
+  - field *request.cookies
+  - field *request.headers
+  - field *request.files
+  - call input
+  - field sys.argv
   sinks:
   - call pickle.loads arg0
   - call pickle.load arg0
@@ -206,7 +266,19 @@ rules:
   owasp: A03:2021
   title: Cross-site scripting (tainted data reaches HTML output)
   message: Untrusted input flows into HTML output without escaping.
-  sources: *id002
+  sources:
+  - field *request.args
+  - field *request.form
+  - field *request.GET
+  - field *request.POST
+  - field *request.json
+  - field *request.values
+  - field *request.data
+  - field *request.cookies
+  - field *request.headers
+  - field *request.files
+  - call input
+  - field sys.argv
   sinks:
   - call Markup arg0
   - call mark_safe arg0
@@ -235,7 +307,19 @@ rules:
   owasp: A03:2021
   title: Template injection (tainted data reaches a template)
   message: Untrusted input flows into a template source.
-  sources: *id002
+  sources:
+  - field *request.args
+  - field *request.form
+  - field *request.GET
+  - field *request.POST
+  - field *request.json
+  - field *request.values
+  - field *request.data
+  - field *request.cookies
+  - field *request.headers
+  - field *request.files
+  - call input
+  - field sys.argv
   sinks:
   - call render_template_string arg0
   - call jinja2.Template arg0
@@ -258,7 +342,19 @@ rules:
   owasp: A01:2021
   title: Open redirect (tainted data reaches a redirect)
   message: Untrusted input flows into a redirect target.
-  sources: *id002
+  sources:
+  - field *request.args
+  - field *request.form
+  - field *request.GET
+  - field *request.POST
+  - field *request.json
+  - field *request.values
+  - field *request.data
+  - field *request.cookies
+  - field *request.headers
+  - field *request.files
+  - call input
+  - field sys.argv
   sinks:
   - call redirect arg0
   - call HttpResponseRedirect arg0
@@ -272,10 +368,65 @@ rules:
     - vuln.py
     safe:
     - safe.py
+- id: tpy-idor
+  kind: taint
+  stack: generic
+  languages: *id001
+  severity: medium
+  confidence: medium
+  cwe:
+  - CWE-639
+  owasp: A01:2021
+  title: Possible IDOR (request key fetches a record without ownership evidence)
+  message: A record is fetched by a key taken from the request, and the function shows no sign of checking
+    that the record belongs to the current user.
+  sources:
+  - field *request.args
+  - field *request.form
+  - field *request.GET
+  - field *request.POST
+  - field *request.json
+  - field *request.values
+  - field *request.data
+  - field *request.cookies
+  - field *request.headers
+  - field *request.files
+  - call input
+  - field sys.argv
+  - param pk
+  - param id
+  - param *_id
+  - param *_pk
+  sinks:
+  - call *.query.get arg0
+  - call *.query.get_or_404 arg0
+  - call get_object_or_404 any
+  - call *.objects.get kw:pk
+  - call *.objects.get kw:id
+  - call session.get arg1
+  tier: B
+  sanitizers:
+  - call jwt.decode
+  - call *.decode_token
+  guards:
+  - field *request.user
+  - field current_user
+  - field flask_login.current_user
+  - field g.user
+  - field *request.session
+  - field session
+  - call get_jwt_identity
+  - call current_identity
+  fix: Scope the query to the signed-in user (filter by owner) or compare the owner after loading.
+  tests:
+    vulnerable:
+    - vuln.py
+    safe:
+    - safe.py
 - id: tjs-sqli
   kind: taint
   stack: generic
-  languages: &id003
+  languages: &id002
   - javascript
   - typescript
   - tsx
@@ -286,7 +437,7 @@ rules:
   owasp: A03:2021
   title: SQL injection (tainted data reaches a query)
   message: Untrusted input flows into a SQL statement without parameter binding.
-  sources: &id004
+  sources:
   - field req.query
   - field req.body
   - field req.params
@@ -315,7 +466,7 @@ rules:
 - id: tjs-cmdi
   kind: taint
   stack: generic
-  languages: *id003
+  languages: *id002
   severity: critical
   confidence: medium
   cwe:
@@ -323,7 +474,16 @@ rules:
   owasp: A03:2021
   title: OS command injection (tainted data reaches a shell)
   message: Untrusted input flows into an OS command.
-  sources: *id004
+  sources:
+  - field req.query
+  - field req.body
+  - field req.params
+  - field req.headers
+  - field req.cookies
+  - call req.param
+  - field request.query
+  - field request.body
+  - field request.params
   sinks:
   - call exec arg0
   - call execSync arg0
@@ -348,7 +508,7 @@ rules:
 - id: tjs-codei
   kind: taint
   stack: generic
-  languages: *id003
+  languages: *id002
   severity: critical
   confidence: medium
   cwe:
@@ -356,7 +516,16 @@ rules:
   owasp: A03:2021
   title: Code injection (tainted data reaches eval)
   message: Untrusted input flows into dynamic code evaluation.
-  sources: *id004
+  sources:
+  - field req.query
+  - field req.body
+  - field req.params
+  - field req.headers
+  - field req.cookies
+  - call req.param
+  - field request.query
+  - field request.body
+  - field request.params
   sinks:
   - call eval arg0
   - call Function arg0
@@ -381,7 +550,7 @@ rules:
 - id: tjs-pathtrav
   kind: taint
   stack: generic
-  languages: *id003
+  languages: *id002
   severity: high
   confidence: medium
   cwe:
@@ -389,7 +558,16 @@ rules:
   owasp: A03:2021
   title: Path traversal (tainted data reaches a file path)
   message: Untrusted input flows into a file system path.
-  sources: *id004
+  sources:
+  - field req.query
+  - field req.body
+  - field req.params
+  - field req.headers
+  - field req.cookies
+  - call req.param
+  - field request.query
+  - field request.body
+  - field request.params
   sinks:
   - call fs.readFile arg0
   - call fs.readFileSync arg0
@@ -416,7 +594,7 @@ rules:
 - id: tjs-ssrf
   kind: taint
   stack: generic
-  languages: *id003
+  languages: *id002
   severity: high
   confidence: medium
   cwe:
@@ -424,7 +602,16 @@ rules:
   owasp: A10:2021
   title: SSRF (tainted data reaches an outgoing request)
   message: Untrusted input flows into the URL of a server-side request.
-  sources: *id004
+  sources:
+  - field req.query
+  - field req.body
+  - field req.params
+  - field req.headers
+  - field req.cookies
+  - call req.param
+  - field request.query
+  - field request.body
+  - field request.params
   sinks:
   - call axios.get arg0
   - call axios.post arg0
@@ -452,7 +639,7 @@ rules:
 - id: tjs-deser
   kind: taint
   stack: generic
-  languages: *id003
+  languages: *id002
   severity: high
   confidence: medium
   cwe:
@@ -460,7 +647,16 @@ rules:
   owasp: A03:2021
   title: Insecure deserialization (tainted data reaches a deserializer)
   message: Untrusted input flows into an unsafe deserializer.
-  sources: *id004
+  sources:
+  - field req.query
+  - field req.body
+  - field req.params
+  - field req.headers
+  - field req.cookies
+  - call req.param
+  - field request.query
+  - field request.body
+  - field request.params
   sinks:
   - call serialize.unserialize arg0
   - call unserialize arg0
@@ -474,7 +670,7 @@ rules:
 - id: tjs-xss
   kind: taint
   stack: generic
-  languages: *id003
+  languages: *id002
   severity: medium
   confidence: medium
   cwe:
@@ -482,7 +678,16 @@ rules:
   owasp: A03:2021
   title: Cross-site scripting (tainted data reaches HTML output)
   message: Untrusted input flows into HTML output without escaping.
-  sources: *id004
+  sources:
+  - field req.query
+  - field req.body
+  - field req.params
+  - field req.headers
+  - field req.cookies
+  - call req.param
+  - field request.query
+  - field request.body
+  - field request.params
   sinks:
   - assign *.innerHTML
   - assign *.outerHTML
@@ -518,7 +723,7 @@ rules:
 - id: tjs-redirect
   kind: taint
   stack: generic
-  languages: *id003
+  languages: *id002
   severity: medium
   confidence: low
   cwe:
@@ -526,7 +731,16 @@ rules:
   owasp: A01:2021
   title: Open redirect (tainted data reaches a redirect)
   message: Untrusted input flows into a redirect target.
-  sources: *id004
+  sources:
+  - field req.query
+  - field req.body
+  - field req.params
+  - field req.headers
+  - field req.cookies
+  - call req.param
+  - field request.query
+  - field request.body
+  - field request.params
   sinks:
   - call res.redirect arg0
   - call res.location arg0
@@ -539,10 +753,58 @@ rules:
     - vuln.js
     safe:
     - safe.js
+- id: tjs-idor
+  kind: taint
+  stack: generic
+  languages: *id002
+  severity: medium
+  confidence: medium
+  cwe:
+  - CWE-639
+  owasp: A01:2021
+  title: Possible IDOR (request key fetches a record without ownership evidence)
+  message: A record is fetched by a key taken from the request, and the function shows no sign of checking
+    that the record belongs to the current user.
+  sources:
+  - field req.query
+  - field req.body
+  - field req.params
+  - field req.headers
+  - field req.cookies
+  - call req.param
+  - field request.query
+  - field request.body
+  - field request.params
+  sinks:
+  - call *.findByPk arg0
+  - call *.findById arg0
+  - call *.findByIdAndUpdate arg0
+  - call *.findByIdAndDelete arg0
+  - call *.findByIdAndRemove arg0
+  tier: B
+  sanitizers:
+  - call *.verify
+  - call *.decode
+  - call jwt.*
+  guards:
+  - field req.user
+  - field req.session
+  - field req.auth
+  - field res.locals.user
+  - field ctx.state.user
+  - field request.user
+  - call getUser
+  - call getSession
+  fix: Scope the query to the signed-in user (filter by owner) or compare the owner after loading.
+  tests:
+    vulnerable:
+    - vuln.js
+    safe:
+    - safe.js
 - id: tphp-sqli
   kind: taint
   stack: generic
-  languages: &id005
+  languages: &id003
   - php
   severity: high
   confidence: medium
@@ -551,7 +813,7 @@ rules:
   owasp: A03:2021
   title: SQL injection (tainted data reaches a query)
   message: Untrusted input flows into a SQL statement without parameter binding.
-  sources: &id006
+  sources:
   - var _GET
   - var _POST
   - var _REQUEST
@@ -590,7 +852,7 @@ rules:
 - id: tphp-cmdi
   kind: taint
   stack: generic
-  languages: *id005
+  languages: *id003
   severity: critical
   confidence: medium
   cwe:
@@ -598,7 +860,12 @@ rules:
   owasp: A03:2021
   title: OS command injection (tainted data reaches a shell)
   message: Untrusted input flows into an OS command.
-  sources: *id006
+  sources:
+  - var _GET
+  - var _POST
+  - var _REQUEST
+  - var _COOKIE
+  - var _FILES
   sinks:
   - call system arg0
   - call exec arg0
@@ -622,7 +889,7 @@ rules:
 - id: tphp-codei
   kind: taint
   stack: generic
-  languages: *id005
+  languages: *id003
   severity: critical
   confidence: medium
   cwe:
@@ -630,7 +897,12 @@ rules:
   owasp: A03:2021
   title: Code injection (tainted data reaches eval)
   message: Untrusted input flows into dynamic code evaluation.
-  sources: *id006
+  sources:
+  - var _GET
+  - var _POST
+  - var _REQUEST
+  - var _COOKIE
+  - var _FILES
   sinks:
   - call eval arg0
   - call assert arg0
@@ -648,7 +920,7 @@ rules:
 - id: tphp-pathtrav
   kind: taint
   stack: generic
-  languages: *id005
+  languages: *id003
   severity: high
   confidence: medium
   cwe:
@@ -656,7 +928,12 @@ rules:
   owasp: A03:2021
   title: Path traversal (tainted data reaches a file path)
   message: Untrusted input flows into a file system path.
-  sources: *id006
+  sources:
+  - var _GET
+  - var _POST
+  - var _REQUEST
+  - var _COOKIE
+  - var _FILES
   sinks:
   - call include arg0
   - call include_once arg0
@@ -686,7 +963,7 @@ rules:
 - id: tphp-ssrf
   kind: taint
   stack: generic
-  languages: *id005
+  languages: *id003
   severity: high
   confidence: medium
   cwe:
@@ -694,7 +971,12 @@ rules:
   owasp: A10:2021
   title: SSRF (tainted data reaches an outgoing request)
   message: Untrusted input flows into the URL of a server-side request.
-  sources: *id006
+  sources:
+  - var _GET
+  - var _POST
+  - var _REQUEST
+  - var _COOKIE
+  - var _FILES
   sinks:
   - call curl_init arg0
   - call get_headers arg0
@@ -715,7 +997,7 @@ rules:
 - id: tphp-deser
   kind: taint
   stack: generic
-  languages: *id005
+  languages: *id003
   severity: high
   confidence: medium
   cwe:
@@ -723,7 +1005,12 @@ rules:
   owasp: A03:2021
   title: Insecure deserialization (tainted data reaches a deserializer)
   message: Untrusted input flows into an unsafe deserializer.
-  sources: *id006
+  sources:
+  - var _GET
+  - var _POST
+  - var _REQUEST
+  - var _COOKIE
+  - var _FILES
   sinks:
   - call unserialize arg0
   - call yaml_parse arg0
@@ -740,7 +1027,7 @@ rules:
 - id: tphp-xss
   kind: taint
   stack: generic
-  languages: *id005
+  languages: *id003
   severity: medium
   confidence: medium
   cwe:
@@ -748,7 +1035,12 @@ rules:
   owasp: A03:2021
   title: Cross-site scripting (tainted data reaches HTML output)
   message: Untrusted input flows into HTML output without escaping.
-  sources: *id006
+  sources:
+  - var _GET
+  - var _POST
+  - var _REQUEST
+  - var _COOKIE
+  - var _FILES
   sinks:
   - call echo args
   - call print arg0
@@ -775,7 +1067,7 @@ rules:
 - id: tphp-redirect
   kind: taint
   stack: generic
-  languages: *id005
+  languages: *id003
   severity: medium
   confidence: low
   cwe:
@@ -783,7 +1075,12 @@ rules:
   owasp: A01:2021
   title: Open redirect (tainted data reaches a redirect)
   message: Untrusted input flows into a redirect target.
-  sources: *id006
+  sources:
+  - var _GET
+  - var _POST
+  - var _REQUEST
+  - var _COOKIE
+  - var _FILES
   sinks:
   - call redirect arg0
   - call Redirect::to arg0
@@ -791,6 +1088,56 @@ rules:
   sanitizers:
   - call intval
   fix: Redirect only to allow-listed or relative internal targets.
+  tests:
+    vulnerable:
+    - vuln.php
+    safe:
+    - safe.php
+- id: tphp-idor
+  kind: taint
+  stack: generic
+  languages: *id003
+  severity: medium
+  confidence: medium
+  cwe:
+  - CWE-639
+  owasp: A01:2021
+  title: Possible IDOR (request key fetches a record without ownership evidence)
+  message: A record is fetched by a key taken from the request, and the function shows no sign of checking
+    that the record belongs to the current user.
+  sources:
+  - var _GET
+  - var _POST
+  - var _REQUEST
+  - var _COOKIE
+  - var _FILES
+  - call request.input
+  - call request.get
+  - call request.query
+  - call request.route
+  - call request.post
+  - param id
+  - param *_id
+  sinks:
+  - call *::find arg0
+  - call *::findOrFail arg0
+  - call *::destroy arg0
+  - call *.find arg0
+  - call *.findOrFail arg0
+  tier: B
+  guards:
+  - call auth
+  - call Auth::id
+  - call Auth::user
+  - call Auth::check
+  - call request.user
+  - field auth.user
+  - call Auth::guard
+  - call Gate::allows
+  - call Gate::authorize
+  - call *.authorize
+  - call *.can
+  fix: Scope the query to the signed-in user (filter by owner) or compare the owner after loading.
   tests:
     vulnerable:
     - vuln.php
