@@ -3,7 +3,7 @@
 Dibuat otomatis oleh `scripts/gen_rule_docs.py` dari rule pack (vulnfab 0.3.x).
 **Jangan edit tangan**; perbarui rule YAML lalu jalankan skripnya. CI memeriksa kesinkronan.
 
-Total: 123 rule. Tingkat: **A** struktural/pasti, **B** pola kepemilikan (IDOR; confidence maksimum medium), **C** kandidat semantik (tersembunyi secara default).
+Total: 124 rule. Tingkat: **A** struktural/pasti, **B** pola kepemilikan (IDOR; confidence maksimum medium), **C** kandidat semantik (tersembunyi secara default).
 
 Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignores` di `.vulnfab.yml`, atau baseline.
 
@@ -203,7 +203,7 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 - Perbaikan: Add @login_required / LoginRequiredMixin (or permission_classes) and check ownership.
 - OWASP: [A01:2021](https://owasp.org/Top10/)
 
-## Stack `generic` (66 rule)
+## Stack `generic` (67 rule)
 
 | Rule | Jenis | Severity | Confidence | Tier | CWE |
 |---|---|---|---|---|---|
@@ -244,6 +244,7 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 | [`py-subprocess-shell`](#py-subprocess-shell) | pattern | high | medium | — | [CWE-78](https://cwe.mitre.org/data/definitions/78.html) |
 | [`py-tempfile-mktemp`](#py-tempfile-mktemp) | pattern | medium | high | — | [CWE-377](https://cwe.mitre.org/data/definitions/377.html) |
 | [`py-yaml-load`](#py-yaml-load) | pattern | high | high | — | [CWE-502](https://cwe.mitre.org/data/definitions/502.html) |
+| [`sca-known-vuln`](#sca-known-vuln) | scanner | high | high | A | [CWE-1104](https://cwe.mitre.org/data/definitions/1104.html), [CWE-937](https://cwe.mitre.org/data/definitions/937.html) |
 | [`sec-secret-hardcoded`](#sec-secret-hardcoded) | scanner | high | medium | A | [CWE-798](https://cwe.mitre.org/data/definitions/798.html) |
 | [`tjs-cmdi`](#tjs-cmdi) | taint | critical | medium | — | [CWE-78](https://cwe.mitre.org/data/definitions/78.html) |
 | [`tjs-codei`](#tjs-codei) | taint | critical | medium | — | [CWE-95](https://cwe.mitre.org/data/definitions/95.html) |
@@ -564,6 +565,14 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 - Jenis: pattern — Syntax pattern (tree-sitter); flags code that has the shape described.
 - Perbaikan: Use yaml.safe_load.
 - OWASP: [A08:2021](https://owasp.org/Top10/)
+
+### sca-known-vuln
+
+**Dependency with a known vulnerability** — A locked dependency version matches a published advisory.
+
+- Jenis: scanner — Text scanner over files (secrets, env files, templates).
+- Perbaikan: Upgrade to a fixed version and regenerate the lockfile.
+- OWASP: [A06:2021](https://owasp.org/Top10/)
 
 ### sec-secret-hardcoded
 

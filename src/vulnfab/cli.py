@@ -89,6 +89,13 @@ def scan_command(
         bool, typer.Option("--no-cache", help="Do not read or write the result cache.")
     ] = False,
     jobs: Annotated[int, typer.Option("--jobs", "-j", min=1, help="Worker processes.")] = 1,
+    osv_db: Annotated[
+        Path | None,
+        typer.Option("--osv-db", help="Offline OSV advisories (dir/file) to check lockfiles."),
+    ] = None,
+    osv_scanner: Annotated[
+        bool, typer.Option("--osv-scanner", help="Also run the optional osv-scanner binary.")
+    ] = False,
     since: Annotated[
         str | None,
         typer.Option(
@@ -115,6 +122,8 @@ def scan_command(
         use_cache=not no_cache,
         jobs=jobs,
         since=since,
+        osv_db=osv_db,
+        osv_scanner=osv_scanner,
     )
     try:
         result = scan(path, options)

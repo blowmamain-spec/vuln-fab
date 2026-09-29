@@ -203,7 +203,11 @@ def _engine_lines(
         target = root / rel
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
-        result = scan(root, ScanOptions(min_confidence=Confidence.LOW))
+        osv = base / "osv"  # advisories for SCA rule tests
+        result = scan(
+            root,
+            ScanOptions(min_confidence=Confidence.LOW, osv_db=osv if osv.is_dir() else None),
+        )
     return {f.line for f in result.findings if f.rule_id == rule.id and f.file == rel}, None
 
 

@@ -71,6 +71,14 @@ Hasil analisis di-cache di `~/.cache/vulnfab` (atau `$VULNFAB_CACHE_DIR`). Kunci
 rule, hash setiap berkas, konfigurasi, dan opsi analisis; jadi hasil dari cache selalu identik dengan pemindaian
 baru. Pindai ulang repo yang tidak berubah biasanya < 1 detik.
 
+## Dependensi rentan (offline)
+
+`vulnfab scan . --osv-db ./osv-advisories` mencocokkan versi di `package-lock.json`, `composer.lock`,
+`Pipfile.lock`, `poetry.lock`, `uv.lock` dan `requirements*.txt` (versi terkunci `==`) dengan dump
+advisori OSV lokal (direktori/berkas `.json`/`.jsonl`). Tanpa jaringan, hasil deterministik.
+`--osv-scanner` menjalankan biner `osv-scanner` bila ada. Tanpa keduanya, lockfile dicatat
+di *coverage* sebagai "tidak diperiksa".
+
 ## CI
 
 GitHub Action (komposit) di root repo ini:

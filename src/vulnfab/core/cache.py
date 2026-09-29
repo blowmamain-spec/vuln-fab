@@ -64,6 +64,16 @@ def rule_digest(paths: list[Path]) -> str:
     return digest.hexdigest()
 
 
+def tree_digest(base: Path) -> str:
+    """Digest of every file under ``base`` (or of the single file)."""
+    digest = hashlib.sha256()
+    files = [base] if base.is_file() else sorted(p for p in base.rglob("*") if p.is_file())
+    for f in files:
+        digest.update(f.name.encode())
+        digest.update(f.read_bytes())
+    return digest.hexdigest()
+
+
 def scan_key(parts: dict[str, Any]) -> str:
     return hashlib.sha256(json.dumps(parts, sort_keys=True, default=str).encode()).hexdigest()
 

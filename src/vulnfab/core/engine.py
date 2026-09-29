@@ -51,6 +51,7 @@ from vulnfab.core.suppress import PerFileIgnores, is_nosec, load_baseline, write
 from vulnfab.core.taintrules import taint_findings
 from vulnfab.core.tir import ModuleIR
 from vulnfab.plugins import registry
+from vulnfab.scanners.sca import is_lockfile
 
 DEFAULT_FILE_TIMEOUT = 10.0
 
@@ -67,6 +68,8 @@ class ScanOptions:
     schema_dump: Path | None = None
     use_cache: bool = False  # opt-in for library callers; the CLI enables it by default
     jobs: int = 1
+    osv_db: Path | None = None  # offline OSV advisories (dir/file) for lockfile checks
+    osv_scanner: bool = False  # also run the optional osv-scanner binary
     since: str | None = None  # only report findings affected by changes since this git ref
 
 
@@ -183,6 +186,8 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
                 "limits": [max_file_bytes, file_timeout],
                 "extra_rules": scan_cache.rule_digest(options.extra_rule_paths or []),
                 "dump": scan_cache.file_digest(options.schema_dump),
+                "osv": scan_cache.tree_digest(options.osv_db) if options.osv_db else "",
+                "osv_scanner": options.osv_scanner,
             }
         )
         hit = scan_cache.load(path, key)
@@ -261,7 +266,23 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
             "<project>/supabase/migrations/ (file names must sort in the order they should run)."
         )
     try:
-        raw.extend(run_scanner_rules([r for r in scanner_rules if r.stack in active], loaded.files))
+        settings: dict[str, Any] = {}
+        if options.osv_db:
+            settings["osv_db"] = str(options.osv_db)
+        if options.osv_scanner:
+            settings["osv_scanner_root"] = str(path)
+        raw.extend(
+            run_scanner_rules(
+                [r for r in scanner_rules if r.stack in active], loaded.files, settings
+            )
+        )
+        coverage.adapters.extend(settings.get("adapters", []))
+        lockfiles = [f.path for f in loaded.files if is_lockfile(f)]
+        if lockfiles and not options.osv_db and not options.osv_scanner:
+            coverage.assumptions.append(
+                f"{len(lockfiles)} dependency lockfile(s) were found but NOT checked for known "
+                "vulnerabilities: pass --osv-db <advisory dir> (offline) or --osv-scanner."
+            )
         cross = [r for r in crosscheck_rules if r.stack in active]
         skipped: dict[str, list[str]] = {}
         for rule in cross:

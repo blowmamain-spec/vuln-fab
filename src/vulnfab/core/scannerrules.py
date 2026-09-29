@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import importlib
 from collections.abc import Callable, Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
-from vulnfab.core.models import Confidence, Finding, SourceFile
+from vulnfab.core.models import Confidence, Finding, Severity, SourceFile
 from vulnfab.core.rules import ScannerRule
 
 ALLOWED_SCANNER_PREFIX = "vulnfab."
@@ -27,12 +27,14 @@ class ScannerHit:
     snippet: str = ""
     symbol: str = ""
     confidence: Confidence | None = None
+    severity: Severity | None = None
 
 
 @dataclass
 class ScannerContext:
     files: list[SourceFile]
     rule: ScannerRule
+    settings: dict[str, Any] = field(default_factory=dict)  # e.g. {"osv_db": path}
 
 
 ScannerFn = Callable[[ScannerContext], Iterable[ScannerHit]]
@@ -54,14 +56,16 @@ def load_scanner(target: str) -> ScannerFn:
 
 
 def run_scanner_rules(
-    rules: Iterable[ScannerRule], files: list[SourceFile]
+    rules: Iterable[ScannerRule],
+    files: list[SourceFile],
+    settings: dict[str, Any] | None = None,
 ) -> list[tuple[Finding, str]]:
     out: list[tuple[Finding, str]] = []
     for rule in rules:
         if not rule.enabled:
             continue
         selected = [f for f in files if not rule.languages or f.language in rule.languages]
-        for hit in load_scanner(rule.scanner)(ScannerContext(selected, rule)):
+        for hit in load_scanner(rule.scanner)(ScannerContext(selected, rule, settings or {})):
             snippet = hit.snippet
             out.append(
                 (
@@ -70,7 +74,7 @@ def run_scanner_rules(
                         title=rule.display_title,
                         cwe=tuple(rule.cwe),
                         owasp=rule.owasp,
-                        severity=rule.severity,
+                        severity=hit.severity or rule.severity,
                         confidence=hit.confidence or rule.confidence,
                         tier=rule.tier,
                         file=hit.file,

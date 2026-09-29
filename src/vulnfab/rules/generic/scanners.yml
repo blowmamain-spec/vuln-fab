@@ -28,3 +28,18 @@ rules:
     message: "A service_role key is placed in a variable that is bundled into the client."
     fix: "Use the anon key in the browser; keep service_role server-side only, without a public prefix."
     tests: {vulnerable: [.env.vuln], safe: [.env.safe]}
+
+  - id: sca-known-vuln
+    stack: generic
+    kind: scanner
+    scanner: "vulnfab.scanners.sca:known_vulnerabilities"
+    languages: [json, composer-lock, poetry-lock, uv-lock, pipfile-lock, requirements]
+    severity: high
+    confidence: high
+    tier: A
+    cwe: [CWE-1104, CWE-937]
+    owasp: "A06:2021"
+    title: "Dependency with a known vulnerability"
+    message: "A locked dependency version matches a published advisory."
+    fix: "Upgrade to a fixed version and regenerate the lockfile."
+    tests: {vulnerable: [requirements.txt], safe: [requirements.safe.txt]}

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- SCA offline: `sca-known-vuln`, `--osv-db`, `--osv-scanner` (WP-8.2).
+
 ## 0.1.0 (M1: Supabase + TypeScript)
 - Pipeline: loader, plugin registry, tree-sitter parsing, reporters JSON/console, baseline, nosec, config.
 - Rule engine: skema rule (pydantic), evaluator ekspresi aman, matcher snippet, harness test, scoring.

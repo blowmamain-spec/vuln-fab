@@ -34,7 +34,16 @@ _EXTENSION_LANGUAGE = {
     ".yml": "yaml", ".yaml": "yaml",
 }  # fmt: skip
 
+LOCKFILE_LANGUAGES = frozenset(
+    {"composer-lock", "poetry-lock", "uv-lock", "pipfile-lock", "requirements"}
+)
+LOCKFILE_MAX_BYTES = 32 * 1024 * 1024  # dependency locks are big and needed in full
+
 _NAME_LANGUAGE = {
+    "composer.lock": "composer-lock",
+    "poetry.lock": "poetry-lock",
+    "uv.lock": "uv-lock",
+    "pipfile.lock": "pipfile-lock",
     "dockerfile": "dockerfile",
     "nginx.conf": "nginx",
     "composer.json": "json",
@@ -51,6 +60,8 @@ def detect_language(rel_path: str) -> str | None:
         return "env"
     if lower in _NAME_LANGUAGE:
         return _NAME_LANGUAGE[lower]
+    if lower.startswith("requirements") and lower.endswith(".txt"):
+        return "requirements"
     if lower.startswith("dockerfile.") or lower.endswith(".dockerfile"):
         return "dockerfile"
     if lower.endswith(".conf") and "nginx" in rel_path.lower():
@@ -233,7 +244,11 @@ class Repo:
             path = self.root / rel
             try:
                 size = path.stat().st_size
-                if size > self.max_file_bytes:
+                is_lock = language in LOCKFILE_LANGUAGES or rel.endswith("package-lock.json")
+                limit = (
+                    max(self.max_file_bytes, LOCKFILE_MAX_BYTES) if is_lock else self.max_file_bytes
+                )
+                if size > limit:
                     result.skipped.append(SkippedFile(rel, "too_large", f"{size} bytes"))
                     continue
                 data = path.read_bytes()
