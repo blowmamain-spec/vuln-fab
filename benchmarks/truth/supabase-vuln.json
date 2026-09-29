@@ -904,7 +904,7 @@
       "file": "web/src/pages/api/search.ts",
       "line_start": 7,
       "line_end": 10,
-      "class": "or-inject",
+      "class": "supabase-or-inject",
       "cwe": [
         "CWE-943"
       ],
@@ -918,7 +918,7 @@
       "file": "web/src/pages/api/search.ts",
       "line_start": 12,
       "line_end": 12,
-      "class": "or-inject",
+      "class": "supabase-or-inject",
       "cwe": [
         "CWE-943"
       ],
@@ -932,7 +932,7 @@
       "file": "web/src/pages/api/search.ts",
       "line_start": 14,
       "line_end": 14,
-      "class": "or-inject",
+      "class": "supabase-or-inject",
       "cwe": [
         "CWE-943"
       ],

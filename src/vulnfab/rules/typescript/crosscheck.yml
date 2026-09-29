@@ -1,0 +1,30 @@
+rules:
+  - id: ts-table-no-rls
+    stack: typescript
+    kind: crosscheck
+    facts: DataAccess
+    check: "vulnfab.plugins.typescript.checks:table_no_rls"
+    severity: high
+    confidence: high
+    tier: A
+    cwe: [CWE-862]
+    owasp: "A01:2021"
+    title: "Client queries a table that has no Row Level Security"
+    message: "Code using the public anon key reads or writes a table without RLS."
+    fix: "Enable RLS on the table and add policies, or stop querying it from the client."
+    tests: {vulnerable: [vuln.ts], safe: [safe.ts]}
+
+  - id: ts-idor-eq-id
+    stack: typescript
+    kind: crosscheck
+    facts: DataAccess
+    check: "vulnfab.plugins.typescript.checks:idor_eq_id"
+    severity: high
+    confidence: medium
+    tier: B
+    cwe: [CWE-639]
+    owasp: "A01:2021"
+    title: "Row fetched by request-supplied id without an ownership check"
+    message: "A row is selected by an id taken from the request and nothing limits it to its owner."
+    fix: "Add an owner filter (.eq('user_id', user.id)) or an owner-based RLS policy."
+    tests: {vulnerable: [vuln.ts], safe: [safe.ts]}

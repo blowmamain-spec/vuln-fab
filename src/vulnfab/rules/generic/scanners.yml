@@ -1,0 +1,30 @@
+rules:
+  - id: sec-secret-hardcoded
+    stack: generic
+    kind: scanner
+    scanner: "vulnfab.scanners.secrets:scan"
+    languages: [python, javascript, typescript, tsx, php, env, yaml, json, toml, sql, dockerfile]
+    severity: high
+    confidence: medium
+    tier: A
+    cwe: [CWE-798]
+    owasp: "A07:2021"
+    title: "Hard-coded secret"
+    message: "A credential appears to be committed to source control."
+    fix: "Move the secret to an environment variable or secret manager and rotate it."
+    tests: {vulnerable: [vuln.ts, vuln.py, .env.vuln], safe: [safe.ts, safe.py, .env.safe]}
+
+  - id: env-service-role-client
+    stack: generic
+    kind: scanner
+    scanner: "vulnfab.scanners.envfiles:service_role_in_public_env"
+    languages: [env]
+    severity: critical
+    confidence: high
+    tier: A
+    cwe: [CWE-522]
+    owasp: "A02:2021"
+    title: "Supabase service_role key exposed through a public env variable"
+    message: "A service_role key is placed in a variable that is bundled into the client."
+    fix: "Use the anon key in the browser; keep service_role server-side only, without a public prefix."
+    tests: {vulnerable: [.env.vuln], safe: [.env.safe]}

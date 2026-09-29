@@ -84,17 +84,17 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
 
 ## Fase 4: Plugin TypeScript + cross-check → **M1**
 
-- [ ] **WP-4.1 Parser & symbol table TS/JS/TSX** (M) — dep: 1.2, 2.3. Fungsi, kelas, import/export, ekspor default, alias sederhana.
+- [x] **WP-4.1 Parser & symbol table TS/JS/TSX** (M) — dep: 1.2, 2.3. Fungsi, kelas, import/export, ekspor default, alias sederhana.
   *Lulus jika*: test pada fixture TS/TSX/JS; sintaks tak valid → `skipped`.
-- [ ] **WP-4.2 Rule pack TS (pola)** (L) — dep: 4.1, 2.4. `service_role` di frontend, `NEXT_PUBLIC_*`/`VITE_*` berisi secret, `dangerouslySetInnerHTML`/`innerHTML`, `eval`/`new Function`, `child_process` dengan input (versi pola; taint menyusul), `.or(\`…${x}\`)`.
+- [x] **WP-4.2 Rule pack TS (pola)** (L) — dep: 4.1, 2.4. `service_role` di frontend, `NEXT_PUBLIC_*`/`VITE_*` berisi secret, `dangerouslySetInnerHTML`/`innerHTML`, `eval`/`new Function`, `child_process` dengan input (versi pola; taint menyusul), `.or(\`…${x}\`)`.
   *Lulus jika*: vuln + safe per rule; `rules test` hijau.
-- [ ] **WP-4.3 Secret bawaan + adaptor gitleaks** (M) — dep: 1.4. Regex spesifik provider, entropi, allowlist, `.env` ter-commit; adaptor gitleaks opsional (ketiadaan → status `missing` di coverage).
+- [x] **WP-4.3 Secret bawaan + adaptor gitleaks** (M) — dep: 1.4. Regex spesifik provider, entropi, allowlist, `.env` ter-commit; adaptor gitleaks opsional (ketiadaan → status `missing` di coverage).
   *Lulus jika*: test secret palsu (jangan pakai kredensial nyata) terdeteksi; kunci contoh di allowlist tidak; ReDoS test lulus.
-- [ ] **WP-4.4 Ekstraksi `DataAccess` supabase-js** (L) — dep: 4.1. `from().select/insert/update/delete/upsert`, `rpc`, deteksi `client_kind` (createClient + kunci `service_role`/anon/user), `filter_columns` dari `.eq/.match/.filter`, resolusi nama tabel literal/konstanta.
+- [x] **WP-4.4 Ekstraksi `DataAccess` supabase-js** (L) — dep: 4.1. `from().select/insert/update/delete/upsert`, `rpc`, deteksi `client_kind` (createClient + kunci `service_role`/anon/user), `filter_columns` dari `.eq/.match/.filter`, resolusi nama tabel literal/konstanta.
   *Lulus jika*: ≥ 20 kasus (chain multi-baris, variabel klien, tabel dinamis → `Unresolved`).
-- [ ] **WP-4.5 Engine cross-check + rule** (M) — dep: 3.4, 4.4. Kelas cek: akses ke tabel tanpa RLS/`Allow` untuk `anon`; klien anon menulis ke tabel dengan policy write terbuka; `.eq('id', param)` pada tabel tanpa policy owner (tier B awal, tanpa taint). Trace ke policy/migration.
+- [x] **WP-4.5 Engine cross-check + rule** (M) — dep: 3.4, 4.4. Kelas cek: akses ke tabel tanpa RLS/`Allow` untuk `anon`; klien anon menulis ke tabel dengan policy write terbuka; `.eq('id', param)` pada tabel tanpa policy owner (tier B awal, tanpa taint). Trace ke policy/migration.
   *Lulus jika*: temuan memuat trace ganda (baris kode + lokasi schema); e2e lab cocok truth.
-- [ ] **WP-4.6 Entrypoint & Edge Functions** (M) — dep: 4.1, 3.5. Next.js route handler/server action, Express, `supabase/functions/*`; `verify_jwt = false` dari config; input tanpa validasi (pola).
+- [x] **WP-4.6 Entrypoint & Edge Functions** (M) — dep: 4.1, 3.5. Next.js route handler/server action, Express, `supabase/functions/*`; `verify_jwt = false` dari config; input tanpa validasi (pola).
   *Lulus jika*: fixture per framework menghasilkan entrypoint yang benar.
 - [ ] **WP-4.7 Gate M1** (M) — dep: 3.8, 4.5, 0.7. Evaluasi lengkap lab + aplikasi milikmu; simpan `benchmarks/results/m1.md`; tag `v0.1.0`.
   *Lulus jika*: seluruh gate M1 di rencana Bagian 17 terpenuhi; catatan false positive/negatif ditulis.

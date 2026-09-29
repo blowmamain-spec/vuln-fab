@@ -502,3 +502,23 @@ def schema_drift(ctx: CheckContext) -> Iterator[SchemaHit]:
                     f"Policies on {key} differ ({'; '.join(parts)}).",
                     symbol=f"{key}:policies",
                 )  # fmt: skip
+
+
+def edge_no_jwt(ctx: CheckContext) -> Iterator[SchemaHit]:
+    """Edge functions declared with ``verify_jwt = false`` in supabase/config.toml."""
+    for doc in ctx.model.configs.values():
+        functions = doc.data.get("functions", {})
+        if not isinstance(functions, dict):
+            continue
+        for name, cfg in sorted(functions.items()):
+            if isinstance(cfg, dict) and cfg.get("verify_jwt") is False:
+                line = doc.lines.get(("functions", name, "verify_jwt"), 1)
+                yield SchemaHit(
+                    doc.path,
+                    line,
+                    line,
+                    f"Edge function {name!r} is publicly invokable: JWT verification is disabled. "
+                    "Anyone on the internet can call it; make sure it authenticates callers itself "
+                    "(e.g. a webhook signature).",
+                    symbol=f"{doc.path}:functions.{name}",
+                )

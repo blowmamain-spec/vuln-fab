@@ -1,0 +1,5 @@
+[functions.legacy-hook]
+verify_jwt = false  # vuln: sb-edge-no-jwt
+
+[functions.another]
+verify_jwt = false  # vuln: sb-edge-no-jwt

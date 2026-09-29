@@ -1,0 +1,96 @@
+rules:
+  - id: ts-service-role-client
+    stack: typescript
+    languages: [javascript, typescript, tsx]
+    severity: critical
+    confidence: high
+    tier: A
+    cwe: [CWE-522]
+    owasp: "A02:2021"
+    title: "Supabase service_role key used in client-bundled code"
+    message: "createClient receives a service_role key from a public (client-bundled) env variable."
+    pattern-either:
+      - "createClient($U, process.env.$V)"
+      - "createClient($U, process.env[$V])"
+      - "createClient($U, import.meta.env.$V)"
+      - "createBrowserClient($U, process.env.$V)"
+    where:
+      - {metavariable: V, kind: regex, regex: "(NEXT_PUBLIC|VITE|REACT_APP|EXPO_PUBLIC|NUXT_PUBLIC|GATSBY)_[A-Z0-9_]*SERVICE"}
+    fix: "Use the anon key in the browser and keep service_role in server-only code."
+    tests: {vulnerable: [vuln.ts], safe: [safe.ts]}
+
+  - id: ts-xss-dangerous-html
+    stack: typescript
+    languages: [javascript, tsx]
+    severity: high
+    confidence: medium
+    tier: A
+    cwe: [CWE-79]
+    owasp: "A03:2021"
+    supersedes: [js-dangerous-html]
+    title: "dangerouslySetInnerHTML with unsanitized data"
+    message: "dangerouslySetInnerHTML renders raw HTML; non-constant, unsanitized data enables XSS."
+    pattern-either:
+      - "<$T ... dangerouslySetInnerHTML={{ __html: $X }} ... />"
+      - "<$T ... dangerouslySetInnerHTML={{ __html: $X }} ...></$T>"
+    where:
+      - {metavariable: X, kind: not_literal}
+      - {metavariable: X, kind: not_regex, regex: "^(DOMPurify\\.sanitize|sanitizeHtml|sanitize|xss)\\("}
+    fix: "Sanitize with DOMPurify.sanitize(...) or render text."
+    tests: {vulnerable: [vuln.tsx], safe: [safe.tsx]}
+
+  - id: ts-cmd-injection
+    stack: typescript
+    languages: [javascript, typescript, tsx]
+    severity: critical
+    confidence: medium
+    tier: A
+    cwe: [CWE-78]
+    owasp: "A03:2021"
+    supersedes: [js-exec]
+    title: "Shell command built from non-constant input"
+    message: "child_process.exec runs a shell; a non-constant command enables injection."
+    pattern-either:
+      - "child_process.exec($X, ...)"
+      - "child_process.execSync($X, ...)"
+      - "exec($X, ...)"
+      - "execSync($X, ...)"
+    where:
+      - {metavariable: X, kind: not_literal}
+    fix: "Use execFile/spawn with an argument array."
+    tests: {vulnerable: [vuln.ts], safe: [safe.ts]}
+
+  - id: ts-dynamic-eval
+    stack: typescript
+    languages: [javascript, typescript, tsx]
+    severity: high
+    confidence: medium
+    tier: A
+    cwe: [CWE-95]
+    owasp: "A03:2021"
+    supersedes: [js-eval, js-function-constructor]
+    title: "Dynamic code evaluation"
+    message: "eval()/new Function() executes code built from non-constant input."
+    pattern-either:
+      - "eval($X)"
+      - "new Function(..., $X)"
+    where:
+      - {metavariable: X, kind: not_literal}
+    fix: "Parse data with JSON.parse or an explicit parser."
+    tests: {vulnerable: [vuln.ts], safe: [safe.ts]}
+
+  - id: ts-supabase-or-inject
+    stack: typescript
+    languages: [javascript, typescript, tsx]
+    severity: medium
+    confidence: medium
+    tier: A
+    cwe: [CWE-943]
+    owasp: "A03:2021"
+    title: "Filter injection through PostgREST .or()"
+    message: "Input concatenated into .or(...) can add arbitrary filters."
+    pattern: "$Q.or($A)"
+    where:
+      - {metavariable: A, kind: fstring_or_concat}
+    fix: "Use .ilike()/.eq() with separate arguments, or validate the input."
+    tests: {vulnerable: [vuln.ts], safe: [safe.ts]}

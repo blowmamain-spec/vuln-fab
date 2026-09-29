@@ -204,6 +204,21 @@ class SchemaRule(_RuleBase):
         return self
 
 
+class ScannerRule(_RuleBase):
+    """Text scanner over file contents (secrets, env files, ...); see core/scannerrules.py."""
+
+    kind: Literal["scanner"]
+    scanner: str
+    languages: list[str] = Field(default_factory=list)  # file languages to feed; empty = all
+
+    @field_validator("scanner")
+    @classmethod
+    def _scanner(cls, v: str) -> str:
+        if not re.match(r"^[\w.]+:\w+$", v):
+            raise ValueError("'scanner' must look like 'package.module:function'")
+        return v
+
+
 class CrosscheckRule(_RuleBase):
     kind: Literal["crosscheck"]
     facts: Literal["DataAccess"]
@@ -218,7 +233,7 @@ class CrosscheckRule(_RuleBase):
 
 
 Rule = Annotated[
-    PatternRule | TaintRule | SchemaRule | CrosscheckRule,
+    PatternRule | TaintRule | SchemaRule | ScannerRule | CrosscheckRule,
     Field(discriminator="kind"),
 ]
 
@@ -274,7 +289,7 @@ def _format_pydantic(exc: ValidationError) -> list[str]:
     return messages
 
 
-AnyRule = PatternRule | TaintRule | SchemaRule | CrosscheckRule
+AnyRule = PatternRule | TaintRule | SchemaRule | ScannerRule | CrosscheckRule
 
 
 def parse_rules(text: str, filename: str = "<string>") -> tuple[list[AnyRule], list[RuleError]]:

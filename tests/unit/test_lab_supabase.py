@@ -40,7 +40,7 @@ REQUIRED_CLASSES = {
     "xss-dangerous-html",
     "cmd-injection",
     "dynamic-eval",
-    "or-inject",
+    "supabase-or-inject",
     "edge-no-jwt",
     "table-no-rls",
     "idor-eq-id",

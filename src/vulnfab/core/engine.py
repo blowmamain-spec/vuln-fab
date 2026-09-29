@@ -10,12 +10,27 @@ from vulnfab.core.config import ScanConfig, load_config
 from vulnfab.core.fingerprint import FingerprintAllocator
 from vulnfab.core.loader import DEFAULT_MAX_FILE_BYTES, Repo
 from vulnfab.core.matcher import CompiledRule
-from vulnfab.core.models import Confidence, Finding, ParsedUnit, SkippedFile
+from vulnfab.core.models import (
+    Confidence,
+    DataAccess,
+    Finding,
+    ParsedUnit,
+    SchemaModel,
+    SkippedFile,
+)
 from vulnfab.core.parsing import Deadline, TimeoutExceeded, clear_parse_cache
 from vulnfab.core.report import Coverage, ScanResult
 from vulnfab.core.ruleengine import compile_pattern_rules, findings_for_file
-from vulnfab.core.rules import RuleError, RuleLoadError, SchemaRule, load_rules
-from vulnfab.core.schemarules import CheckError, run_schema_rules
+from vulnfab.core.rules import (
+    CrosscheckRule,
+    RuleError,
+    RuleLoadError,
+    ScannerRule,
+    SchemaRule,
+    load_rules,
+)
+from vulnfab.core.scannerrules import ScannerError, run_scanner_rules
+from vulnfab.core.schemarules import CheckError, run_crosscheck_rules, run_schema_rules
 from vulnfab.core.suppress import PerFileIgnores, is_nosec, load_baseline, write_baseline
 from vulnfab.plugins import registry
 
@@ -83,6 +98,8 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
     ]
     crules: list[CompiledRule] = compile_pattern_rules(rules)
     schema_rules = [r for r in rules if isinstance(r, SchemaRule)]
+    scanner_rules = [r for r in rules if isinstance(r, ScannerRule)]
+    crosscheck_rules = [r for r in rules if isinstance(r, CrosscheckRule)]
     supersedes = {r.id: list(r.supersedes) for r in rules if getattr(r, "supersedes", None)}  # type: ignore[attr-defined]
 
     loaded = repo.load()
@@ -94,14 +111,19 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
     )
     scanned: set[str] = set()
     raw: list[tuple[Finding, str]] = []
+    facts: list[DataAccess] = []
+    schemas: dict[str, SchemaModel] = {}
 
     for sel in selected:
         plugin = sel.plugin
         plugin_rules = [c for c in crules if c.rule.stack == plugin.name]
         unit: ParsedUnit = plugin.parse([f for f in loaded.files if f.language in plugin.languages])
+        facts.extend(plugin.data_access(unit))
         coverage.files_skipped.extend(unit.skipped)
         coverage.unresolved.extend(unit.unresolved)
         schema = plugin.extract_schema(repo)
+        if schema is not None:
+            schemas[plugin.name] = schema
         if schema is not None and options.schema_dump is not None:
             attach = getattr(plugin, "attach_drift", None)
             if attach is not None:
@@ -130,6 +152,20 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
                 coverage.files_skipped.append(
                     SkippedFile(pf.path, "timeout", f"exceeded {file_timeout:g}s")
                 )
+
+    active = {s.plugin.name for s in selected}
+    try:
+        raw.extend(run_scanner_rules([r for r in scanner_rules if r.stack in active], loaded.files))
+        cross = [r for r in crosscheck_rules if r.stack in active]
+        model = schemas.get("supabase") or next(iter(schemas.values()), None)
+        if cross and model is None:
+            coverage.assumptions.append(
+                "Cross-check rules were skipped: no database schema was found to compare with."
+            )
+        elif cross and model is not None:
+            raw.extend(run_crosscheck_rules(cross, facts, model, repo))
+    except (CheckError, ScannerError) as exc:
+        raise RuleLoadError([RuleError("engine", 1, None, str(exc))]) from exc
 
     coverage.files_scanned = len(scanned)
     coverage.syntax_errors = sorted(set(coverage.syntax_errors))

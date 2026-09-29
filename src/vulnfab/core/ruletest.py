@@ -18,7 +18,7 @@ from vulnfab.core.matcher import PatternError, compile_rule
 from vulnfab.core.models import SourceFile
 from vulnfab.core.parsing import ParseFailure, parse_file
 from vulnfab.core.ruleengine import findings_for_file
-from vulnfab.core.rules import PatternRule, SchemaRule
+from vulnfab.core.rules import CrosscheckRule, PatternRule, ScannerRule, SchemaRule
 from vulnfab.core.schemarules import CheckError, run_schema_rules
 
 ANNOTATION_RE = re.compile(r"(?:#|//|--)\s*vuln:\s*([a-z][a-z0-9-]*)")
@@ -101,6 +101,9 @@ def run_rule_tests(rule: object, tests_root: Path) -> RuleTestResult:
     if isinstance(rule, SchemaRule):
         _check_lines(result, rule, base, lambda path: _schema_lines(rule, path))
         return result
+    if isinstance(rule, (ScannerRule, CrosscheckRule)):
+        _check_lines(result, rule, base, lambda path: _engine_lines(rule, base, path))
+        return result
     if not isinstance(rule, PatternRule):
         result.skipped = f"kind {getattr(rule, 'kind', '?')!r}: only file presence is checked here"
         return result
@@ -141,7 +144,33 @@ def run_rule_tests(rule: object, tests_root: Path) -> RuleTestResult:
     return result
 
 
-def _check_lines(result: RuleTestResult, rule: SchemaRule, base: Path, run) -> None:  # type: ignore[no-untyped-def]
+def _engine_lines(
+    rule: ScannerRule | CrosscheckRule, base: Path, path: Path
+) -> tuple[set[int], str | None]:
+    """Run the whole engine on a throw-away repository holding the test file.
+
+    ``schema.sql`` next to the test files (if present) becomes the Supabase migration, so
+    cross-check rules see a database schema.
+    """
+    from vulnfab.core.engine import ScanOptions, scan
+    from vulnfab.core.models import Confidence
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        schema = base / "schema.sql"
+        if schema.is_file():
+            migration = root / "supabase" / "migrations" / "20240101000000_schema.sql"
+            migration.parent.mkdir(parents=True)
+            migration.write_text(schema.read_text(encoding="utf-8"), encoding="utf-8")
+        rel = path.name if path.name.startswith(".env") else f"src/{path.name}"
+        target = root / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+        result = scan(root, ScanOptions(min_confidence=Confidence.LOW))
+    return {f.line for f in result.findings if f.rule_id == rule.id and f.file == rel}, None
+
+
+def _check_lines(result: RuleTestResult, rule, base: Path, run) -> None:  # type: ignore[no-untyped-def]
     for name in rule.tests.vulnerable:
         path = base / name
         if not path.is_file():

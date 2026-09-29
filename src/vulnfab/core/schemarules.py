@@ -9,8 +9,8 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from typing import Any
 
-from vulnfab.core.models import Confidence, Finding, SchemaModel, TraceStep
-from vulnfab.core.rules import SCHEMA_CONDITION_NAMES, SchemaRule
+from vulnfab.core.models import Confidence, DataAccess, Finding, SchemaModel, TraceStep
+from vulnfab.core.rules import SCHEMA_CONDITION_NAMES, CrosscheckRule, SchemaRule
 from vulnfab.core.safeexpr import compile_expression
 from vulnfab.plugins.base import RepoView
 
@@ -38,8 +38,9 @@ class SchemaHit:
 class CheckContext:
     model: SchemaModel
     repo: RepoView
-    rule: SchemaRule
+    rule: SchemaRule | CrosscheckRule
     extras: dict[str, Any] = field(default_factory=dict)
+    facts: list[DataAccess] = field(default_factory=list)
 
     def snippet(self, file: str, line: int, end_line: int) -> str:
         try:
@@ -168,26 +169,45 @@ def run_schema_rules(
             hits = list(load_check(rule.check)(ctx))
         else:
             hits = _condition_hits(rule, ctx)
-        for h in hits:
-            out.append(
-                (
-                    Finding(
-                        rule_id=rule.id,
-                        title=rule.display_title,
-                        cwe=tuple(rule.cwe),
-                        owasp=rule.owasp,
-                        severity=rule.severity,
-                        confidence=h.confidence or rule.confidence,
-                        tier=rule.tier,
-                        file=h.file,
-                        line=h.line,
-                        end_line=h.end_line,
-                        snippet=h.snippet or ctx.snippet(h.file, h.line, h.end_line),
-                        trace=h.trace,
-                        fix=rule.fix,
-                        message=h.detail or rule.message,
-                    ),
-                    h.symbol,
-                )
-            )
+        out.extend(_to_findings(rule, ctx, hits))
     return out
+
+
+def run_crosscheck_rules(
+    rules: Iterable[CrosscheckRule], facts: list[DataAccess], model: SchemaModel, repo: RepoView
+) -> list[tuple[Finding, str]]:
+    """Rules that relate code-level facts (`DataAccess`) to the schema model."""
+    out: list[tuple[Finding, str]] = []
+    for rule in rules:
+        if not rule.enabled:
+            continue
+        ctx = CheckContext(model, repo, rule, facts=facts)
+        out.extend(_to_findings(rule, ctx, list(load_check(rule.check)(ctx))))
+    return out
+
+
+def _to_findings(
+    rule: SchemaRule | CrosscheckRule, ctx: CheckContext, hits: list[SchemaHit]
+) -> list[tuple[Finding, str]]:
+    return [
+        (
+            Finding(
+                rule_id=rule.id,
+                title=rule.display_title,
+                cwe=tuple(rule.cwe),
+                owasp=rule.owasp,
+                severity=rule.severity,
+                confidence=h.confidence or rule.confidence,
+                tier=rule.tier,
+                file=h.file,
+                line=h.line,
+                end_line=h.end_line,
+                snippet=h.snippet or ctx.snippet(h.file, h.line, h.end_line),
+                trace=h.trace,
+                fix=rule.fix,
+                message=h.detail or rule.message,
+            ),
+            h.symbol,
+        )
+        for h in hits
+    ]

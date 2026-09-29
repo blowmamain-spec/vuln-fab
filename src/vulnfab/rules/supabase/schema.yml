@@ -208,3 +208,17 @@ rules:
     check: "vulnfab.plugins.supabase.checks:schema_drift"
     fix: "Bring the database and migrations back in sync (supabase db diff / db pull)."
     tests: {vulnerable: [vuln.sql], safe: [safe.sql]}
+
+  - id: sb-edge-no-jwt
+    stack: supabase
+    kind: schema
+    severity: high
+    confidence: medium
+    tier: A
+    cwe: [CWE-306]
+    owasp: "A07:2021"
+    title: "Edge function without JWT verification"
+    message: "An edge function is configured with verify_jwt = false."
+    check: "vulnfab.plugins.supabase.checks:edge_no_jwt"
+    fix: "Keep verify_jwt = true, or authenticate callers inside the function (e.g. webhook signature)."
+    tests: {vulnerable: [config.toml], safe: [config_safe.toml]}

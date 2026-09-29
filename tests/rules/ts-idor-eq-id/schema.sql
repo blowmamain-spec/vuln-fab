@@ -1,0 +1,10 @@
+create table public.invoices (id int, user_id uuid);
+alter table public.invoices enable row level security;
+create policy "read_all" on public.invoices for select to authenticated using (true);
+create table public.todos (id int, user_id uuid);
+alter table public.todos enable row level security;
+create policy "own" on public.todos for all to authenticated using ((select auth.uid()) = user_id);
+create table public.categories (id int, name text);
+alter table public.categories enable row level security;
+create policy "read" on public.categories for select using (true);
+create table public.docs (id int, owner_id uuid);
