@@ -46,6 +46,7 @@ def findings_for_file(
                         end_line=last,
                         snippet=_snippet(node_text(m.node, pf.source)),
                         fix=rule.fix,
+                        message=rule.message,
                     ),
                     enclosing_symbol(m.node, pf.source),
                 )

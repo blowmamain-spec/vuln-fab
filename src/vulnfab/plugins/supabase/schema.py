@@ -20,6 +20,7 @@ from vulnfab.core.models import (
     DefaultPrivilege,
     Function,
     Grant,
+    GrantEvent,
     Policy,
     SchemaModel,
     Table,
@@ -390,6 +391,18 @@ class SchemaBuilder:
                 for rv in (n.objects or [])
                 if isinstance(rv, A.RangeVar)
             ]
+        if n.is_grant:
+            for role in roles:
+                self.model.grant_events.append(
+                    GrantEvent(
+                        path,
+                        stmt.line,
+                        stmt.end_line,
+                        role,
+                        privileges,
+                        tuple(t.qualified_name for t in targets),
+                    )  # fmt: skip
+                )
         for table in targets:
             for role in roles:
                 self._set_grant(

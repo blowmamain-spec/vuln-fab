@@ -38,7 +38,7 @@
     },
     "finding": {
       "type": "object",
-      "required": ["rule_id", "title", "cwe", "owasp", "severity", "confidence", "tier", "file", "line", "end_line", "snippet", "trace", "unresolved_hops", "fix", "fingerprint"],
+      "required": ["rule_id", "title", "cwe", "owasp", "severity", "confidence", "tier", "file", "line", "end_line", "snippet", "trace", "unresolved_hops", "fix", "fingerprint", "message"],
       "additionalProperties": false,
       "properties": {
         "rule_id": {"type": "string", "pattern": "^[a-z]+-[a-z0-9-]+$"},
@@ -55,7 +55,8 @@
         "trace": {"type": "array", "items": {"$ref": "#/$defs/traceStep"}},
         "unresolved_hops": {"type": "integer", "minimum": 0},
         "fix": {"type": ["string", "null"]},
-        "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{32}$"}
+        "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+        "message": {"type": "string"}
       }
     },
     "skipped": {

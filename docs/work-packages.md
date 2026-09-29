@@ -69,17 +69,17 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
   *Lulus jika*: test urutan, duplikat timestamp, SQL rusak.
 - [x] **WP-3.2 SchemaBuilder: DDL inti** (L) — dep: 0.2, 3.1. `CREATE/ALTER/DROP TABLE`, `RENAME`, `SET SCHEMA`, kolom, constraint, `ENABLE/FORCE RLS`, `CREATE/ALTER/DROP POLICY`, `GRANT/REVOKE`, `ALTER DEFAULT PRIVILEGES`, `CREATE SCHEMA`, view (+ `security_invoker`).
   *Lulus jika*: test tabel-per-pernyataan menghasilkan SchemaModel keadaan akhir yang benar (termasuk drop lalu recreate, rename).
-- [ ] **WP-3.3 Fungsi & plpgsql** (M) — dep: 3.2. `CREATE FUNCTION` (`security_definer`, `search_path`, bahasa), parse body via `parse_plpgsql`, deteksi `EXECUTE` dinamis; `DO $$` → `Unresolved`.
+- [x] **WP-3.3 Fungsi & plpgsql** (M) — dep: 3.2. `CREATE FUNCTION` (`security_definer`, `search_path`, bahasa), parse body via `parse_plpgsql`, deteksi `EXECUTE` dinamis; `DO $$` → `Unresolved`.
   *Lulus jika*: fungsi definer tanpa `search_path` dan `EXECUTE` konkatenasi terdeteksi di test; `DO` menghasilkan `Unresolved`.
 - [x] **WP-3.4 Akses efektif** (L) — dep: 3.2. `effective_access` sesuai `spec.md` §5 (OR permissive, restrictive AND, deny-default, `auth.uid()` owner, `service_role` bypass).
   *Lulus jika*: tabel kebenaran ≥ 25 kasus lulus (termasuk RLS aktif tanpa policy = deny, `(select auth.uid())`, policy `true`, `FORCE RLS`).
-- [ ] **WP-3.5 Storage, config.toml, seed.sql** (M) — dep: 3.2. Bucket (SQL `storage.buckets` + config), policy `storage.objects`, `config.toml` (signup, jwt, `verify_jwt` per fungsi), password/akun hardcoded di seed.
+- [x] **WP-3.5 Storage, config.toml, seed.sql** (M) — dep: 3.2. Bucket (SQL `storage.buckets` + config), policy `storage.objects`, `config.toml` (signup, jwt, `verify_jwt` per fungsi), password/akun hardcoded di seed.
   *Lulus jika*: test fixture untuk tiap sumber; TOML rusak → `Unresolved`.
-- [ ] **WP-3.6 Rule pack Supabase (14 rule)** (L) — dep: 3.4, 3.5, 2.4. Katalog di rencana Bagian 9; tiap rule vuln + safe.
+- [x] **WP-3.6 Rule pack Supabase (14 rule)** (L) — dep: 3.4, 3.5, 2.4. Katalog di rencana Bagian 9; tiap rule vuln + safe.
   *Lulus jika*: `rules test` hijau; setiap rule memakai `check` Python teruji atau `condition` aman.
 - [ ] **WP-3.7 Cek drift (`--schema-dump`)** (M) — dep: 3.2. Bandingkan SchemaModel dengan dump `pg_dump --schema-only`; perbedaan menjadi temuan `info` + catatan asumsi.
   *Lulus jika*: dump sintetis dengan tabel/RLS berbeda memunculkan perbedaan yang diharapkan.
-- [ ] **WP-3.8 E2E lab Supabase** (M) — dep: 3.6, 0.6. Evaluasi terhadap `supabase-vuln`; tinjau semua temuan tak berlabel (verdict).
+- [x] **WP-3.8 E2E lab Supabase** (M) — dep: 3.6, 0.6. Evaluasi terhadap `supabase-vuln`; tinjau semua temuan tak berlabel (verdict).
   *Lulus jika*: recall tier A ≥ 90%, precision ≥ 90%, 0 FP pada decoy; snapshot e2e tersimpan; waktu < 10 s.
 
 ## Fase 4: Plugin TypeScript + cross-check → **M1**

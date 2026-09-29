@@ -1,0 +1,196 @@
+rules:
+  - id: sb-rls-missing
+    stack: supabase
+    kind: schema
+    severity: critical
+    confidence: high
+    tier: A
+    cwe: [CWE-862]
+    owasp: "A01:2021"
+    title: "Table exposed without Row Level Security"
+    message: "A table in an exposed schema has Row Level Security disabled."
+    check: "vulnfab.plugins.supabase.checks:rls_missing"
+    fix: "ALTER TABLE <t> ENABLE ROW LEVEL SECURITY; then add explicit policies."
+    tests: {vulnerable: [vuln.sql], safe: [safe.sql]}
+
+  - id: sb-policy-true
+    stack: supabase
+    kind: schema
+    severity: high
+    confidence: high
+    tier: A
+    cwe: [CWE-863]
+    owasp: "A01:2021"
+    title: "Policy allows everything (USING/WITH CHECK true)"
+    message: "A permissive policy for client roles has a TRUE expression."
+    check: "vulnfab.plugins.supabase.checks:policy_true"
+    fix: "Restrict rows, e.g. USING ((select auth.uid()) = user_id)."
+    tests: {vulnerable: [vuln.sql], safe: [safe.sql]}
+
+  - id: sb-policy-anon-write
+    stack: supabase
+    kind: schema
+    severity: high
+    confidence: high
+    tier: A
+    cwe: [CWE-862]
+    owasp: "A01:2021"
+    title: "Unauthenticated (anon) users can write"
+    message: "A policy lets the anon role INSERT/UPDATE/DELETE."
+    check: "vulnfab.plugins.supabase.checks:policy_anon_write"
+    fix: "Grant write policies TO authenticated and check ownership."
+    tests: {vulnerable: [vuln.sql], safe: [safe.sql]}
+
+  - id: sb-policy-user-metadata
+    stack: supabase
+    kind: schema
+    severity: high
+    confidence: high
+    tier: A
+    cwe: [CWE-285]
+    owasp: "A01:2021"
+    title: "Policy trusts user_metadata"
+    message: "Authorization based on user_metadata can be forged by the user."
+    check: "vulnfab.plugins.supabase.checks:policy_user_metadata"
+    fix: "Use app_metadata (server controlled) or a dedicated roles table."
+    tests: {vulnerable: [vuln.sql], safe: [safe.sql]}
+
+  - id: sb-policy-no-uid
+    stack: supabase
+    kind: schema
+    severity: medium
+    confidence: medium
+    tier: B
+    cwe: [CWE-863]
+    owasp: "A01:2021"
+    title: "Policy does not check the row owner"
+    message: "The table has user_id but the policy never compares it with auth.uid()."
+    check: "vulnfab.plugins.supabase.checks:policy_no_uid"
+    fix: "Add (select auth.uid()) = user_id to the policy expression."
+    tests: {vulnerable: [vuln.sql], safe: [safe.sql]}
+
+  - id: sb-definer-no-path
+    stack: supabase
+    kind: schema
+    severity: high
+    confidence: high
+    tier: A
+    cwe: [CWE-426]
+    owasp: "A04:2021"
+    title: "SECURITY DEFINER function without search_path"
+    message: "SECURITY DEFINER functions must pin search_path."
+    check: "vulnfab.plugins.supabase.checks:definer_no_path"
+    fix: "Add SET search_path = '' and schema-qualify every object."
+    tests: {vulnerable: [vuln.sql], safe: [safe.sql]}
+
+  - id: sb-view-no-invoker
+    stack: supabase
+    kind: schema
+    severity: medium
+    confidence: high
+    tier: A
+    cwe: [CWE-284]
+    owasp: "A01:2021"
+    title: "View bypasses RLS"
+    message: "A view in an exposed schema runs with its owner's privileges."
+    check: "vulnfab.plugins.supabase.checks:view_no_invoker"
+    fix: "CREATE VIEW ... WITH (security_invoker = true)."
+    tests: {vulnerable: [vuln.sql], safe: [safe.sql]}
+
+  - id: sb-grant-broad
+    stack: supabase
+    kind: schema
+    severity: high
+    confidence: high
+    tier: A
+    cwe: [CWE-732]
+    owasp: "A01:2021"
+    title: "Overly broad GRANT to API roles"
+    message: "Write privileges were granted to an API role."
+    check: "vulnfab.plugins.supabase.checks:grant_broad"
+    fix: "Grant only the privileges each role needs (usually SELECT)."
+    tests: {vulnerable: [vuln.sql], safe: [safe.sql]}
+
+  - id: sb-default-priv
+    stack: supabase
+    kind: schema
+    severity: medium
+    confidence: high
+    tier: A
+    cwe: [CWE-732]
+    owasp: "A01:2021"
+    title: "Default privileges grant write access on future tables"
+    message: "ALTER DEFAULT PRIVILEGES grants write access to API roles."
+    check: "vulnfab.plugins.supabase.checks:default_priv"
+    fix: "Remove the default grant; grant per table."
+    tests: {vulnerable: [vuln.sql], safe: [safe.sql]}
+
+  - id: sb-dynamic-sql
+    stack: supabase
+    kind: schema
+    severity: high
+    confidence: medium
+    tier: A
+    cwe: [CWE-89]
+    owasp: "A03:2021"
+    title: "SQL injection in a plpgsql function"
+    message: "EXECUTE receives a query built by concatenation or %s formatting."
+    check: "vulnfab.plugins.supabase.checks:dynamic_sql"
+    fix: "Use format('%L'/'%I') or EXECUTE ... USING $1."
+    tests: {vulnerable: [vuln.sql], safe: [safe.sql]}
+
+  - id: sb-storage-public
+    stack: supabase
+    kind: schema
+    severity: medium
+    confidence: medium
+    tier: A
+    cwe: [CWE-200]
+    owasp: "A01:2021"
+    title: "Public storage bucket with sensitive name"
+    message: "A public bucket name suggests sensitive files."
+    check: "vulnfab.plugins.supabase.checks:storage_public"
+    fix: "Make the bucket private and serve files with signed URLs."
+    tests: {vulnerable: [vuln.sql, config.toml], safe: [safe.sql]}
+
+  - id: sb-storage-policy
+    stack: supabase
+    kind: schema
+    severity: high
+    confidence: medium
+    tier: A
+    cwe: [CWE-863]
+    owasp: "A01:2021"
+    title: "Storage policy without ownership check"
+    message: "A storage.objects write policy does not check who owns the object."
+    check: "vulnfab.plugins.supabase.checks:storage_policy"
+    fix: "Restrict with (storage.foldername(name))[1] = (select auth.uid())::text."
+    tests: {vulnerable: [vuln.sql], safe: [safe.sql]}
+
+  - id: sb-seed-secret
+    stack: supabase
+    kind: schema
+    severity: high
+    confidence: high
+    tier: A
+    cwe: [CWE-798]
+    owasp: "A07:2021"
+    title: "Hard-coded password in seed data"
+    message: "Seed data contains a hard-coded password."
+    check: "vulnfab.plugins.supabase.checks:seed_secret"
+    fix: "Generate passwords at runtime or keep seeds out of production."
+    tests: {vulnerable: [seed.sql], safe: [seed_safe.sql]}
+
+  - id: sb-config-signup
+    stack: supabase
+    kind: schema
+    severity: medium
+    confidence: high
+    tier: A
+    cwe: [CWE-287]
+    owasp: "A07:2021"
+    title: "Open sign-up without email confirmation"
+    message: "Email sign-ups are open and confirmation is disabled."
+    check: "vulnfab.plugins.supabase.checks:config_signup"
+    fix: "Set [auth.email] enable_confirmations = true."
+    tests: {vulnerable: [config.toml], safe: [config_safe.toml]}

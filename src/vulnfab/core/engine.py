@@ -14,7 +14,8 @@ from vulnfab.core.models import Confidence, Finding, ParsedUnit, SkippedFile
 from vulnfab.core.parsing import Deadline, TimeoutExceeded
 from vulnfab.core.report import Coverage, ScanResult
 from vulnfab.core.ruleengine import compile_pattern_rules, findings_for_file
-from vulnfab.core.rules import RuleError, RuleLoadError, load_rules
+from vulnfab.core.rules import RuleError, RuleLoadError, SchemaRule, load_rules
+from vulnfab.core.schemarules import CheckError, run_schema_rules
 from vulnfab.core.suppress import PerFileIgnores, is_nosec, load_baseline, write_baseline
 from vulnfab.plugins import registry
 
@@ -73,6 +74,7 @@ def scan(path: Path, options: ScanOptions | None = None) -> ScanResult:
         if getattr(r, "id", "") not in set(config.disable_rules)
     ]
     crules: list[CompiledRule] = compile_pattern_rules(rules)
+    schema_rules = [r for r in rules if isinstance(r, SchemaRule)]
     supersedes = {r.id: list(r.supersedes) for r in rules if getattr(r, "supersedes", None)}  # type: ignore[attr-defined]
 
     loaded = repo.load()
@@ -91,6 +93,17 @@ def scan(path: Path, options: ScanOptions | None = None) -> ScanResult:
         unit: ParsedUnit = plugin.parse([f for f in loaded.files if f.language in plugin.languages])
         coverage.files_skipped.extend(unit.skipped)
         coverage.unresolved.extend(unit.unresolved)
+        schema = plugin.extract_schema(repo)
+        if schema is not None:
+            coverage.unresolved.extend(schema.unresolved)
+            coverage.assumptions.extend(
+                a for a in schema.assumptions if a not in coverage.assumptions
+            )
+            mine = [r for r in schema_rules if r.stack == plugin.name]
+            try:
+                raw.extend(run_schema_rules(mine, schema, repo))
+            except CheckError as exc:
+                raise RuleLoadError([RuleError(plugin.name, 1, None, str(exc))]) from exc
         for pf in unit.files.values():
             scanned.add(pf.path)
             if pf.has_syntax_errors:

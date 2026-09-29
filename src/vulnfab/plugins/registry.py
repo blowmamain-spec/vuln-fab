@@ -16,7 +16,10 @@ from vulnfab.plugins.base import RepoView, StackPlugin
 
 ENTRY_POINT_GROUP = "vulnfab.plugins"
 # "module:attribute" — the attribute is a plugin class or a ready instance.
-BUILTIN_PLUGINS = ("vulnfab.plugins.generic:GenericPlugin",)
+BUILTIN_PLUGINS = (
+    "vulnfab.plugins.generic:GenericPlugin",
+    "vulnfab.plugins.supabase:SupabasePlugin",
+)
 
 ACTIVATION_THRESHOLD = Confidence.MEDIUM
 

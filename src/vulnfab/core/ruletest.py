@@ -9,15 +9,17 @@ for that rule.
 from __future__ import annotations
 
 import re
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from vulnfab.core.loader import detect_language
+from vulnfab.core.loader import Repo, detect_language
 from vulnfab.core.matcher import PatternError, compile_rule
 from vulnfab.core.models import SourceFile
 from vulnfab.core.parsing import ParseFailure, parse_file
 from vulnfab.core.ruleengine import findings_for_file
-from vulnfab.core.rules import PatternRule
+from vulnfab.core.rules import PatternRule, SchemaRule
+from vulnfab.core.schemarules import CheckError, run_schema_rules
 
 ANNOTATION_RE = re.compile(r"(?:#|//|--)\s*vuln:\s*([a-z][a-z0-9-]*)")
 
@@ -59,6 +61,31 @@ def _reported_lines(rule: PatternRule, crule, path: Path) -> tuple[set[int], str
     return lines, None
 
 
+def _schema_lines(rule: SchemaRule, path: Path) -> tuple[set[int], str | None]:
+    from vulnfab.plugins import registry
+
+    plugin = next((p for p in registry.discover() if p.name == rule.stack), None)
+    layout = getattr(plugin, "fixture_path", None)
+    if plugin is None or layout is None:
+        return set(), f"stack {rule.stack!r} provides no test fixture layout"
+    dest = layout(path.name)
+    if dest is None:
+        return set(), f"{path.name}: cannot place this file in a {rule.stack} fixture repository"
+    with tempfile.TemporaryDirectory() as tmp:
+        target = Path(tmp) / dest
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+        repo = Repo(Path(tmp))
+        model = plugin.extract_schema(repo)
+        if model is None:
+            return set(), f"{path.name}: plugin found no project in the fixture"
+        try:
+            hits = run_schema_rules([rule], model, repo)
+        except CheckError as exc:
+            return set(), str(exc)
+    return {f.line for f, _ in hits if f.file == dest}, None
+
+
 def run_rule_tests(rule: object, tests_root: Path) -> RuleTestResult:
     rule_id = getattr(rule, "id", "?")
     result = RuleTestResult(rule_id)
@@ -67,6 +94,9 @@ def run_rule_tests(rule: object, tests_root: Path) -> RuleTestResult:
     for name in declared:
         if not (base / name).is_file():
             result.problems.append(f"missing test file {base / name}")
+    if isinstance(rule, SchemaRule):
+        _check_lines(result, rule, base, lambda path: _schema_lines(rule, path))
+        return result
     if not isinstance(rule, PatternRule):
         result.skipped = f"kind {getattr(rule, 'kind', '?')!r}: only file presence is checked here"
         return result
@@ -105,3 +135,34 @@ def run_rule_tests(rule: object, tests_root: Path) -> RuleTestResult:
                 f"{name}: safe file produced finding(s) at line(s) {sorted(got)}"
             )
     return result
+
+
+def _check_lines(result: RuleTestResult, rule: SchemaRule, base: Path, run) -> None:  # type: ignore[no-untyped-def]
+    for name in rule.tests.vulnerable:
+        path = base / name
+        if not path.is_file():
+            continue
+        expected = annotated_lines(path.read_text(encoding="utf-8"), rule.id)
+        if not expected:
+            result.problems.append(f"{name}: vulnerable file has no 'vuln: {rule.id}' annotation")
+            continue
+        got, err = run(path)
+        if err:
+            result.problems.append(err)
+            continue
+        missed, extra = sorted(expected - got), sorted(got - expected)
+        if missed:
+            result.problems.append(f"{name}: expected finding not reported at line(s) {missed}")
+        if extra:
+            result.problems.append(f"{name}: unexpected finding at line(s) {extra}")
+    for name in rule.tests.safe:
+        path = base / name
+        if not path.is_file():
+            continue
+        got, err = run(path)
+        if err:
+            result.problems.append(err)
+        elif got:
+            result.problems.append(
+                f"{name}: safe file produced finding(s) at line(s) {sorted(got)}"
+            )

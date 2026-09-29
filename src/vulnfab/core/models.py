@@ -84,6 +84,7 @@ class Finding:
     unresolved_hops: int = 0
     fix: str | None = None
     fingerprint: str = ""
+    message: str = ""
 
     @property
     def priority(self) -> float:
@@ -303,6 +304,18 @@ class ConfigDoc:
 
 
 @dataclass
+class GrantEvent:
+    """One explicit GRANT statement (kept so rules can point at the statement itself)."""
+
+    file: str
+    line: int
+    end_line: int
+    role: str
+    privileges: frozenset[str]
+    tables: tuple[str, ...]  # qualified names the grant applied to
+
+
+@dataclass
 class SchemaModel:
     tables: dict[str, Table] = field(default_factory=dict)  # key: "schema.name"
     functions: dict[str, Function] = field(default_factory=dict)
@@ -311,6 +324,7 @@ class SchemaModel:
     buckets: dict[str, Bucket] = field(default_factory=dict)
     unresolved: list[Unresolved] = field(default_factory=list)
     configs: dict[str, ConfigDoc] = field(default_factory=dict)
+    grant_events: list[GrantEvent] = field(default_factory=list)
     assumptions: list[str] = field(default_factory=list)
 
 

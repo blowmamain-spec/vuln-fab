@@ -1,0 +1,2 @@
+[storage.buckets.receipts]  # vuln: sb-storage-public
+public = true
