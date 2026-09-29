@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 
 from tree_sitter import Node, Tree
 
-from vulnfab.core.parsing import Deadline, parser_for, walk
+from vulnfab.core.parsing import Deadline, line_of, parser_for, walk
 from vulnfab.core.rules import PatternRule, WhereClause
 
 ELLIPSIS = "__ELLIPSIS__"
@@ -111,12 +111,12 @@ def compile_pattern(language: str, snippet: str) -> CompiledPattern:
     if parser is None:
         raise PatternError(f"language {language!r} has no parser")
     prepared = _prepare(language, snippet)
-    tree = parser.parse(prepared.encode("utf-8"))
+    prepared_bytes = prepared.encode("utf-8")
+    tree = parser.parse(prepared_bytes)
     bad = _first_error(tree.root_node)
     if bad is not None:
-        raise PatternError(
-            f"pattern is not valid {language} code near line {bad.start_point.row + 1}: {snippet!r}"
-        )
+        line = line_of(prepared_bytes, bad.start_byte)
+        raise PatternError(f"pattern is not valid {language} code near line {line}: {snippet!r}")
     return CompiledPattern(language, snippet, _unwrap(tree.root_node), tree)
 
 

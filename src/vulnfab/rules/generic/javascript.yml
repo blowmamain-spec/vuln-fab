@@ -1,0 +1,99 @@
+rules:
+  - id: js-eval
+    stack: generic
+    languages: [javascript, typescript, tsx]
+    severity: high
+    confidence: medium
+    cwe: [CWE-95]
+    owasp: "A03:2021"
+    title: "Use of eval()"
+    message: "eval() executes arbitrary code. Avoid it with non-constant input."
+    pattern: "eval($X)"
+    where:
+      - {metavariable: X, kind: not_literal}
+    tests: {vulnerable: [vuln.js, vuln.ts], safe: [safe.js]}
+
+  - id: js-function-constructor
+    stack: generic
+    languages: [javascript, typescript, tsx]
+    severity: high
+    confidence: medium
+    cwe: [CWE-95]
+    owasp: "A03:2021"
+    title: "Function constructor with non-constant body"
+    message: "new Function(body) compiles code from a string."
+    pattern: "new Function(..., $X)"
+    where:
+      - {metavariable: X, kind: not_literal}
+    tests: {vulnerable: [vuln.js], safe: [safe.js]}
+
+  - id: js-exec
+    stack: generic
+    languages: [javascript, typescript, tsx]
+    severity: high
+    confidence: medium
+    cwe: [CWE-78]
+    owasp: "A03:2021"
+    title: "Shell command built from non-constant input"
+    message: "child_process.exec runs a shell; a non-constant command enables injection."
+    pattern-either:
+      - "child_process.exec($X, ...)"
+      - "child_process.execSync($X, ...)"
+      - "exec($X, ...)"
+      - "execSync($X, ...)"
+    where:
+      - {metavariable: X, kind: not_literal}
+    fix: "Use execFile/spawn with an argument array."
+    tests: {vulnerable: [vuln.js, vuln.ts], safe: [safe.js]}
+
+  - id: js-innerhtml-assign
+    stack: generic
+    languages: [javascript, typescript, tsx]
+    severity: medium
+    confidence: medium
+    cwe: [CWE-79]
+    owasp: "A03:2021"
+    title: "HTML injection through innerHTML/outerHTML"
+    message: "Assigning non-constant data to innerHTML can inject script."
+    pattern-either:
+      - "$EL.innerHTML = $X"
+      - "$EL.innerHTML += $X"
+      - "$EL.outerHTML = $X"
+    where:
+      - {metavariable: X, kind: not_literal}
+    fix: "Use textContent, or sanitize with DOMPurify."
+    tests: {vulnerable: [vuln.js, vuln.ts], safe: [safe.js]}
+
+  - id: js-document-write
+    stack: generic
+    languages: [javascript, typescript, tsx]
+    severity: medium
+    confidence: medium
+    cwe: [CWE-79]
+    owasp: "A03:2021"
+    title: "document.write with non-constant data"
+    message: "document.write with dynamic data can inject script."
+    pattern-either:
+      - "document.write($X)"
+      - "document.writeln($X)"
+    where:
+      - {metavariable: X, kind: not_literal}
+    tests: {vulnerable: [vuln.js], safe: [safe.js]}
+
+  - id: js-dangerous-html
+    stack: generic
+    languages: [javascript, tsx]
+    severity: high
+    confidence: medium
+    cwe: [CWE-79]
+    owasp: "A03:2021"
+    title: "dangerouslySetInnerHTML with unsanitized data"
+    message: "dangerouslySetInnerHTML renders raw HTML; non-constant, unsanitized data enables XSS."
+    pattern-either:
+      - "<$T ... dangerouslySetInnerHTML={{ __html: $X }} ... />"
+      - "<$T ... dangerouslySetInnerHTML={{ __html: $X }} ...></$T>"
+    where:
+      - {metavariable: X, kind: not_literal}
+      - {metavariable: X, kind: not_regex, regex: "^(DOMPurify\\.sanitize|sanitizeHtml|sanitize|xss)\\("}
+    fix: "Sanitize with DOMPurify.sanitize(...) or render text."
+    tests: {vulnerable: [vuln.tsx], safe: [safe.tsx]}

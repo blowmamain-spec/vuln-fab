@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from vulnfab.core.matcher import CompiledRule, FileIndex, compile_rule, run_rule
 from vulnfab.core.models import Finding, ParsedFile
-from vulnfab.core.parsing import Deadline, enclosing_symbol, node_text
+from vulnfab.core.parsing import Deadline, enclosing_symbol, node_lines, node_text
 from vulnfab.core.rules import PatternRule
 
 SNIPPET_LIMIT = 300
@@ -30,6 +30,7 @@ def findings_for_file(
     for crule in applicable:
         rule = crule.rule
         for m in run_rule(crule, pf.language, index):
+            first, last = node_lines(m.node, pf.source)
             out.append(
                 (
                     Finding(
@@ -41,8 +42,8 @@ def findings_for_file(
                         confidence=rule.confidence,
                         tier=rule.tier,
                         file=pf.path,
-                        line=m.node.start_point.row + 1,
-                        end_line=m.node.end_point.row + 1,
+                        line=first,
+                        end_line=last,
                         snippet=_snippet(node_text(m.node, pf.source)),
                         fix=rule.fix,
                     ),

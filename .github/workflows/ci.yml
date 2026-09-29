@@ -12,3 +12,5 @@ jobs:
       - run: uv run ruff check .
       - run: uv run mypy
       - run: uv run pytest
+      - name: Tests under memory poisoning (catches use-after-free in native extensions)
+        run: MALLOC_PERTURB_=165 PYTHONMALLOC=malloc uv run pytest

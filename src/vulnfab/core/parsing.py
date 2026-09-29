@@ -123,6 +123,21 @@ def walk(node: Node, deadline: Deadline | None = None) -> Iterator[Node]:
                 return
 
 
+def line_of(source: bytes, byte_offset: int) -> int:
+    """1-based line number of a byte offset.
+
+    Deliberately avoids ``Node.start_point``/``end_point``: ``Point`` objects in py-tree-sitter
+    0.26.0 have a reference-counting bug (use-after-free, found with valgrind).
+    """
+    return source.count(b"\n", 0, max(byte_offset, 0)) + 1
+
+
+def node_lines(node: Node, source: bytes) -> tuple[int, int]:
+    """(first line, last line) of a node, 1-based, computed from byte offsets."""
+    end = max(node.end_byte - 1, node.start_byte)
+    return line_of(source, node.start_byte), line_of(source, end)
+
+
 def node_text(node: Node, source: bytes) -> str:
     return source[node.start_byte : node.end_byte].decode("utf-8", errors="replace")
 

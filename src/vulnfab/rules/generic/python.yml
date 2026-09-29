@@ -12,6 +12,159 @@ rules:
     where:
       - {metavariable: X, kind: not_literal}
     fix: "Avoid eval(); use ast.literal_eval or an explicit parser."
-    tests:
-      vulnerable: [vuln.py]
-      safe: [safe.py]
+    tests: {vulnerable: [vuln.py], safe: [safe.py]}
+
+  - id: py-exec
+    stack: generic
+    languages: [python]
+    severity: high
+    confidence: medium
+    cwe: [CWE-95]
+    owasp: "A03:2021"
+    title: "Use of exec()"
+    message: "exec() executes arbitrary code. Avoid it with non-constant input."
+    pattern: "exec($X)"
+    where:
+      - {metavariable: X, kind: not_literal}
+    tests: {vulnerable: [vuln.py], safe: [safe.py]}
+
+  - id: py-pickle-loads
+    stack: generic
+    languages: [python]
+    severity: high
+    confidence: medium
+    cwe: [CWE-502]
+    owasp: "A08:2021"
+    title: "Deserialization with pickle"
+    message: "pickle can execute code while loading. Never unpickle untrusted data."
+    pattern-either:
+      - "pickle.loads($X)"
+      - "pickle.load($X)"
+      - "cPickle.loads($X)"
+    fix: "Use a safe format such as JSON."
+    tests: {vulnerable: [vuln.py], safe: [safe.py]}
+
+  - id: py-subprocess-shell
+    stack: generic
+    languages: [python]
+    severity: high
+    confidence: medium
+    cwe: [CWE-78]
+    owasp: "A03:2021"
+    title: "subprocess with shell=True and a non-constant command"
+    message: "shell=True passes the command through the shell; a non-constant command enables injection."
+    pattern-either:
+      - "subprocess.run($C, ..., shell=True)"
+      - "subprocess.call($C, ..., shell=True)"
+      - "subprocess.check_call($C, ..., shell=True)"
+      - "subprocess.check_output($C, ..., shell=True)"
+      - "subprocess.Popen($C, ..., shell=True)"
+    where:
+      - {metavariable: C, kind: not_literal}
+    fix: "Pass an argument list and drop shell=True."
+    tests: {vulnerable: [vuln.py], safe: [safe.py]}
+
+  - id: py-os-system
+    stack: generic
+    languages: [python]
+    severity: high
+    confidence: medium
+    cwe: [CWE-78]
+    owasp: "A03:2021"
+    title: "os.system with a non-constant command"
+    message: "os.system runs a shell command; a non-constant command enables injection."
+    pattern: "os.system($X)"
+    where:
+      - {metavariable: X, kind: not_literal}
+    fix: "Use subprocess.run with an argument list."
+    tests: {vulnerable: [vuln.py], safe: [safe.py]}
+
+  - id: py-yaml-load
+    stack: generic
+    languages: [python]
+    severity: high
+    confidence: high
+    cwe: [CWE-502]
+    owasp: "A08:2021"
+    title: "yaml.load with an unsafe loader"
+    message: "yaml.load without SafeLoader can construct arbitrary Python objects."
+    pattern-either:
+      - "yaml.load($X)"
+      - "yaml.load($X, Loader=yaml.Loader)"
+      - "yaml.load($X, Loader=yaml.UnsafeLoader)"
+      - "yaml.load($X, Loader=yaml.FullLoader)"
+      - "yaml.load($X, yaml.Loader)"
+    fix: "Use yaml.safe_load."
+    tests: {vulnerable: [vuln.py], safe: [safe.py]}
+
+  - id: py-hash-weak
+    stack: generic
+    languages: [python]
+    severity: medium
+    confidence: low
+    cwe: [CWE-328]
+    owasp: "A02:2021"
+    title: "Weak hash algorithm"
+    message: "MD5/SHA-1 are broken for security purposes. Only appropriate for non-security checksums."
+    pattern-either:
+      - "hashlib.md5(...)"
+      - "hashlib.sha1(...)"
+    pattern-not:
+      - "hashlib.md5(..., usedforsecurity=False)"
+      - "hashlib.sha1(..., usedforsecurity=False)"
+    fix: "Use SHA-256 or better; passwords need bcrypt/argon2."
+    tests: {vulnerable: [vuln.py], safe: [safe.py]}
+
+  - id: py-flask-debug
+    stack: generic
+    languages: [python]
+    severity: medium
+    confidence: medium
+    cwe: [CWE-489]
+    owasp: "A05:2021"
+    title: "Debug mode enabled"
+    message: "app.run(debug=True) exposes the interactive debugger."
+    pattern: "$APP.run(..., debug=True)"
+    fix: "Never enable debug mode in production."
+    tests: {vulnerable: [vuln.py], safe: [safe.py]}
+
+  - id: py-requests-verify-false
+    stack: generic
+    languages: [python]
+    severity: medium
+    confidence: high
+    cwe: [CWE-295]
+    owasp: "A07:2021"
+    title: "TLS verification disabled"
+    message: "verify=False disables certificate validation."
+    pattern: "requests.$M(..., verify=False)"
+    fix: "Remove verify=False or point it at a CA bundle."
+    tests: {vulnerable: [vuln.py], safe: [safe.py]}
+
+  - id: py-tempfile-mktemp
+    stack: generic
+    languages: [python]
+    severity: medium
+    confidence: high
+    cwe: [CWE-377]
+    owasp: "A01:2021"
+    title: "Insecure temporary file name"
+    message: "tempfile.mktemp is racy; another process can create the file first."
+    pattern: "tempfile.mktemp(...)"
+    fix: "Use tempfile.mkstemp or NamedTemporaryFile."
+    tests: {vulnerable: [vuln.py], safe: [safe.py]}
+
+  - id: py-sql-execute-interp
+    stack: generic
+    languages: [python]
+    severity: high
+    confidence: medium
+    cwe: [CWE-89]
+    owasp: "A03:2021"
+    title: "SQL built with string interpolation"
+    message: "A query assembled by interpolation or concatenation is injectable. Use bound parameters."
+    pattern: "$CUR.execute($Q, ...)"
+    where:
+      - {metavariable: Q, kind: fstring_or_concat}
+    fix: "cursor.execute('... WHERE id = %s', (value,))"
+    tests: {vulnerable: [vuln.py], safe: [safe.py]}

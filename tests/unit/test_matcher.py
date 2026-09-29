@@ -13,7 +13,7 @@ from vulnfab.core.matcher import (
     run_rule,
 )
 from vulnfab.core.models import SourceFile
-from vulnfab.core.parsing import parse_file, walk
+from vulnfab.core.parsing import node_lines, parse_file, walk
 from vulnfab.core.rules import PatternRule, parse_rules
 
 
@@ -243,7 +243,8 @@ tests: {{vulnerable: [a], safe: [b]}}
 def run(rule: PatternRule, code: str, language: str = "python") -> list[int]:
     crule = compile_rule(rule)
     pf = _parse(language, code)
-    return [m.node.start_point.row + 1 for m in run_rule(crule, language, FileIndex(pf.tree))]
+    index = FileIndex(pf.tree)
+    return [node_lines(m.node, pf.source)[0] for m in run_rule(crule, language, index)]
 
 
 def test_pattern_either() -> None:
