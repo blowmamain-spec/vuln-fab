@@ -77,7 +77,7 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
   *Lulus jika*: test fixture untuk tiap sumber; TOML rusak → `Unresolved`.
 - [x] **WP-3.6 Rule pack Supabase (14 rule)** (L) — dep: 3.4, 3.5, 2.4. Katalog di rencana Bagian 9; tiap rule vuln + safe.
   *Lulus jika*: `rules test` hijau; setiap rule memakai `check` Python teruji atau `condition` aman.
-- [ ] **WP-3.7 Cek drift (`--schema-dump`)** (M) — dep: 3.2. Bandingkan SchemaModel dengan dump `pg_dump --schema-only`; perbedaan menjadi temuan `info` + catatan asumsi.
+- [x] **WP-3.7 Cek drift (`--schema-dump`)** (M) — dep: 3.2. Bandingkan SchemaModel dengan dump `pg_dump --schema-only`; perbedaan menjadi temuan `info` + catatan asumsi.
   *Lulus jika*: dump sintetis dengan tabel/RLS berbeda memunculkan perbedaan yang diharapkan.
 - [x] **WP-3.8 E2E lab Supabase** (M) — dep: 3.6, 0.6. Evaluasi terhadap `supabase-vuln`; tinjau semua temuan tak berlabel (verdict).
   *Lulus jika*: recall tier A ≥ 90%, precision ≥ 90%, 0 FP pada decoy; snapshot e2e tersimpan; waktu < 10 s.

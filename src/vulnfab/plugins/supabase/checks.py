@@ -449,3 +449,56 @@ def config_signup(ctx: CheckContext) -> Iterator[SchemaHit]:
                 "accounts with addresses they do not own.",
                 symbol=f"{doc.path}:auth.email",
             )
+
+
+def schema_drift(ctx: CheckContext) -> Iterator[SchemaHit]:
+    """Differences between the migrations and a dump of the live database."""
+    live = ctx.model.drift_source
+    if live is None:
+        return
+    exposed = exposed_schemas(ctx.model)
+    keys = sorted(k for k in {*ctx.model.tables, *live.tables} if k.split(".", 1)[0] in exposed)
+    for key in keys:
+        mig, db = ctx.model.tables.get(key), live.tables.get(key)
+        if mig is not None and mig.external:
+            mig = None
+        if mig is not None and db is None:
+            yield SchemaHit(
+                mig.file, mig.line, mig.end_line,
+                f"Table {key} is in the migrations but not in the database dump "
+                "(migration not applied?).",
+                symbol=key,
+            )  # fmt: skip
+        elif mig is None and db is not None:
+            state = "RLS enabled" if db.rls_enabled else "RLS DISABLED"
+            yield SchemaHit(
+                db.file, db.line, db.end_line,
+                f"Table {key} exists in the database but in no migration ({state}); it was "
+                "probably created in the dashboard and is not reviewed.",
+                symbol=key,
+            )  # fmt: skip
+        elif mig is not None and db is not None:
+            if mig.rls_enabled != db.rls_enabled:
+                wrong = "disabled" if not db.rls_enabled else "enabled"
+                yield SchemaHit(
+                    mig.rls_file, mig.rls_line, mig.rls_end_line,
+                    f"RLS on {key} is {wrong} in the live database but the migrations say the "
+                    "opposite.",
+                    trace=(
+                        TraceStep(db.rls_file, db.rls_line, "schema", f"database: RLS {wrong}"),
+                    ),
+                    symbol=key,
+                )  # fmt: skip
+            only_db = sorted({p.name for p in db.policies} - {p.name for p in mig.policies})
+            only_mig = sorted({p.name for p in mig.policies} - {p.name for p in db.policies})
+            if only_db or only_mig:
+                parts = []
+                if only_db:
+                    parts.append(f"only in the database: {', '.join(only_db)}")
+                if only_mig:
+                    parts.append(f"only in the migrations: {', '.join(only_mig)}")
+                yield SchemaHit(
+                    mig.file, mig.line, mig.end_line,
+                    f"Policies on {key} differ ({'; '.join(parts)}).",
+                    symbol=f"{key}:policies",
+                )  # fmt: skip

@@ -76,10 +76,17 @@ def scan_command(
     rules_path: Annotated[
         list[Path] | None, typer.Option("--rules", help="Extra rule files/directories.")
     ] = None,
+    schema_dump: Annotated[
+        Path | None,
+        typer.Option("--schema-dump", help="pg_dump --schema-only of the live database (drift)."),
+    ] = None,
 ) -> None:
     """Scan a repository."""
     if not path.is_dir():
         typer.echo(f"error: {path} is not a directory", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    if schema_dump is not None and not schema_dump.is_file():
+        typer.echo(f"error: schema dump {schema_dump} not found", err=True)
         raise typer.Exit(EXIT_USAGE)
     options = ScanOptions(
         stacks=stack,
@@ -89,6 +96,7 @@ def scan_command(
         baseline=baseline,
         write_baseline=write_baseline,
         extra_rule_paths=rules_path,
+        schema_dump=schema_dump,
     )
     try:
         result = scan(path, options)

@@ -194,3 +194,17 @@ rules:
     check: "vulnfab.plugins.supabase.checks:config_signup"
     fix: "Set [auth.email] enable_confirmations = true."
     tests: {vulnerable: [config.toml], safe: [config_safe.toml]}
+
+  - id: sb-schema-drift
+    stack: supabase
+    kind: schema
+    severity: medium
+    confidence: high
+    tier: A
+    cwe: [CWE-1188]
+    owasp: "A05:2021"
+    title: "Live database differs from the migrations"
+    message: "The database dump and the migrations disagree."
+    check: "vulnfab.plugins.supabase.checks:schema_drift"
+    fix: "Bring the database and migrations back in sync (supabase db diff / db pull)."
+    tests: {vulnerable: [vuln.sql], safe: [safe.sql]}

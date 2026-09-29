@@ -31,6 +31,7 @@ class ScanOptions:
     baseline: Path | None = None
     write_baseline: Path | None = None
     extra_rule_paths: list[Path] | None = None
+    schema_dump: Path | None = None
 
 
 def _load_plugin_rules(selected: list[registry.Selected], extra: list[Path] | None) -> list[object]:
@@ -94,6 +95,14 @@ def scan(path: Path, options: ScanOptions | None = None) -> ScanResult:
         coverage.files_skipped.extend(unit.skipped)
         coverage.unresolved.extend(unit.unresolved)
         schema = plugin.extract_schema(repo)
+        if schema is not None and options.schema_dump is not None:
+            attach = getattr(plugin, "attach_drift", None)
+            if attach is not None:
+                attach(
+                    schema,
+                    options.schema_dump.name,
+                    options.schema_dump.read_text(encoding="utf-8"),
+                )
         if schema is not None:
             coverage.unresolved.extend(schema.unresolved)
             coverage.assumptions.extend(

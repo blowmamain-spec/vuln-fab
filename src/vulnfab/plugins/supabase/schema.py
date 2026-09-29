@@ -96,10 +96,12 @@ def baseline_default_privileges() -> list[DefaultPrivilege]:
 
 
 class SchemaBuilder:
-    def __init__(self, parser: SqlParser | None = None) -> None:
+    def __init__(self, parser: SqlParser | None = None, *, baseline: bool = True) -> None:
         self.parser = parser or PglastParser()
-        self.model = SchemaModel(default_privileges=baseline_default_privileges())
-        self.model.assumptions.append(BASELINE_ASSUMPTION)
+        self.model = SchemaModel()
+        if baseline:
+            self.model.default_privileges = baseline_default_privileges()
+            self.model.assumptions.append(BASELINE_ASSUMPTION)
 
     # --- entry points -----------------------------------------------------------------------
 

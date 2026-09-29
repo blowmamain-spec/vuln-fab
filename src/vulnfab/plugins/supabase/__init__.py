@@ -130,6 +130,14 @@ class SupabasePlugin:
     def rule_packs(self) -> list[Path]:
         return [Path(__file__).resolve().parents[2] / "rules" / "supabase"]
 
+    def attach_drift(self, model: SchemaModel, name: str, dump_sql: str) -> None:
+        """Attach a ``pg_dump --schema-only`` of the live database for drift detection."""
+        builder = SchemaBuilder(baseline=False)
+        builder.apply_file(name, dump_sql)
+        model.drift_source = builder.model
+        model.assumptions[:] = [a for a in model.assumptions if "migrations only" not in a]
+        model.assumptions.append(f"Schema drift checked against database dump {name}.")
+
     # Used by the rule test harness: where a test file must live inside a fixture repository.
     def fixture_path(self, filename: str) -> str | None:
         if filename.endswith(".toml"):

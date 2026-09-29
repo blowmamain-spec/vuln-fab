@@ -79,6 +79,10 @@ def _schema_lines(rule: SchemaRule, path: Path) -> tuple[set[int], str | None]:
         model = plugin.extract_schema(repo)
         if model is None:
             return set(), f"{path.name}: plugin found no project in the fixture"
+        dump = path.with_suffix(".dump.sql")
+        attach = getattr(plugin, "attach_drift", None)
+        if dump.is_file() and attach is not None:
+            attach(model, dump.name, dump.read_text(encoding="utf-8"))
         try:
             hits = run_schema_rules([rule], model, repo)
         except CheckError as exc:
