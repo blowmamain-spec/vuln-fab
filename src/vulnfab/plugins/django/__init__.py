@@ -233,7 +233,7 @@ class DjangoPlugin:
         for finding, symbol in raw:
             if finding.rule_id == "tpy-idor":
                 table = _queried_table(finding.snippet, model)
-                if table is not None and not _has_owner(table):
+                if table is not None and not _has_owner(table, model):
                     finding = replace(
                         finding,
                         confidence=Confidence.LOW,
@@ -318,9 +318,19 @@ def _queried_table(snippet: str, model: SchemaModel):  # type: ignore[no-untyped
     return candidates[0] if len(candidates) == 1 else None
 
 
-def _has_owner(table) -> bool:  # type: ignore[no-untyped-def]
+def _has_owner(table, model: SchemaModel, depth: int = 2) -> bool:  # type: ignore[no-untyped-def]
+    """A model is ownable if it relates to a user, directly or through up to ``depth`` parents."""
     for column in table.columns:
         target = column.references or ""
         if "User" in target or "AUTH_USER_MODEL" in target or _OWNER_NAMES.match(column.name):
+            return True
+    if depth <= 1:
+        return False
+    for column in table.columns:
+        if not column.references:
+            continue
+        name = column.references.rsplit(".", 1)[-1].lower()
+        parents = [t for t in model.tables.values() if t.name == name and t is not table]
+        if len(parents) == 1 and _has_owner(parents[0], model, depth - 1):
             return True
     return False

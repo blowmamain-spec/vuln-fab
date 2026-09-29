@@ -11,7 +11,9 @@ rules:
     pattern-either:
       - "fields = '__all__'"
       - 'fields = "__all__"'
-    fix: "List the editable fields explicitly."
+      - "exclude = [...]"
+      - "exclude = (...)"
+    fix: "List the editable fields explicitly (a whitelist); an `exclude` blacklist misses new columns."
     tests: {vulnerable: [vuln.py], safe: [safe.py]}
 
   - id: dj-sql-raw

@@ -179,6 +179,7 @@ class TaintRule(_LanguageRule):
     propagators: list[str] = Field(default_factory=list)
     guards: list[str] = Field(default_factory=list)  # ownership evidence (tier B, IDOR)
     validators: list[str] = Field(default_factory=list)  # calls that validate when used in `if`
+    escapers: list[str] = Field(default_factory=list)  # safe only inside a quoted literal
 
     @model_validator(mode="after")
     def _non_empty(self) -> TaintRule:
@@ -194,6 +195,7 @@ class TaintRule(_LanguageRule):
                 self.propagators,
                 self.guards,
                 self.validators,
+                self.escapers,
             )
         except SpecError as exc:
             raise ValueError(str(exc)) from exc

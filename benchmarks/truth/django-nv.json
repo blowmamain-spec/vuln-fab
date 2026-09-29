@@ -1,0 +1,445 @@
+{
+  "target": "django-nv",
+  "revision": "see benchmarks/targets.lock",
+  "exclude": [
+    "taskManager/migrations/**",
+    "taskManager/static/**",
+    "taskManager/tests.py"
+  ],
+  "items": [
+    {
+      "id": "T001",
+      "kind": "vulnerable",
+      "file": "taskManager/views.py",
+      "line_start": 174,
+      "line_end": 174,
+      "class": "idor",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": "B",
+      "in_scope": true,
+      "note": "official: marker '# A4: IDOR' above the view"
+    },
+    {
+      "id": "T002",
+      "kind": "vulnerable",
+      "file": "taskManager/views.py",
+      "line_start": 208,
+      "line_end": 208,
+      "class": "idor",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": "B",
+      "in_scope": true,
+      "note": "official: marker '# A4: IDOR' above the view"
+    },
+    {
+      "id": "T003",
+      "kind": "vulnerable",
+      "file": "taskManager/views.py",
+      "line_start": 244,
+      "line_end": 244,
+      "class": "idor",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": "B",
+      "in_scope": true,
+      "note": "official: marker '# A4: IDOR' above the view"
+    },
+    {
+      "id": "T004",
+      "kind": "vulnerable",
+      "file": "taskManager/views.py",
+      "line_start": 275,
+      "line_end": 276,
+      "class": "idor",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": "B",
+      "in_scope": true,
+      "note": "official: marker '# A4: IDOR' above the view"
+    },
+    {
+      "id": "T005",
+      "kind": "vulnerable",
+      "file": "taskManager/views.py",
+      "line_start": 300,
+      "line_end": 301,
+      "class": "idor",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": "B",
+      "in_scope": true,
+      "note": "official: marker '# A4: IDOR' above the view"
+    },
+    {
+      "id": "T006",
+      "kind": "vulnerable",
+      "file": "taskManager/views.py",
+      "line_start": 312,
+      "line_end": 313,
+      "class": "idor",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": "B",
+      "in_scope": true,
+      "note": "official: marker '# A4: IDOR' above the view"
+    },
+    {
+      "id": "T007",
+      "kind": "vulnerable",
+      "file": "taskManager/views.py",
+      "line_start": 352,
+      "line_end": 352,
+      "class": "idor",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": "B",
+      "in_scope": true,
+      "note": "official: marker '# A4: IDOR' above the view"
+    },
+    {
+      "id": "T008",
+      "kind": "vulnerable",
+      "file": "taskManager/views.py",
+      "line_start": 378,
+      "line_end": 378,
+      "class": "idor",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": "B",
+      "in_scope": true,
+      "note": "official: marker '# A4: IDOR' above the view"
+    },
+    {
+      "id": "T009",
+      "kind": "vulnerable",
+      "file": "taskManager/views.py",
+      "line_start": 387,
+      "line_end": 387,
+      "class": "redirect",
+      "cwe": [
+        "CWE-601"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: marker '# A10: Open Redirect' + tutorial"
+    },
+    {
+      "id": "T010",
+      "kind": "vulnerable",
+      "file": "taskManager/views.py",
+      "line_start": 533,
+      "line_end": 533,
+      "class": "idor",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": "B",
+      "in_scope": true,
+      "note": "official: marker '# A4: IDOR' above the view"
+    },
+    {
+      "id": "T011",
+      "kind": "vulnerable",
+      "file": "taskManager/views.py",
+      "line_start": 556,
+      "line_end": 558,
+      "class": "idor",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": "B",
+      "in_scope": true,
+      "note": "official: marker '# A4: IDOR' above the view"
+    },
+    {
+      "id": "T012",
+      "kind": "vulnerable",
+      "file": "taskManager/views.py",
+      "line_start": 582,
+      "line_end": 584,
+      "class": "idor",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": "B",
+      "in_scope": true,
+      "note": "official: marker '# A4: IDOR' above the view"
+    },
+    {
+      "id": "T013",
+      "kind": "vulnerable",
+      "file": "taskManager/views.py",
+      "line_start": 712,
+      "line_end": 712,
+      "class": "idor",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": "B",
+      "in_scope": true,
+      "note": "official: marker '# A4: IDOR' above the view"
+    },
+    {
+      "id": "T014",
+      "kind": "vulnerable",
+      "file": "taskManager/views.py",
+      "line_start": 711,
+      "line_end": 711,
+      "class": "csrf-exempt",
+      "cwe": [
+        "CWE-352"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: marker '# A8: CSRF' (@csrf_exempt view)"
+    },
+    {
+      "id": "T015",
+      "kind": "vulnerable",
+      "file": "taskManager/views.py",
+      "line_start": 740,
+      "line_end": 740,
+      "class": "csrf-exempt",
+      "cwe": [
+        "CWE-352"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: marker '# A8: CSRF' (@csrf_exempt view)"
+    },
+    {
+      "id": "T016",
+      "kind": "vulnerable",
+      "file": "taskManager/views.py",
+      "line_start": 814,
+      "line_end": 814,
+      "class": "csrf-exempt",
+      "cwe": [
+        "CWE-352"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: marker '# A8: CSRF' (@csrf_exempt view)"
+    },
+    {
+      "id": "T017",
+      "kind": "vulnerable",
+      "file": "taskManager/views.py",
+      "line_start": 183,
+      "line_end": 186,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: marker '#A1 - Injection (SQLi)' (%-formatted SQL)"
+    },
+    {
+      "id": "T018",
+      "kind": "vulnerable",
+      "file": "taskManager/views.py",
+      "line_start": 780,
+      "line_end": 780,
+      "class": "csrf-exempt",
+      "cwe": [
+        "CWE-352"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "reviewer: same @csrf_exempt pattern as the marked views"
+    },
+    {
+      "id": "T019",
+      "kind": "vulnerable",
+      "file": "taskManager/misc.py",
+      "line_start": 33,
+      "line_end": 33,
+      "class": "cmd-injection",
+      "cwe": [
+        "CWE-78"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: marker '# A1: Injection (shell)'"
+    },
+    {
+      "id": "T020",
+      "kind": "vulnerable",
+      "file": "taskManager/settings.py",
+      "line_start": 28,
+      "line_end": 28,
+      "class": "debug-true",
+      "cwe": [
+        "CWE-489"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: marker '# A5: Security Misconfiguration'"
+    },
+    {
+      "id": "T021",
+      "kind": "vulnerable",
+      "file": "taskManager/settings.py",
+      "line_start": 101,
+      "line_end": 101,
+      "class": "password-hasher",
+      "cwe": [
+        "CWE-916"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: marker '# A6: Sensitive Data Exposure' (MD5)"
+    },
+    {
+      "id": "T022",
+      "kind": "vulnerable",
+      "file": "taskManager/settings.py",
+      "line_start": 109,
+      "line_end": 109,
+      "class": "pickle-session",
+      "cwe": [
+        "CWE-502"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: marker '# A2' + tutorial (PickleSerializer)"
+    },
+    {
+      "id": "T023",
+      "kind": "vulnerable",
+      "file": "taskManager/settings.py",
+      "line_start": 110,
+      "line_end": 110,
+      "class": "cookie-httponly",
+      "cwe": [
+        "CWE-1004"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: marker '# A2' block"
+    },
+    {
+      "id": "T024",
+      "kind": "vulnerable",
+      "file": "taskManager/settings.py",
+      "line_start": 24,
+      "line_end": 24,
+      "class": "secret-key",
+      "cwe": [
+        "CWE-798"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "reviewer: SECRET_KEY literal (the tutorial says a leaked key enables pickle RCE)"
+    },
+    {
+      "id": "T025",
+      "kind": "vulnerable",
+      "file": "taskManager/forms.py",
+      "line_start": 75,
+      "line_end": 75,
+      "class": "modelform-all",
+      "cwe": [
+        "CWE-915"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: marker '# A2' + tutorial (blacklist `exclude` lets is_superuser through)"
+    },
+    {
+      "id": "T026",
+      "kind": "vulnerable",
+      "file": "taskManager/templates/taskManager/base_backend.html",
+      "line_start": 58,
+      "line_end": 58,
+      "class": "template-safe",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official tutorial (XSS: username|safe)"
+    },
+    {
+      "id": "T027",
+      "kind": "vulnerable",
+      "file": "taskManager/templates/taskManager/tutorials/base.html",
+      "line_start": 54,
+      "line_end": 54,
+      "class": "template-safe",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official tutorial (XSS: username|safe)"
+    },
+    {
+      "id": "T028",
+      "kind": "vulnerable",
+      "file": "taskManager/templates/taskManager/task_details.html",
+      "line_start": 12,
+      "line_end": 12,
+      "class": "template-safe",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "reviewer: same |safe pattern"
+    },
+    {
+      "id": "T029",
+      "kind": "vulnerable",
+      "file": "taskManager/templates/taskManager/task_details.html",
+      "line_start": 48,
+      "line_end": 48,
+      "class": "template-safe",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "reviewer: same |safe pattern"
+    },
+    {
+      "id": "T030",
+      "kind": "vulnerable",
+      "file": "taskManager/templates/taskManager/search.html",
+      "line_start": 14,
+      "line_end": 14,
+      "class": "template-safe",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "reviewer: same |safe pattern"
+    },
+    {
+      "id": "T031",
+      "kind": "vulnerable",
+      "file": "taskManager/templates/taskManager/settings.html",
+      "line_start": 28,
+      "line_end": 28,
+      "class": "template-safe",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "reviewer: same |safe pattern"
+    }
+  ]
+}

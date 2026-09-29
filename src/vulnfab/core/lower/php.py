@@ -285,12 +285,14 @@ class PhpLowerer(Lowerer):
         return self.call(node, f"new {cls}", None, args, kwargs)
 
     def x_encapsed_string(self, node: Node) -> Operand:
-        parts = [
-            self.expr(c)
-            for c in self.named(node)
-            if c.type not in ("string_content", "escape_sequence", "string_value")
-        ]
-        return self._concat(parts, node) if parts else Const(self.text(node)[1:-1])
+        parts: list[Operand] = []
+        for c in self.named(node):  # keep the literal text: quote context matters to escapers
+            if c.type in ("string_content", "string_value", "escape_sequence"):
+                parts.append(Const(self.text(c)))
+            else:
+                parts.append(self.expr(c))
+        has_substitution = any(not isinstance(p, Const) for p in parts)
+        return self._concat(parts, node) if has_substitution else Const(self.text(node)[1:-1])
 
     x_heredoc = x_encapsed_string
 

@@ -63,6 +63,7 @@ DEFAULT_PROPAGATORS = (
 class Taint:
     trace: tuple[TraceStep, ...]
     hops: int = 0
+    escaped: bool = False  # passed through an escaper and still inside a quoted literal
 
     def step(self, file: str, line: int, kind: str, detail: str) -> Taint:
         new = TraceStep(file, line, kind, detail)  # type: ignore[arg-type]
@@ -82,6 +83,10 @@ class Taint:
 
 
 State = dict[str, Taint]
+
+# Marks a path as validated: reads of it (or of what lies below) are clean even when the path
+# matches a source such as ``$_GET``.
+CLEAN = Taint(())
 
 
 @dataclass
@@ -203,6 +208,7 @@ class FunctionAnalyzer:
         self.ctx = ctx
         self.fn = fn
         self.defs: dict[str, Instr] = {}
+        self.templates: dict[str, str] = {}  # static text of built strings (\0 = dynamic part)
 
     # --- operands ---------------------------------------------------------------------------
 
@@ -212,7 +218,8 @@ class FunctionAnalyzer:
         if path is not None:
             for prefix in reversed(path_prefixes(path)):  # most specific first
                 if prefix in state:
-                    return state[prefix]
+                    value = state[prefix]
+                    return None if value is CLEAN else value
             if matches_path(spec.sources, "field", path) or matches_path(spec.sources, "var", path):
                 return Taint((TraceStep(self.ctx.file, line, "source", path),))
         if isinstance(op, Index):
@@ -266,8 +273,7 @@ class FunctionAnalyzer:
             self.assign_sink(instr, taint)
             self.write(instr.dst, taint, state)
         elif isinstance(instr, Concat):
-            taints = [t for p in instr.parts if (t := self.read(p, state, instr.line)) is not None]
-            self.write(instr.dst, taints[0] if taints else None, state)
+            self.write(instr.dst, self.concat(instr, state), state)
         elif isinstance(instr, Call):
             self.call(instr, state)
         elif isinstance(instr, Branch):
@@ -289,6 +295,41 @@ class FunctionAnalyzer:
                     self.ctx.returns.append(taint)
         return state
 
+    def concat(self, instr: Concat, state: State) -> Taint | None:
+        """Taint of a built string. An escaped value only stays escaped inside a quoted literal."""
+        found: list[Taint] = []
+        prefix = ""
+        for part in instr.parts:
+            if isinstance(part, Const):
+                prefix += str(part.value)
+                continue
+            if isinstance(part, Var) and part.name in self.templates:
+                prefix += self.templates[part.name]
+            taint = self.read(part, state, instr.line)
+            if taint is None:
+                continue
+            if (
+                taint.escaped
+                and prefix.replace("\0", "").strip()
+                and not (prefix.count("'") % 2 == 1 or prefix.count('"') % 2 == 1)
+            ):
+                taint = replace(
+                    taint, escaped=False
+                )  # e.g. `WHERE id = $escaped` (numeric context)
+            found.append(taint)
+        self.templates[instr.dst.name] = "".join(
+            str(p.value)
+            if isinstance(p, Const)
+            else self.templates.get(p.name, "\0")
+            if isinstance(p, Var)
+            else "\0"
+            for p in instr.parts
+        )
+        if not found:
+            return None
+        live = [t for t in found if not t.escaped] or found
+        return min(live, key=lambda t: t.hops)
+
     def branch(self, instr: Branch, state: State) -> State:
         validated = self.validated_operands(instr)
         if not validated:
@@ -300,7 +341,10 @@ class FunctionAnalyzer:
         # guarded nothing we can see, so the original taint is restored.
         cleared = dict(state)
         for target in validated:
-            self.write(target, None, cleared)
+            path = access_path(target)
+            if path is not None:
+                self.write(target, None, cleared)
+                cleared[path] = CLEAN
         a = self.block(instr.then, dict(cleared))
         b = self.block(instr.other, dict(cleared))
         a_ends, b_ends = _terminates(instr.then), _terminates(instr.other)
@@ -315,8 +359,11 @@ class FunctionAnalyzer:
                 repaired = path is not None and (
                     _writes(instr.then, path) or _writes(instr.other, path)
                 )  # "if not valid(x): x = default" leaves x clean afterwards
-                if path is not None and path in state and path not in merged and not repaired:
-                    merged[path] = state[path]
+                if path is not None and not repaired and merged.get(path) is CLEAN:
+                    if path in state:
+                        merged[path] = state[path]
+                    else:
+                        del merged[path]
         return merged
 
     def validated_operands(self, branch: Branch) -> list[Operand]:
@@ -376,6 +423,9 @@ class FunctionAnalyzer:
         result: Taint | None
         if any(m.kind == "call" and m.matches_name(callee) for m in spec.sanitizers):
             result = None
+        elif any(m.kind == "call" and m.matches_name(callee) for m in spec.escapers):
+            inputs = [t for t in [*in_args, *in_kwargs.values(), in_recv] if t is not None]
+            result = replace(min(inputs, key=lambda t: t.hops), escaped=True) if inputs else None
         elif any(m.kind == "call" and m.matches_name(callee) for m in spec.sources) or matches_path(
             spec.sources, "field", callee
         ):
@@ -435,7 +485,7 @@ class FunctionAnalyzer:
         return min(candidates, key=lambda t: t.hops) if candidates else None
 
     def report_ref(self, entered: Taint, ref: SinkRef) -> None:
-        if self.ctx.guarded:
+        if self.ctx.guarded or entered.escaped:
             return
         key = (ref.line, ref.sink + "@" + ref.file)
         if key in self.ctx.seen:
@@ -463,7 +513,7 @@ class FunctionAnalyzer:
         return args[index] if index < len(args) else None
 
     def report(self, line: int, taint: Taint, sink: str) -> None:
-        if self.ctx.guarded:
+        if self.ctx.guarded or taint.escaped:
             return
         key = (line, sink)
         if key in self.ctx.seen:

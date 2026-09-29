@@ -159,3 +159,29 @@ def test_refine_lowers_idor_on_models_without_owner(tmp_path: Path) -> None:
     out = plugin.refine(raw, model)
     assert [f.confidence for f, _ in out] == [Confidence.LOW, Confidence.MEDIUM, Confidence.MEDIUM]
     assert "reference data" in out[0][0].message
+
+
+def test_refine_owner_relation_can_be_inherited_from_a_parent_model(tmp_path: Path) -> None:
+    repo = repo_with(
+        tmp_path,
+        {
+            "manage.py": "import django\n",
+            "app/models.py": (
+                "from django.db import models\n"
+                "class Project(models.Model):\n"
+                "    users_assigned = models.ManyToManyField('auth.User')\n"
+                "class File(models.Model):\n"
+                "    project = models.ForeignKey(Project, on_delete=models.CASCADE)\n"
+                "class Loose(models.Model):\n    label = models.CharField(max_length=3)\n"
+            ),
+        },
+    )
+    plugin = DjangoPlugin()
+    model = plugin.extract_schema(repo)
+    assert model is not None
+    raw = [
+        (_idor_finding("f = File.objects.get(pk=pk)"), "a"),
+        (_idor_finding("l = Loose.objects.get(pk=pk)"), "b"),
+    ]
+    out = plugin.refine(raw, model)
+    assert [f.confidence for f, _ in out] == [Confidence.MEDIUM, Confidence.LOW]

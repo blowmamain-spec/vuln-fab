@@ -1,0 +1,585 @@
+{
+  "target": "dvwa",
+  "revision": "see benchmarks/targets.lock",
+  "exclude": [
+    "tests/**",
+    "external/**",
+    "vulnerabilities/*/test_*/**"
+  ],
+  "items": [
+    {
+      "id": "T001",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/sqli/source/low.php",
+      "line_start": 11,
+      "line_end": 11,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: level low"
+    },
+    {
+      "id": "T002",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/sqli/source/low.php",
+      "line_start": 34,
+      "line_end": 34,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: level low"
+    },
+    {
+      "id": "T003",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/sqli/source/medium.php",
+      "line_start": 12,
+      "line_end": 12,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: escape_string in a numeric context does not help"
+    },
+    {
+      "id": "T004",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/sqli/source/medium.php",
+      "line_start": 30,
+      "line_end": 30,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: escape_string in a numeric context does not help"
+    },
+    {
+      "id": "T005",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/sqli/source/high.php",
+      "line_start": 11,
+      "line_end": 11,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: value comes from a session id the user sets; LIMIT 1 is bypassed by a comment"
+    },
+    {
+      "id": "T006",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/sqli/source/high.php",
+      "line_start": 31,
+      "line_end": 31,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: value comes from a session id the user sets; LIMIT 1 is bypassed by a comment"
+    },
+    {
+      "id": "T007",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/sqli_blind/source/low.php",
+      "line_start": 13,
+      "line_end": 13,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: blind SQLi, level low"
+    },
+    {
+      "id": "T008",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/sqli_blind/source/low.php",
+      "line_start": 34,
+      "line_end": 34,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: blind SQLi, level low"
+    },
+    {
+      "id": "T009",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/sqli_blind/source/medium.php",
+      "line_start": 15,
+      "line_end": 15,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: blind SQLi, level medium"
+    },
+    {
+      "id": "T010",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/sqli_blind/source/medium.php",
+      "line_start": 36,
+      "line_end": 36,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: blind SQLi, level medium"
+    },
+    {
+      "id": "T011",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/sqli_blind/source/high.php",
+      "line_start": 13,
+      "line_end": 13,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: blind SQLi, level high"
+    },
+    {
+      "id": "T012",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/sqli_blind/source/high.php",
+      "line_start": 35,
+      "line_end": 35,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: blind SQLi, level high"
+    },
+    {
+      "id": "T013",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/brute/source/low.php",
+      "line_start": 13,
+      "line_end": 13,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "reviewer: username concatenated into the login query"
+    },
+    {
+      "id": "D014",
+      "kind": "decoy",
+      "file": "vulnerabilities/sqli/source/impossible.php",
+      "line_start": 16,
+      "line_end": 16,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "official: PDO prepared statement"
+    },
+    {
+      "id": "D015",
+      "kind": "decoy",
+      "file": "vulnerabilities/sqli/source/impossible.php",
+      "line_start": 34,
+      "line_end": 34,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "official: SQLite3 prepared statement"
+    },
+    {
+      "id": "D016",
+      "kind": "decoy",
+      "file": "vulnerabilities/sqli_blind/source/impossible.php",
+      "line_start": 17,
+      "line_end": 17,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "official: PDO prepared statement"
+    },
+    {
+      "id": "D017",
+      "kind": "decoy",
+      "file": "vulnerabilities/sqli_blind/source/impossible.php",
+      "line_start": 26,
+      "line_end": 26,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "official: SQLite3 prepared statement"
+    },
+    {
+      "id": "D018",
+      "kind": "decoy",
+      "file": "vulnerabilities/brute/source/impossible.php",
+      "line_start": 24,
+      "line_end": 24,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "official: PDO prepared statement"
+    },
+    {
+      "id": "D019",
+      "kind": "decoy",
+      "file": "vulnerabilities/brute/source/impossible.php",
+      "line_start": 53,
+      "line_end": 53,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "official: PDO prepared statement"
+    },
+    {
+      "id": "D020",
+      "kind": "decoy",
+      "file": "vulnerabilities/csrf/source/low.php",
+      "line_start": 17,
+      "line_end": 17,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "reviewer: value escaped and md5-hashed before the query"
+    },
+    {
+      "id": "D021",
+      "kind": "decoy",
+      "file": "vulnerabilities/captcha/source/low.php",
+      "line_start": 61,
+      "line_end": 61,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "reviewer: value escaped and md5-hashed before the query"
+    },
+    {
+      "id": "D022",
+      "kind": "decoy",
+      "file": "vulnerabilities/xss_s/source/low.php",
+      "line_start": 17,
+      "line_end": 17,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "reviewer: both values escaped before the INSERT"
+    },
+    {
+      "id": "T023",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/exec/source/low.php",
+      "line_start": 10,
+      "line_end": 10,
+      "class": "cmd-injection",
+      "cwe": [
+        "CWE-78"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: level low"
+    },
+    {
+      "id": "T024",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/exec/source/low.php",
+      "line_start": 14,
+      "line_end": 14,
+      "class": "cmd-injection",
+      "cwe": [
+        "CWE-78"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: level low"
+    },
+    {
+      "id": "T025",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/exec/source/medium.php",
+      "line_start": 19,
+      "line_end": 19,
+      "class": "cmd-injection",
+      "cwe": [
+        "CWE-78"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: blacklist of && and ; is bypassed with | or &"
+    },
+    {
+      "id": "T026",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/exec/source/medium.php",
+      "line_start": 23,
+      "line_end": 23,
+      "class": "cmd-injection",
+      "cwe": [
+        "CWE-78"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: blacklist of && and ; is bypassed with | or &"
+    },
+    {
+      "id": "T027",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/exec/source/high.php",
+      "line_start": 26,
+      "line_end": 26,
+      "class": "cmd-injection",
+      "cwe": [
+        "CWE-78"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: blacklist has '| ' with a space; '|' alone still works"
+    },
+    {
+      "id": "T028",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/exec/source/high.php",
+      "line_start": 30,
+      "line_end": 30,
+      "class": "cmd-injection",
+      "cwe": [
+        "CWE-78"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: blacklist has '| ' with a space; '|' alone still works"
+    },
+    {
+      "id": "D029",
+      "kind": "decoy",
+      "file": "vulnerabilities/exec/source/impossible.php",
+      "line_start": 22,
+      "line_end": 22,
+      "class": "cmd-injection",
+      "cwe": [
+        "CWE-78"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "official: input must be four numeric octets"
+    },
+    {
+      "id": "D030",
+      "kind": "decoy",
+      "file": "vulnerabilities/exec/source/impossible.php",
+      "line_start": 26,
+      "line_end": 26,
+      "class": "cmd-injection",
+      "cwe": [
+        "CWE-78"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "official: input must be four numeric octets"
+    },
+    {
+      "id": "T031",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/open_redirect/source/low.php",
+      "line_start": 4,
+      "line_end": 4,
+      "class": "redirect",
+      "cwe": [
+        "CWE-601"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: level low"
+    },
+    {
+      "id": "D032",
+      "kind": "decoy",
+      "file": "vulnerabilities/open_redirect/source/impossible.php",
+      "line_start": 18,
+      "line_end": 18,
+      "class": "redirect",
+      "cwe": [
+        "CWE-601"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "official: target chosen from constants"
+    },
+    {
+      "id": "T033",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/xss_r/source/low.php",
+      "line_start": 8,
+      "line_end": 8,
+      "class": "xss",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: reflected XSS, level low (output happens via $html elsewhere)"
+    },
+    {
+      "id": "D034",
+      "kind": "decoy",
+      "file": "vulnerabilities/xss_r/source/impossible.php",
+      "line_start": 12,
+      "line_end": 12,
+      "class": "xss",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "official: htmlspecialchars"
+    },
+    {
+      "id": "T035",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/fi/index.php",
+      "line_start": 36,
+      "line_end": 36,
+      "class": "path-traversal",
+      "cwe": [
+        "CWE-98"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "official: file inclusion (the path is set in source/<level>.php)"
+    },
+    {
+      "id": "T036",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/view_source_all.php",
+      "line_start": 14,
+      "line_end": 14,
+      "class": "path-traversal",
+      "cwe": [
+        "CWE-22"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "reviewer: ?id= is concatenated into a file path"
+    },
+    {
+      "id": "T037",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/view_source_all.php",
+      "line_start": 18,
+      "line_end": 18,
+      "class": "path-traversal",
+      "cwe": [
+        "CWE-22"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "reviewer: ?id= is concatenated into a file path"
+    },
+    {
+      "id": "T038",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/view_source_all.php",
+      "line_start": 22,
+      "line_end": 22,
+      "class": "path-traversal",
+      "cwe": [
+        "CWE-22"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "reviewer: ?id= is concatenated into a file path"
+    },
+    {
+      "id": "T039",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/view_source_all.php",
+      "line_start": 26,
+      "line_end": 26,
+      "class": "path-traversal",
+      "cwe": [
+        "CWE-22"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "reviewer: ?id= is concatenated into a file path"
+    },
+    {
+      "id": "T040",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/view_source.php",
+      "line_start": 63,
+      "line_end": 63,
+      "class": "path-traversal",
+      "cwe": [
+        "CWE-22"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "reviewer: ?id= is concatenated into a file path"
+    },
+    {
+      "id": "T041",
+      "kind": "vulnerable",
+      "file": "vulnerabilities/view_source.php",
+      "line_start": 68,
+      "line_end": 68,
+      "class": "path-traversal",
+      "cwe": [
+        "CWE-22"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "reviewer: ?id= is concatenated into a file path"
+    }
+  ]
+}

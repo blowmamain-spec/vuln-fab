@@ -302,7 +302,12 @@ class PythonLowerer(Lowerer):
     def x_string(self, node: Node) -> Operand:
         interpolations = [c for c in node.children if c.type == "interpolation"]
         if interpolations:
-            parts = [self.expr(i.child_by_field_name("expression")) for i in interpolations]
+            parts: list[Operand] = []
+            for child in node.children:  # keep the literal text: quote context matters to escapers
+                if child.type == "interpolation":
+                    parts.append(self.expr(child.child_by_field_name("expression")))
+                elif child.type in ("string_content", "escape_sequence"):
+                    parts.append(Const(self.text(child)))
             return self._concat(parts, node)
         text = self.text(node)
         prefix = _STRING_PREFIX.match(text)

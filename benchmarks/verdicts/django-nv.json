@@ -1,0 +1,10 @@
+{
+  "target": "django-nv",
+  "reviewer": "Claude (sesi ini) - perlu dikonfirmasi pemilik",
+  "verdicts": {
+    "d871bd6d1d415c496f9aa47ba1f739db": {
+      "verdict": "tp",
+      "note": "profil pengguna lain diambil dari id URL tanpa cek; dampak rendah dan tidak ditandai penulis"
+    }
+  }
+}

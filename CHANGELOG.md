@@ -20,8 +20,15 @@
 - Rule `js-xss` (Angular `bypassSecurityTrust*`).
 - Gate M2 terpenuhi pada Juice Shop dan NodeGoat; lihat `benchmarks/results/m2.md` (termasuk catatan bias).
 
+## 0.3.0 (M3: tiga stack)
+- Plugin Django: settings/models (tanpa eksekusi), URL→view dengan analisis auth, 15+ rule (settings, view tanpa auth, csrf_exempt, ModelForm, SQL mentah, mark_safe, dispatch), template (`|safe`, autoescape, csrf_token).
+- Plugin Laravel: migrations→skema, model Eloquent, rute→entrypoint (grup/middleware/resource), Blade (`{!! !!}`, `@csrf`), rule config/model, mass assignment (taint), IDOR sadar-model.
+- Taint: validator, escaper sadar-konteks-kutip, guards kepemilikan, penanda CLEAN, sanitizer hash, sumber/sink Laravel.
+- Kontrak plugin 1.0 dibeku; kontrak diuji dengan plugin pihak ketiga minimal.
+- Lab Django dan Laravel; ground truth DVWA dan django.nV; gate M3 terpenuhi (`benchmarks/results/m3.md`, termasuk catatan bias).
+
 ## Unreleased
-- Berikutnya: Fase 6 (Django) dan Fase 7 (Laravel).
+- Berikutnya: Fase 8 (scanner pelengkap), 9 (kualitas), 10 (produk).
 
 ## Spec
 Perubahan pada `docs/spec.md` dicatat di sini.

@@ -1,0 +1,566 @@
+{
+  "target": "laravel-vuln",
+  "revision": "lab-1",
+  "items": [
+    {
+      "id": "T001",
+      "kind": "vulnerable",
+      "file": ".env",
+      "line_start": 3,
+      "line_end": 3,
+      "class": "app-key",
+      "cwe": [
+        "CWE-798"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "APP_KEY ikut dikomit"
+    },
+    {
+      "id": "T002",
+      "kind": "vulnerable",
+      "file": ".env",
+      "line_start": 5,
+      "line_end": 5,
+      "class": "app-debug",
+      "cwe": [
+        "CWE-489"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "debug aktif"
+    },
+    {
+      "id": "D001",
+      "kind": "decoy",
+      "file": ".env.example",
+      "line_start": 3,
+      "line_end": 3,
+      "class": "app-key",
+      "cwe": [
+        "CWE-798"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "contoh tanpa nilai"
+    },
+    {
+      "id": "D002",
+      "kind": "decoy",
+      "file": ".env.example",
+      "line_start": 5,
+      "line_end": 5,
+      "class": "app-debug",
+      "cwe": [
+        "CWE-489"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "contoh dengan debug mati"
+    },
+    {
+      "id": "T003",
+      "kind": "vulnerable",
+      "file": "app/Http/Controllers/PostController.php",
+      "line_start": 18,
+      "line_end": 18,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "input request digabung ke SQL"
+    },
+    {
+      "id": "D003",
+      "kind": "decoy",
+      "file": "app/Http/Controllers/PostController.php",
+      "line_start": 25,
+      "line_end": 25,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "query berparameter"
+    },
+    {
+      "id": "T004",
+      "kind": "vulnerable",
+      "file": "app/Http/Controllers/PostController.php",
+      "line_start": 32,
+      "line_end": 32,
+      "class": "cmd-injection",
+      "cwe": [
+        "CWE-78"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "input masuk ke shell"
+    },
+    {
+      "id": "D004",
+      "kind": "decoy",
+      "file": "app/Http/Controllers/PostController.php",
+      "line_start": 39,
+      "line_end": 39,
+      "class": "cmd-injection",
+      "cwe": [
+        "CWE-78"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "argumen di-escape"
+    },
+    {
+      "id": "T005",
+      "kind": "vulnerable",
+      "file": "app/Http/Controllers/PostController.php",
+      "line_start": 46,
+      "line_end": 46,
+      "class": "path-traversal",
+      "cwe": [
+        "CWE-22"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "path dari klien"
+    },
+    {
+      "id": "D005",
+      "kind": "decoy",
+      "file": "app/Http/Controllers/PostController.php",
+      "line_start": 53,
+      "line_end": 53,
+      "class": "path-traversal",
+      "cwe": [
+        "CWE-22"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "hanya nama dasar"
+    },
+    {
+      "id": "T006",
+      "kind": "vulnerable",
+      "file": "app/Http/Controllers/PostController.php",
+      "line_start": 60,
+      "line_end": 60,
+      "class": "ssrf",
+      "cwe": [
+        "CWE-918"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "URL dari klien diminta server"
+    },
+    {
+      "id": "D006",
+      "kind": "decoy",
+      "file": "app/Http/Controllers/PostController.php",
+      "line_start": 67,
+      "line_end": 67,
+      "class": "ssrf",
+      "cwe": [
+        "CWE-918"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "host tetap"
+    },
+    {
+      "id": "T007",
+      "kind": "vulnerable",
+      "file": "app/Http/Controllers/PostController.php",
+      "line_start": 74,
+      "line_end": 74,
+      "class": "redirect",
+      "cwe": [
+        "CWE-601"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "redirect ke URL dari klien"
+    },
+    {
+      "id": "D007",
+      "kind": "decoy",
+      "file": "app/Http/Controllers/PostController.php",
+      "line_start": 84,
+      "line_end": 84,
+      "class": "redirect",
+      "cwe": [
+        "CWE-601"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "daftar putih"
+    },
+    {
+      "id": "T008",
+      "kind": "vulnerable",
+      "file": "app/Http/Controllers/PostController.php",
+      "line_start": 91,
+      "line_end": 91,
+      "class": "deserialization",
+      "cwe": [
+        "CWE-502"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "unserialize atas data klien"
+    },
+    {
+      "id": "T009",
+      "kind": "vulnerable",
+      "file": "app/Http/Controllers/PostController.php",
+      "line_start": 98,
+      "line_end": 98,
+      "class": "xss",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "input dicetak tanpa escape"
+    },
+    {
+      "id": "D008",
+      "kind": "decoy",
+      "file": "app/Http/Controllers/PostController.php",
+      "line_start": 105,
+      "line_end": 105,
+      "class": "xss",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "di-escape"
+    },
+    {
+      "id": "T010",
+      "kind": "vulnerable",
+      "file": "app/Http/Controllers/PostController.php",
+      "line_start": 111,
+      "line_end": 111,
+      "class": "idor",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": "B",
+      "in_scope": true,
+      "note": "post diambil dari id URL tanpa cek pemilik"
+    },
+    {
+      "id": "D009",
+      "kind": "decoy",
+      "file": "app/Http/Controllers/PostController.php",
+      "line_start": 118,
+      "line_end": 118,
+      "class": "idor",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "dibatasi ke pemilik"
+    },
+    {
+      "id": "D010",
+      "kind": "decoy",
+      "file": "app/Http/Controllers/PostController.php",
+      "line_start": 125,
+      "line_end": 125,
+      "class": "idor",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "data referensi bersama"
+    },
+    {
+      "id": "T011",
+      "kind": "vulnerable",
+      "file": "app/Http/Controllers/PostController.php",
+      "line_start": 131,
+      "line_end": 131,
+      "class": "mass-assignment",
+      "cwe": [
+        "CWE-915"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "seluruh request masuk ke create()"
+    },
+    {
+      "id": "D011",
+      "kind": "decoy",
+      "file": "app/Http/Controllers/PostController.php",
+      "line_start": 138,
+      "line_end": 138,
+      "class": "mass-assignment",
+      "cwe": [
+        "CWE-915"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "hanya data tervalidasi"
+    },
+    {
+      "id": "T012",
+      "kind": "vulnerable",
+      "file": "app/Http/Controllers/PostController.php",
+      "line_start": 142,
+      "line_end": 142,
+      "class": "route-no-auth",
+      "cwe": [
+        "CWE-306"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "menghapus data tanpa autentikasi"
+    },
+    {
+      "id": "D012",
+      "kind": "decoy",
+      "file": "app/Http/Controllers/PostController.php",
+      "line_start": 148,
+      "line_end": 148,
+      "class": "route-no-auth",
+      "cwe": [
+        "CWE-306"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "rute berada di grup auth"
+    },
+    {
+      "id": "D013",
+      "kind": "decoy",
+      "file": "app/Http/Middleware/VerifyCsrfToken.php",
+      "line_start": 8,
+      "line_end": 8,
+      "class": "csrf-wildcard",
+      "cwe": [
+        "CWE-352"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "hanya webhook yang dikecualikan"
+    },
+    {
+      "id": "D014",
+      "kind": "decoy",
+      "file": "app/Models/Country.php",
+      "line_start": 10,
+      "line_end": 10,
+      "class": "guarded-empty",
+      "cwe": [
+        "CWE-915"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "daftar fillable eksplisit"
+    },
+    {
+      "id": "T013",
+      "kind": "vulnerable",
+      "file": "app/Models/Post.php",
+      "line_start": 8,
+      "line_end": 8,
+      "class": "hidden-missing",
+      "cwe": [
+        "CWE-200"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "api_token tidak disembunyikan dari JSON"
+    },
+    {
+      "id": "T014",
+      "kind": "vulnerable",
+      "file": "app/Models/Post.php",
+      "line_start": 11,
+      "line_end": 11,
+      "class": "guarded-empty",
+      "cwe": [
+        "CWE-915"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "semua kolom bisa diisi massal"
+    },
+    {
+      "id": "D015",
+      "kind": "decoy",
+      "file": "app/Models/User.php",
+      "line_start": 8,
+      "line_end": 8,
+      "class": "hidden-missing",
+      "cwe": [
+        "CWE-200"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "password dan token disembunyikan"
+    },
+    {
+      "id": "T015",
+      "kind": "vulnerable",
+      "file": "app/Models/User.php",
+      "line_start": 11,
+      "line_end": 11,
+      "class": "fillable-privileged",
+      "cwe": [
+        "CWE-915"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "is_admin bisa diisi massal"
+    },
+    {
+      "id": "D016",
+      "kind": "decoy",
+      "file": "config/app.php",
+      "line_start": 6,
+      "line_end": 6,
+      "class": "app-debug",
+      "cwe": [
+        "CWE-489"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "dibaca dari environment"
+    },
+    {
+      "id": "T016",
+      "kind": "vulnerable",
+      "file": "database/seeders/DatabaseSeeder.php",
+      "line_start": 10,
+      "line_end": 10,
+      "class": "seeder-password",
+      "cwe": [
+        "CWE-798"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "admin dengan kata sandi bawaan"
+    },
+    {
+      "id": "D017",
+      "kind": "decoy",
+      "file": "database/seeders/DatabaseSeeder.php",
+      "line_start": 13,
+      "line_end": 13,
+      "class": "seeder-password",
+      "cwe": [
+        "CWE-798"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "kata sandi dari environment"
+    },
+    {
+      "id": "T017",
+      "kind": "vulnerable",
+      "file": "resources/views/posts/show.blade.php",
+      "line_start": 4,
+      "line_end": 4,
+      "class": "blade-raw",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "isi post dicetak tanpa escape"
+    },
+    {
+      "id": "D018",
+      "kind": "decoy",
+      "file": "resources/views/posts/show.blade.php",
+      "line_start": 7,
+      "line_end": 7,
+      "class": "blade-raw",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "di-escape lewat e()"
+    },
+    {
+      "id": "D019",
+      "kind": "decoy",
+      "file": "resources/views/posts/show.blade.php",
+      "line_start": 10,
+      "line_end": 10,
+      "class": "blade-raw",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "{{ }} otomatis di-escape"
+    },
+    {
+      "id": "T018",
+      "kind": "vulnerable",
+      "file": "resources/views/posts/show.blade.php",
+      "line_start": 13,
+      "line_end": 13,
+      "class": "blade-csrf",
+      "cwe": [
+        "CWE-352"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "form POST tanpa @csrf"
+    },
+    {
+      "id": "D020",
+      "kind": "decoy",
+      "file": "resources/views/posts/show.blade.php",
+      "line_start": 18,
+      "line_end": 18,
+      "class": "blade-csrf",
+      "cwe": [
+        "CWE-352"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "@csrf ada"
+    },
+    {
+      "id": "T019",
+      "kind": "vulnerable",
+      "file": "routes/web.php",
+      "line_start": 33,
+      "line_end": 33,
+      "class": "route-no-auth",
+      "cwe": [
+        "CWE-306"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "webhook mengubah data tanpa verifikasi pemanggil"
+    },
+    {
+      "id": "T020",
+      "kind": "vulnerable",
+      "file": "routes/web.php",
+      "line_start": 33,
+      "line_end": 33,
+      "class": "csrf-exempt",
+      "cwe": [
+        "CWE-352"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "dikecualikan dari CSRF lewat VerifyCsrfToken::$except"
+    }
+  ]
+}

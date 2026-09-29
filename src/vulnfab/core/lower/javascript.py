@@ -392,12 +392,14 @@ class JavaScriptLowerer(Lowerer):
         return Const(self.text(node)[1:-1])
 
     def x_template_string(self, node: Node) -> Operand:
-        parts = [
-            self.expr(self.named(sub)[0])
-            for sub in node.children
-            if sub.type == "template_substitution" and self.named(sub)
-        ]
-        return self._concat(parts, node) if parts else Const(self.text(node)[1:-1])
+        parts: list[Operand] = []
+        for sub in node.children:  # keep the literal text: quote context matters to escapers
+            if sub.type == "template_substitution" and self.named(sub):
+                parts.append(self.expr(self.named(sub)[0]))
+            elif sub.type in ("string_fragment", "escape_sequence"):
+                parts.append(Const(self.text(sub)))
+        has_substitution = any(not isinstance(p, Const) for p in parts)
+        return self._concat(parts, node) if has_substitution else Const(self.text(node)[1:-1])
 
     def x_number(self, node: Node) -> Operand:
         text = self.text(node).replace("_", "")

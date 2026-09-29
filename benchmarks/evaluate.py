@@ -43,10 +43,10 @@ def main() -> int:
         target, truth = load_truth(HERE / "truth" / f"{args.target}.json")
         verdicts = load_verdicts(HERE / "verdicts" / f"{args.target}.json")
         findings = load_findings(args.findings)
-        excludes = json.loads((HERE / "truth" / f"{args.target}.json").read_text()).get("exclude", [])
-        classes = (
-            set(args.classes.split(",")) if args.classes else {t.cls for t in truth}
+        excludes = json.loads((HERE / "truth" / f"{args.target}.json").read_text()).get(
+            "exclude", []
         )
+        classes = set(args.classes.split(",")) if args.classes else {t.cls for t in truth}
         kept = [
             f
             for f in findings

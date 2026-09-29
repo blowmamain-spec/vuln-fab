@@ -22,6 +22,7 @@ def spec_for(rule: TaintRule) -> TaintSpec:
         rule.propagators,
         rule.guards,
         rule.validators,
+        rule.escapers,
     )
 
 

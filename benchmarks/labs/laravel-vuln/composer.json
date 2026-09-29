@@ -1,0 +1,7 @@
+{
+    "name": "lab/laravel-vuln",
+    "require": {
+        "php": "^8.2",
+        "laravel/framework": "^11.0"
+    }
+}

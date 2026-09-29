@@ -37,6 +37,11 @@ rules:
   - call int
   - call float
   - call bool
+  - call hashlib.*
+  - call *.hexdigest
+  - call *.digest
+  - call zlib.crc32
+  - call uuid.uuid4
   validators:
   - call re.match
   - call re.fullmatch
@@ -86,6 +91,11 @@ rules:
   - call int
   - call shlex.quote
   - call pipes.quote
+  - call hashlib.*
+  - call *.hexdigest
+  - call *.digest
+  - call zlib.crc32
+  - call uuid.uuid4
   validators:
   - call re.match
   - call re.fullmatch
@@ -133,6 +143,11 @@ rules:
   - call int
   - call float
   - call ast.literal_eval
+  - call hashlib.*
+  - call *.hexdigest
+  - call *.digest
+  - call zlib.crc32
+  - call uuid.uuid4
   validators:
   - call re.match
   - call re.fullmatch
@@ -187,6 +202,11 @@ rules:
   - call secure_filename
   - call werkzeug.utils.secure_filename
   - call int
+  - call hashlib.*
+  - call *.hexdigest
+  - call *.digest
+  - call zlib.crc32
+  - call uuid.uuid4
   validators:
   - call re.match
   - call re.fullmatch
@@ -241,6 +261,11 @@ rules:
   - call httpx.post arg0
   sanitizers:
   - call int
+  - call hashlib.*
+  - call *.hexdigest
+  - call *.digest
+  - call zlib.crc32
+  - call uuid.uuid4
   validators:
   - call re.match
   - call re.fullmatch
@@ -290,6 +315,12 @@ rules:
   - call yaml.unsafe_load arg0
   - call jsonpickle.decode arg0
   - call dill.loads arg0
+  sanitizers:
+  - call hashlib.*
+  - call *.hexdigest
+  - call *.digest
+  - call zlib.crc32
+  - call uuid.uuid4
   supersedes:
   - py-pickle-loads
   fix: Use a data-only format (JSON) and validate the result.
@@ -342,6 +373,11 @@ rules:
   - call *.fetchall
   - call *.fetchone
   - call *.read
+  - call hashlib.*
+  - call *.hexdigest
+  - call *.digest
+  - call zlib.crc32
+  - call uuid.uuid4
   validators:
   - call re.match
   - call re.fullmatch
@@ -384,6 +420,11 @@ rules:
   - call jinja2.Template arg0
   sanitizers:
   - call int
+  - call hashlib.*
+  - call *.hexdigest
+  - call *.digest
+  - call zlib.crc32
+  - call uuid.uuid4
   validators:
   - call re.match
   - call re.fullmatch
@@ -428,6 +469,11 @@ rules:
   - call url_for
   - call reverse
   - call int
+  - call hashlib.*
+  - call *.hexdigest
+  - call *.digest
+  - call zlib.crc32
+  - call uuid.uuid4
   validators:
   - call re.match
   - call re.fullmatch
@@ -485,6 +531,11 @@ rules:
   sanitizers:
   - call jwt.decode
   - call *.decode_token
+  - call hashlib.*
+  - call *.hexdigest
+  - call *.digest
+  - call zlib.crc32
+  - call uuid.uuid4
   guards:
   - field *request.user
   - field current_user
@@ -539,6 +590,10 @@ rules:
   - call parseInt
   - call Number
   - call parseFloat
+  - call *.digest
+  - call uuid
+  - call uuidv4
+  - call crypto.randomUUID
   validators:
   - call *.match
   - call *.test
@@ -592,6 +647,10 @@ rules:
   - call Number
   - call shellescape
   - call shell-quote.quote
+  - call *.digest
+  - call uuid
+  - call uuidv4
+  - call crypto.randomUUID
   validators:
   - call *.match
   - call *.test
@@ -647,6 +706,10 @@ rules:
   - call parseInt
   - call Number
   - call JSON.parse
+  - call *.digest
+  - call uuid
+  - call uuidv4
+  - call crypto.randomUUID
   validators:
   - call *.match
   - call *.test
@@ -709,6 +772,10 @@ rules:
   - call path.basename
   - call parseInt
   - call Number
+  - call *.digest
+  - call uuid
+  - call uuidv4
+  - call crypto.randomUUID
   validators:
   - call *.match
   - call *.test
@@ -773,6 +840,10 @@ rules:
   sanitizers:
   - call parseInt
   - call Number
+  - call *.digest
+  - call uuid
+  - call uuidv4
+  - call crypto.randomUUID
   validators:
   - call *.match
   - call *.test
@@ -823,6 +894,11 @@ rules:
   - call serialize.unserialize arg0
   - call unserialize arg0
   - call v8.deserialize arg0
+  sanitizers:
+  - call *.digest
+  - call uuid
+  - call uuidv4
+  - call crypto.randomUUID
   fix: Use a data-only format (JSON) and validate the result.
   tests:
     vulnerable:
@@ -886,6 +962,10 @@ rules:
   - call *.query
   - call *.findByPk
   - call *.findOne
+  - call *.digest
+  - call uuid
+  - call uuidv4
+  - call crypto.randomUUID
   validators:
   - call *.match
   - call *.test
@@ -937,6 +1017,10 @@ rules:
   sanitizers:
   - call parseInt
   - call Number
+  - call *.digest
+  - call uuid
+  - call uuidv4
+  - call crypto.randomUUID
   validators:
   - call *.match
   - call *.test
@@ -995,6 +1079,10 @@ rules:
   - call *.verify
   - call *.decode
   - call jwt.*
+  - call *.digest
+  - call uuid
+  - call uuidv4
+  - call crypto.randomUUID
   guards:
   - field req.user
   - field req.session
@@ -1074,9 +1162,15 @@ rules:
   sanitizers:
   - call intval
   - call floatval
-  - call mysqli_real_escape_string
-  - call pg_escape_string
-  - call addslashes
+  - call md5
+  - call sha1
+  - call crc32
+  - call hash
+  - call hash_hmac
+  - call password_hash
+  - call bin2hex
+  - call uniqid
+  - call random_int
   validators:
   - call is_numeric
   - call ctype_digit
@@ -1084,6 +1178,14 @@ rules:
   - call preg_match
   - call filter_var
   - call is_int
+  escapers:
+  - call mysqli_real_escape_string
+  - call mysql_real_escape_string
+  - call pg_escape_string
+  - call addslashes
+  - call *.real_escape_string
+  - call *.quote
+  - call *.escape_string
   supersedes:
   - php-sql-interp
   fix: Use parameterised queries / bound parameters.
@@ -1141,6 +1243,15 @@ rules:
   - call escapeshellarg
   - call escapeshellcmd
   - call intval
+  - call md5
+  - call sha1
+  - call crc32
+  - call hash
+  - call hash_hmac
+  - call password_hash
+  - call bin2hex
+  - call uniqid
+  - call random_int
   validators:
   - call is_numeric
   - call ctype_digit
@@ -1201,6 +1312,15 @@ rules:
   - call Blade::compileString arg0
   sanitizers:
   - call intval
+  - call md5
+  - call sha1
+  - call crc32
+  - call hash
+  - call hash_hmac
+  - call password_hash
+  - call bin2hex
+  - call uniqid
+  - call random_int
   validators:
   - call is_numeric
   - call ctype_digit
@@ -1279,6 +1399,15 @@ rules:
   sanitizers:
   - call basename
   - call intval
+  - call md5
+  - call sha1
+  - call crc32
+  - call hash
+  - call hash_hmac
+  - call password_hash
+  - call bin2hex
+  - call uniqid
+  - call random_int
   validators:
   - call is_numeric
   - call ctype_digit
@@ -1290,7 +1419,6 @@ rules:
   - call strpos
   - call str_starts_with
   - call str_contains
-  - call array_key_exists
   supersedes:
   - php-include-request
   fix: Use a fixed base directory, reduce input to a basename and verify the resolved path.
@@ -1347,6 +1475,15 @@ rules:
   - call *.request arg1
   sanitizers:
   - call intval
+  - call md5
+  - call sha1
+  - call crc32
+  - call hash
+  - call hash_hmac
+  - call password_hash
+  - call bin2hex
+  - call uniqid
+  - call random_int
   validators:
   - call is_numeric
   - call ctype_digit
@@ -1358,7 +1495,6 @@ rules:
   - call strpos
   - call str_starts_with
   - call str_contains
-  - call array_key_exists
   fix: Allow-list hosts and schemes; never request user-supplied URLs directly.
   tests:
     vulnerable:
@@ -1407,6 +1543,16 @@ rules:
   - call yaml_parse arg0
   - call igbinary_unserialize arg0
   - call maybe_unserialize arg0
+  sanitizers:
+  - call md5
+  - call sha1
+  - call crc32
+  - call hash
+  - call hash_hmac
+  - call password_hash
+  - call bin2hex
+  - call uniqid
+  - call random_int
   supersedes:
   - php-unserialize
   fix: Use a data-only format (JSON) and validate the result.
@@ -1474,6 +1620,15 @@ rules:
   - call *.query
   - call fgets
   - call file
+  - call md5
+  - call sha1
+  - call crc32
+  - call hash
+  - call hash_hmac
+  - call password_hash
+  - call bin2hex
+  - call uniqid
+  - call random_int
   validators:
   - call is_numeric
   - call ctype_digit
@@ -1530,8 +1685,18 @@ rules:
   - call redirect arg0
   - call Redirect::to arg0
   - call wp_redirect arg0
+  - call header arg0
   sanitizers:
   - call intval
+  - call md5
+  - call sha1
+  - call crc32
+  - call hash
+  - call hash_hmac
+  - call password_hash
+  - call bin2hex
+  - call uniqid
+  - call random_int
   validators:
   - call is_numeric
   - call ctype_digit
@@ -1543,7 +1708,6 @@ rules:
   - call strpos
   - call str_starts_with
   - call str_contains
-  - call array_key_exists
   fix: Redirect only to allow-listed or relative internal targets.
   tests:
     vulnerable:
@@ -1602,6 +1766,16 @@ rules:
   - call *.find arg0
   - call *.findOrFail arg0
   tier: B
+  sanitizers:
+  - call md5
+  - call sha1
+  - call crc32
+  - call hash
+  - call hash_hmac
+  - call password_hash
+  - call bin2hex
+  - call uniqid
+  - call random_int
   guards:
   - call auth
   - call Auth::id

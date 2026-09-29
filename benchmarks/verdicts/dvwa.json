@@ -1,0 +1,34 @@
+{
+  "target": "dvwa",
+  "reviewer": "Claude (sesi ini) - perlu dikonfirmasi pemilik",
+  "verdicts": {
+    "1c22644d2fc9e2d7fe20f2e33dab5c81": {
+      "verdict": "tp",
+      "note": "cookie 'theme' dicetak tanpa escape di atribut class (dvwaThemeGet)"
+    },
+    "81bb9c0204aab77acc6d7953298dc20e": {
+      "verdict": "tp",
+      "note": "cookie 'theme' dicetak tanpa escape di atribut class"
+    },
+    "84cba6f0c03d076977d6baa2dc85f81a": {
+      "verdict": "tp",
+      "note": "cookie 'theme' dicetak tanpa escape di atribut class"
+    },
+    "8dd6196b44c72bbdcf2952d36b98eb4f": {
+      "verdict": "tp",
+      "note": "parameter callback JSONP dipantulkan tanpa validasi (pelajaran CSP bypass)"
+    },
+    "1e1b9899c784be1edead45ded98750a3": {
+      "verdict": "fp",
+      "note": "nama berkas sementara dibuat ulang dari md5(uniqid) dan ekstensi divalidasi"
+    },
+    "a871b6b7c77427b18c844d3578e9e2c2": {
+      "verdict": "tp",
+      "note": "?id= masuk ke jalur file_get_contents lalu eval"
+    },
+    "6598177d7d582bb76a0ed56b1c65e3a2": {
+      "verdict": "tp",
+      "note": "?id= masuk ke jalur file_get_contents lalu eval"
+    }
+  }
+}

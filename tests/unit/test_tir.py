@@ -35,7 +35,7 @@ def module_body(language: str, code: str) -> list[str]:
 
 PY = [
     ("assign+attr+subscript", "def f(req):\n    q = req.GET['q']\n", ["L2: q = req.GET['q']"]),
-    ("fstring", "def f(a):\n    s = f'x{a}y'\n", ["L2: t1 = concat(a)", "L2: s = t1"]),
+    ("fstring", "def f(a):\n    s = f'x{a}y'\n", ["L2: t1 = concat('x', a, 'y')", "L2: s = t1"]),
     ("concat", "def f(a):\n    s = 'x' + a\n", ["L2: t1 = concat('x', a)", "L2: s = t1"]),
     ("call+kwargs", "def f(a):\n    g(a, k=1)\n", ["L2: t1 = call g(a, k=1)"]),
     ("method call", "def f(a):\n    a.b.c(1)\n", ["L2: t1 = call a.b.c(1)"]),
@@ -135,7 +135,7 @@ JS = [
         "function f(req) { const a = req.query.id; g(a); }",
         ["a = req.query.id", "call g(a)"],
     ),
-    ("template", "function f(a) { const s = `x${a}y${b}`; }", ["concat(a, b)"]),
+    ("template", "function f(a) { const s = `x${a}y${b}`; }", ["concat('x', a, 'y', b)"]),
     ("concat", "function f(a) { const s = 'x' + a + 'y'; }", ["concat('x', a)", "concat(t1, 'y')"]),
     (
         "destructure object",
@@ -235,7 +235,11 @@ def test_javascript_imports_and_tsx() -> None:
 
 PHP = [
     ("superglobal", "<?php function f() { $a = $_GET['id']; }", ["a = _GET['id']"]),
-    ("interpolation", '<?php function f($n) { $s = "hi $n and {$n}"; }', ["concat(n, n)"]),
+    (
+        "interpolation",
+        '<?php function f($n) { $s = "hi $n and {$n}"; }',
+        ["concat('hi ', n, ' and ', n)"],
+    ),
     ("concat dot", "<?php function f($a) { $s = 'x' . $a; }", ["concat('x', a)"]),
     ("function call", "<?php function f($a) { g($a, 1); }", ["call g(a, 1)"]),
     ("method call", "<?php function f($db) { $db->query('x'); }", ["call db.query('x')"]),

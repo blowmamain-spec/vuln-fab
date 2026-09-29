@@ -44,7 +44,7 @@ def collect(lab: Path) -> list[dict[str, object]]:
     for path in sorted(p for p in lab.rglob("*") if p.is_file()):
         if SKIP_DIRS & set(path.relative_to(lab).parts):
             continue
-        if path.suffix not in TEXT_SUFFIXES and path.name not in {".env.local"}:
+        if path.suffix not in TEXT_SUFFIXES and not path.name.startswith(".env"):
             continue
         rel = path.relative_to(lab).as_posix()
         lines = path.read_text().split("\n")

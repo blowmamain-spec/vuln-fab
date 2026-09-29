@@ -291,3 +291,43 @@ def test_validate_or_reset_pattern_cleans_after_branch() -> None:
         "    if not url_has_allowed_host_and_scheme(t):\n        t = '/'\n    return redirect(t)\n"
     )
     assert not hits(code, "python", spec)
+
+
+ESC_SPEC = TaintSpec.from_rule(
+    ["var _GET"],
+    ["call mysqli_query arg1"],
+    ["call intval"],
+    [],
+    None,
+    None,
+    ["call mysqli_real_escape_string"],
+)
+
+
+def _esc(code: str):
+    return hits("<?php\nfunction f($c){ $id = $_GET['id']; " + code + " }\n", "php", ESC_SPEC)
+
+
+def test_escaper_is_enough_inside_quotes() -> None:
+    assert not _esc(
+        "$e = mysqli_real_escape_string($c, $id); mysqli_query($c, \"select * from t where a = '$e'\");"
+    )
+
+
+def test_escaper_does_not_help_in_numeric_context() -> None:
+    assert _esc(
+        '$e = mysqli_real_escape_string($c, $id); mysqli_query($c, "select * from t where a = $e");'
+    )
+
+
+def test_escaper_odd_quotes_and_other_taint() -> None:
+    assert _esc(
+        "$e = mysqli_real_escape_string($c, $id); mysqli_query($c, \"select * from t where a = '$e' and b = $id\");"
+    )
+    assert not _esc(
+        "$e = mysqli_real_escape_string($c, $id); mysqli_query($c, \"select * from t where a = '$e' and b = 'x'\");"
+    )
+
+
+def test_intval_still_sanitizes_everywhere() -> None:
+    assert not _esc('$n = intval($id); mysqli_query($c, "select * from t where a = $n");')
