@@ -245,3 +245,59 @@ def ir_command(
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(EXIT_USAGE) from exc
     typer.echo(format_module(module), nl=False)
+
+
+triage_app = typer.Typer(
+    help="Record verdicts (true/false positive) for findings.", no_args_is_help=True
+)
+app.add_typer(triage_app, name="triage")
+
+VerdictFile = Annotated[Path, typer.Option("--file", "-f", help="Verdict file (JSON).")]
+
+
+@triage_app.command("set")
+def triage_set(
+    fingerprints: Annotated[list[str], typer.Argument(help="Finding fingerprint(s).")],
+    verdict: Annotated[str, typer.Option("--verdict", "-v", help="tp | fp | dup")],
+    file: VerdictFile = Path(".vulnfab-verdicts.json"),
+    note: Annotated[str, typer.Option("--note", "-n")] = "",
+    reviewer: Annotated[str, typer.Option("--reviewer")] = "",
+) -> None:
+    """Store a verdict for one or more fingerprints."""
+    from vulnfab.core import triage
+
+    try:
+        count = triage.set_verdicts(file, fingerprints, verdict, note, reviewer)
+    except triage.TriageError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+    typer.echo(f"{count} verdict(s) saved to {file}")
+
+
+@triage_app.command("clear")
+def triage_clear(
+    fingerprints: Annotated[list[str], typer.Argument()],
+    file: VerdictFile = Path(".vulnfab-verdicts.json"),
+) -> None:
+    """Remove verdicts."""
+    from vulnfab.core import triage
+
+    typer.echo(f"{triage.clear(file, fingerprints)} verdict(s) removed from {file}")
+
+
+@triage_app.command("list")
+def triage_list(
+    findings: Annotated[Path, typer.Argument(help="JSON produced by `scan --format json`.")],
+    file: VerdictFile = Path(".vulnfab-verdicts.json"),
+) -> None:
+    """List findings that still have no verdict."""
+    from vulnfab.core import triage
+
+    try:
+        pending = triage.unreviewed(findings, file)
+    except (OSError, ValueError, KeyError, triage.TriageError) as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+    for f in pending:
+        typer.echo(f"{f['fingerprint']}  {f['rule_id']}  {f['file']}:{f['line']}")
+    typer.echo(f"{len(pending)} finding(s) without a verdict")
