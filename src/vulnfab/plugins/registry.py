@@ -18,6 +18,7 @@ ENTRY_POINT_GROUP = "vulnfab.plugins"
 # "module:attribute" — the attribute is a plugin class or a ready instance.
 BUILTIN_PLUGINS = (
     "vulnfab.plugins.generic:GenericPlugin",
+    "vulnfab.plugins.django:DjangoPlugin",
     "vulnfab.plugins.supabase:SupabasePlugin",
     "vulnfab.plugins.typescript:TypeScriptPlugin",
 )

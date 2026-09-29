@@ -192,6 +192,7 @@ class Column:
     default: str | None = None
     unique: bool = False
     sensitive_hint: bool = False
+    references: str | None = None  # foreign key target (model/table name as written)
 
 
 PolicyCommand = Literal["all", "select", "insert", "update", "delete"]
@@ -305,6 +306,7 @@ class ConfigDoc:
     path: str
     data: dict[str, Any]
     lines: dict[tuple[str, ...], int] = field(default_factory=dict)  # key path -> 1-based line
+    extras: dict[str, Any] = field(default_factory=dict)  # reader-specific notes
 
 
 @dataclass

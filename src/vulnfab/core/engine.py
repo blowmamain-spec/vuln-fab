@@ -170,7 +170,7 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
     try:
         raw.extend(run_scanner_rules([r for r in scanner_rules if r.stack in active], loaded.files))
         cross = [r for r in crosscheck_rules if r.stack in active]
-        model = schemas.get("supabase") or next(iter(schemas.values()), None)
+        model = schemas.get("supabase")
         if cross and model is None:
             coverage.assumptions.append(
                 "Cross-check rules were skipped: no database schema was found to compare with."

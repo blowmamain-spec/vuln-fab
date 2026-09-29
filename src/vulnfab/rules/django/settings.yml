@@ -1,0 +1,130 @@
+rules:
+  - id: dj-debug-true
+    kind: schema
+    stack: django
+    severity: high
+    confidence: medium
+    cwe: [CWE-489, CWE-215]
+    owasp: "A05:2021"
+    title: "DEBUG enabled in settings"
+    message: "DEBUG = True exposes source, settings and SQL in error pages."
+    check: "vulnfab.plugins.django.checks:debug_true"
+    fix: "Set DEBUG from the environment and default it to False."
+    tests: {vulnerable: [settings_vuln.py], safe: [settings_safe.py]}
+
+  - id: dj-secret-key
+    kind: schema
+    stack: django
+    severity: high
+    confidence: high
+    cwe: [CWE-798, CWE-321]
+    owasp: "A02:2021"
+    title: "Hard-coded SECRET_KEY"
+    message: "SECRET_KEY is hard-coded."
+    check: "vulnfab.plugins.django.checks:secret_key_hardcoded"
+    fix: "Read SECRET_KEY from an environment variable or a secret manager and rotate the exposed key."
+    tests: {vulnerable: [settings_vuln.py], safe: [settings_safe.py]}
+
+  - id: dj-allowed-hosts
+    kind: schema
+    stack: django
+    severity: medium
+    confidence: medium
+    cwe: [CWE-644]
+    owasp: "A05:2021"
+    title: "ALLOWED_HOSTS accepts every host"
+    message: "ALLOWED_HOSTS contains '*'."
+    check: "vulnfab.plugins.django.checks:allowed_hosts_wildcard"
+    fix: "List the real host names."
+    tests: {vulnerable: [settings_vuln.py], safe: [settings_safe.py]}
+
+  - id: dj-password-hasher
+    kind: schema
+    stack: django
+    severity: high
+    confidence: high
+    cwe: [CWE-916, CWE-328]
+    owasp: "A02:2021"
+    title: "Weak password hasher"
+    message: "PASSWORD_HASHERS contains a weak hasher."
+    check: "vulnfab.plugins.django.checks:weak_password_hasher"
+    fix: "Use PBKDF2, Argon2 or bcrypt hashers only."
+    tests: {vulnerable: [settings_vuln.py], safe: [settings_safe.py]}
+
+  - id: dj-pickle-session
+    kind: schema
+    stack: django
+    severity: high
+    confidence: high
+    cwe: [CWE-502]
+    owasp: "A08:2021"
+    title: "Pickle session serializer"
+    message: "SESSION_SERIALIZER uses pickle."
+    check: "vulnfab.plugins.django.checks:pickle_session_serializer"
+    fix: "Use django.contrib.sessions.serializers.JSONSerializer."
+    tests: {vulnerable: [settings_vuln.py], safe: [settings_safe.py]}
+
+  - id: dj-cookie-httponly
+    kind: schema
+    stack: django
+    severity: medium
+    confidence: medium
+    cwe: [CWE-1004]
+    owasp: "A05:2021"
+    title: "Session cookie readable by JavaScript"
+    message: "SESSION_COOKIE_HTTPONLY is False."
+    check: "vulnfab.plugins.django.checks:session_cookie_httponly_off"
+    fix: "Leave SESSION_COOKIE_HTTPONLY at its default (True)."
+    tests: {vulnerable: [settings_vuln.py], safe: [settings_safe.py]}
+
+  - id: dj-cookie-secure
+    kind: schema
+    stack: django
+    severity: medium
+    confidence: medium
+    cwe: [CWE-614]
+    owasp: "A05:2021"
+    title: "Cookie sent over plain HTTP"
+    message: "A cookie 'Secure' flag is explicitly disabled."
+    check: "vulnfab.plugins.django.checks:cookie_secure_off"
+    fix: "Set SESSION_COOKIE_SECURE and CSRF_COOKIE_SECURE to True in production."
+    tests: {vulnerable: [settings_vuln.py], safe: [settings_safe.py]}
+
+  - id: dj-csrf-middleware
+    kind: schema
+    stack: django
+    severity: high
+    confidence: high
+    cwe: [CWE-352]
+    owasp: "A01:2021"
+    title: "CSRF middleware missing"
+    message: "CsrfViewMiddleware is not enabled."
+    check: "vulnfab.plugins.django.checks:csrf_middleware_missing"
+    fix: "Add 'django.middleware.csrf.CsrfViewMiddleware' to MIDDLEWARE."
+    tests: {vulnerable: [settings_vuln.py], safe: [settings_safe.py]}
+
+  - id: dj-clickjacking
+    kind: schema
+    stack: django
+    severity: low
+    confidence: low
+    cwe: [CWE-1021]
+    owasp: "A05:2021"
+    title: "Clickjacking protection missing"
+    message: "XFrameOptionsMiddleware is not enabled."
+    check: "vulnfab.plugins.django.checks:clickjacking_protection_missing"
+    fix: "Add 'django.middleware.clickjacking.XFrameOptionsMiddleware'."
+    tests: {vulnerable: [settings_vuln.py], safe: [settings_safe.py]}
+
+  - id: dj-password-validators
+    kind: schema
+    stack: django
+    severity: low
+    confidence: low
+    cwe: [CWE-521]
+    owasp: "A07:2021"
+    title: "No password validators"
+    message: "AUTH_PASSWORD_VALIDATORS is empty."
+    check: "vulnfab.plugins.django.checks:password_validators_missing"
+    fix: "Enable Django's default AUTH_PASSWORD_VALIDATORS."
+    tests: {vulnerable: [settings_vuln.py], safe: [settings_safe.py]}
