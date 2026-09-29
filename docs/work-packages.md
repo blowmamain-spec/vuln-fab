@@ -52,7 +52,7 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
   *Lulus jika*: test untuk tiap kelas kesalahan (id ganda, tanpa test safe, kind tak dikenal, field hilang).
 - [x] **WP-2.2 Evaluator ekspresi aman** (S) — dep: 2.1. Whitelist node; tanpa pemanggilan fungsi, tanpa akses dunder.
   *Lulus jika*: test adversarial (`__import__`, atribut dunder, komprehensi berat) semuanya ditolak.
-- [ ] **WP-2.3 Kompiler pola snippet → matcher** (L) — dep: 0.3b, 1.1. Metavariable, `...`, `pattern-not`, `pattern-inside`, `where`; adaptor tree-sitter Python/TS/PHP.
+- [x] **WP-2.3 Kompiler pola snippet → matcher** (L) — dep: 0.3b, 1.1. Metavariable, `...`, `pattern-not`, `pattern-inside`, `where`; adaptor tree-sitter Python/TS/PHP.
   *Lulus jika*: ≥ 30 kasus per bahasa (cocok/tidak cocok/tepi) lulus.
 - [ ] **WP-2.4 Harness test rule** (M) — dep: 2.1, 2.3. Anotasi `# vuln: <id>`; `vulnfab rules test`; cek CI "rule tanpa test gagal".
   *Lulus jika*: rule sengaja rusak (safe menghasilkan temuan) membuat harness gagal dengan pesan jelas.
