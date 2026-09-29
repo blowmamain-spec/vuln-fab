@@ -1,8 +1,20 @@
-# Rencana Proyek: SAST Multi-Stack (v2)
+# Rencana Proyek: SAST Multi-Stack (v3, siap eksekusi)
 
-Scanner statis untuk kode aplikasi web. Satu engine inti, banyak plugin: **Supabase/Postgres, Django, Laravel, TypeScript**.
+Scanner statis untuk kode aplikasi web. Satu engine inti, banyak plugin: **Supabase/Postgres, Django, Laravel, TypeScript**. Nama paket dan CLI: **`vulnfab`** (mengikuti nama repo; mudah diganti).
 
-Perubahan utama dari v1:
+**Peta dokumen**
+- Dokumen ini: strategi, keputusan final, gate milestone, tangga pemangkasan scope (Bagian 15-19).
+- [`spec.md`](spec.md): kontrak teknis (CLI, exit code, skema JSON, IR, skema rule, fingerprint, scoring, format ground truth).
+- [`work-packages.md`](work-packages.md): daftar paket kerja bercentang, dengan dependensi dan kriteria lulus yang bisa dijalankan. **Inilah yang dikerjakan berurutan sampai selesai.**
+
+Perubahan v3 terhadap v2:
+- Bagian 15-19 baru: keputusan final, konvensi engineering, gate numerik per milestone, tangga pemangkasan, catatan lingkungan.
+- Pencocokan pola memakai **tree-sitter untuk semua bahasa** (termasuk Python), bukan `ast`, agar hanya ada satu matcher. `ast` tetap boleh dipakai untuk kebutuhan khusus (mis. mengevaluasi `migrations/*.py`).
+- Taint engine bekerja pada **IR bertipe kecil (TIR)** yang dinormalisasi per bahasa, agar satu engine melayani semua stack.
+- Spike berbatas waktu di Fase 0 untuk menguji asumsi paling berisiko sebelum membangun di atasnya.
+- Adaptor gitleaks/osv-scanner bersifat opsional dengan fallback bawaan (alat tidak terpasang di lingkungan pengembangan; API OSV diblokir di sandbox).
+
+Perubahan v2 terhadap v1:
 - Broken access control (IDOR) dan kode dinamis **masuk scope** sebagai cakupan bertingkat dengan confidence eksplisit, bukan lagi pengecualian.
 - Diferensiator produk: analisis skema Supabase + cross-check skema ↔ kode.
 - Kontrak plugin diperbaiki (fakta `DataAccess`, pembekuan setelah plugin ke-3).
@@ -52,18 +64,18 @@ Perubahan utama dari v1:
 | Lisensi proyek | **GPL-3.0-or-later** | `pglast` berlisensi GPL-3.0-or-later; proyek yang meng-import-nya harus kompatibel |
 | Parser SQL Postgres | `pglast` di belakang antarmuka `SqlParser` | Parser asli PostgreSQL. Antarmuka menjaga opsi mengganti ke wrapper `libpg_query` (BSD) bila lisensi berubah |
 | Parser plpgsql | `pglast.parse_plpgsql` | Body fungsi tidak diparse oleh `parse_sql` |
-| Parser Python | modul `ast` | Akurat, tanpa dependensi |
-| Parser PHP/TS/JS | `tree-sitter` + grammar (versi di-pin) | Satu API; pin mencegah AST berubah diam-diam |
+| Parser Python/PHP/TS/JS | `tree-sitter` + grammar (versi di-pin) | Satu API dan satu matcher untuk semua bahasa; pin mencegah AST berubah diam-diam. Modul `ast` hanya untuk kebutuhan khusus |
+| IR taint | TIR: assign, call, return, concat/fstring, subscript, attribute, branch, loop | Dinormalisasi per bahasa dari tree-sitter; satu engine untuk semua stack |
 | Parser template | Django template & Blade: parser sederhana buatan sendiri (lihat Fase 6/7) | Tidak tercakup `ast`/tree-sitter |
 | Pola rule | Meniru sintaks Semgrep (snippet dengan metavariable `$X`, diparse dengan grammar bahasa yang sama) | Tidak merancang bahasa pola sendiri; rule bisa dirujuk silang |
 | Ekspresi kondisi rule skema | Evaluator aman (whitelist node AST, mis. `simpleeval`) atau fungsi Python teruji | **Dilarang `eval` string**: ini security tool |
 | CLI | `typer` | Help otomatis |
 | Output | JSON (`schema_version`), SARIF, HTML, console (`rich`) | SARIF untuk GitHub/CI |
 | Test | `pytest` + snapshot | Regresi rule |
-| Paket | `uv` (alternatif: `poetry`) | Pilih satu; Poetry hanya lebih lambat di sisi dev/CI, bukan runtime scanner |
+| Paket | `uv` (final) | Lebih cepat dan sederhana; tidak memengaruhi runtime scanner |
 | Penemuan plugin | Python entry points (`importlib.metadata`) + folder bawaan | Plugin pihak ketiga tanpa mengubah core |
-| Secret | Bungkus **gitleaks** (adaptor → Finding) | Matang; hemat waktu |
-| SCA | Bungkus **osv-scanner** (mode offline dengan dump lokal) | Matang; hemat waktu |
+| Secret | Adaptor **gitleaks** opsional + detektor regex/entropi bawaan sebagai fallback | Alat tidak selalu terpasang; fallback menjaga fungsi dasar |
+| SCA | Adaptor **osv-scanner** opsional; mode offline dari dump OSV lokal | API OSV bisa diblokir; SCA berprioritas rendah (Fase 8) |
 | Pembanding | Semgrep, Database Advisors Supabase | Referensi akurasi |
 
 ## 3. Arsitektur
@@ -195,7 +207,7 @@ Rule skema (kondisi lewat evaluator aman atau fungsi teruji):
 id: sb-rls-missing
 stack: supabase
 kind: schema
-check: "sast.plugins.supabase.checks:rls_missing"   # fungsi Python teruji
+check: "vulnfab.plugins.supabase.checks:rls_missing"   # fungsi Python teruji
 severity: critical
 cwe: [CWE-862]
 message: "Tabel {table.name} di schema public tanpa RLS."
@@ -206,20 +218,20 @@ Rule cross-check (fakta ↔ skema):
 id: ts-table-no-rls
 kind: crosscheck
 facts: DataAccess
-check: "sast.core.crosscheck:access_to_table_without_rls"
+check: "vulnfab.core.crosscheck:access_to_table_without_rls"
 severity: high
 ```
 
 ## 7. Struktur folder
 
 ```
-sast/
+vulnfab/
 ├── pyproject.toml
 ├── LICENSE                     # GPL-3.0-or-later
 ├── THIRD_PARTY_LICENSES.md     # lisensi pglast, tree-sitter grammar, rule pinjaman
 ├── README.md
 ├── docs/                       # panduan plugin & rule, batasan yang diketahui
-├── src/sast/
+├── src/vulnfab/
 │   ├── cli.py                  # scan, rules test, explain, ast, triage
 │   ├── core/
 │   │   ├── loader.py
@@ -250,21 +262,24 @@ sast/
 
 Estimasi dihitung ulang untuk 10-15 jam/minggu dan disertai kriteria berhenti.
 
-### Fase 0: Persiapan (1 minggu)
-- [ ] Repo, `pyproject`, ruff, mypy, CI dasar; pilih `uv` atau `poetry`.
+> Rincian eksekusi tiap fase (paket kerja, dependensi, kriteria lulus) ada di [`work-packages.md`](work-packages.md). Daftar di bawah adalah ringkasan cakupan.
+
+### Fase 0: Persiapan (1-2 minggu)
+- [ ] Repo, `pyproject`, ruff, mypy, CI dasar dengan `uv` (keputusan final).
+- [ ] Spike berbatas waktu (S1-S5) untuk menguji asumsi berisiko; hasil di `docs/spikes/`.
 - [ ] Lisensi GPL-3.0-or-later; `THIRD_PARTY_LICENSES.md`; cek lisensi tree-sitter grammar yang dipilih.
 - [ ] Antarmuka `SqlParser` (`parse`, `parse_plpgsql`) dengan implementasi `pglast`.
 - [ ] Draf kontrak plugin dan model data (Bagian 4-5), termasuk `DataAccess` dan `Unresolved`.
 - [ ] Siapkan target lab (kloning sumber; Docker hanya bila perlu): Juice Shop, NodeGoat, DVWA, Django.nV, aplikasi Supabase sengaja rentan (buat sendiri).
 - [ ] **Ground truth**: `expected.json` berlabel (file, baris, jenis) per target lab; dataset berlabel bila ada (NIST SARD/Juliet untuk PHP).
 - [ ] Definisikan metrik keberhasilan proyek dan ambang precision per severity.
-- [ ] Alat debug: `sast ast <file>`.
+- [ ] Alat debug: `vulnfab ast <file>`.
 
-**Selesai jika**: `sast --version` jalan, CI hijau, draf kontrak terdokumentasi, ground truth lab Supabase ada.
+**Selesai jika**: `vulnfab --version` jalan, CI hijau, draf kontrak terdokumentasi, ground truth lab Supabase ada.
 
 ### Fase 1: Pipeline dasar (2 minggu)
-- [ ] CLI `sast scan <path> --format json`.
-- [ ] Loader: walk, `.sastignore`, abaikan `node_modules`/`vendor`/`.git`, batas ukuran file.
+- [ ] CLI `vulnfab scan <path> --format json`.
+- [ ] Loader: walk, `.vulnfabignore`, abaikan `node_modules`/`vendor`/`.git`, batas ukuran file.
 - [ ] Detektor stack lewat file penanda (dukung monorepo multi-stack).
 - [ ] Reporter JSON (dengan `schema_version`) dan console; bagian Coverage & limitations.
 - [ ] Satu rule sepele end-to-end untuk menguji pipeline.
@@ -272,7 +287,7 @@ Estimasi dihitung ulang untuk 10-15 jam/minggu dan disertai kriteria berhenti.
 ### Fase 2: Rule engine (2-3 minggu)
 - [ ] Loader/validator YAML (pydantic), evaluator ekspresi aman.
 - [ ] Matcher pola snippet ala Semgrep (metavariable, wildcard).
-- [ ] Harness test rule (`vuln/` harus terdeteksi, `safe/` tidak); `sast rules test`.
+- [ ] Harness test rule (`vuln/` harus terdeteksi, `safe/` tidak); `vulnfab rules test`.
 - [ ] 15-20 rule awal.
 
 ### Fase 3: Plugin Supabase/Postgres (3-4 minggu) — inti produk
@@ -329,8 +344,8 @@ Rilis tiap tahap:
 
 ### Fase 9: Kualitas dan akurasi (berjalan terus, intensif 3 minggu)
 - [ ] Scoring: severity × confidence; dedup berdasarkan fingerprint; tingkat C tersembunyi secara default.
-- [ ] Suppression: `# nosec`, `.sast.yml`, mode **baseline**.
-- [ ] `sast triage` untuk menandai false positive; simpan sebagai data.
+- [ ] Suppression: `# nosec`, `.vulnfab.yml`, mode **baseline**.
+- [ ] `vulnfab triage` untuk menandai false positive; simpan sebagai data.
 - [ ] Benchmark otomatis per stack terhadap ground truth; tabel precision/recall per rule.
 - [ ] Ambang precision per severity (critical lebih ketat); rule di bawah ambang diperbaiki atau confidence diturunkan.
 - [ ] Dogfooding: scan repo sendiri dan aplikasimu di CI.
@@ -340,7 +355,7 @@ Rilis tiap tahap:
 - [ ] **Mode diff/PR** (`--since main`): call graph menjawab "file mana yang terdampak".
 - [ ] GitHub Action, pre-commit hook.
 - [ ] Cache, paralelisasi (`multiprocessing`), scan inkremental.
-- [ ] `sast explain <finding>`, dokumentasi (menulis rule, menulis plugin, referensi rule, batasan yang diketahui).
+- [ ] `vulnfab explain <finding>`, dokumentasi (menulis rule, menulis plugin, referensi rule, batasan yang diketahui).
 - [ ] Opsional: triase LLM (snippet minimal + trace; kode target diperlakukan sebagai data). LLM bukan satu-satunya detektor.
 
 **M4**: rilis publik (GPLv3).
@@ -472,3 +487,82 @@ Rilis tiap tahap:
 4. Tulis rule pertama `sb-rls-missing` dengan test vuln/safe.
 5. Jalankan ke aplikasi Supabase-mu dan catat hasilnya (bukti konsep pertama).
 6. Mulai `expected.json` untuk aplikasi itu (ground truth).
+
+## 15. Keputusan final (tidak dibuka ulang tanpa alasan kuat)
+
+| # | Keputusan | Catatan |
+|---|---|---|
+| D1 | Lisensi GPL-3.0-or-later | Karena `pglast`; antarmuka `SqlParser` menjaga opsi ganti parser |
+| D2 | Nama paket/CLI `vulnfab`, layout `src/vulnfab/` | Ubah lewat rename tunggal bila perlu |
+| D3 | Manajer paket `uv`; Python ≥ 3.11 | |
+| D4 | Satu matcher berbasis tree-sitter untuk semua bahasa | Rule pola ditulis sebagai snippet dengan metavariable `$X` |
+| D5 | Taint bekerja di atas TIR per-bahasa | Titik evaluasi Semgrep-backend setelah WP-5.3 |
+| D6 | Rule skema/kondisi tidak boleh `eval` string | Evaluator aman atau fungsi Python teruji |
+| D7 | Fingerprint tanpa nomor baris | Lihat `spec.md` |
+| D8 | Temuan confidence rendah tersembunyi secara default | `--min-confidence low` untuk menampilkan |
+| D9 | Tool tidak pernah mengeksekusi kode target | Termasuk `import`, `eval`, migration |
+| D10 | Setiap rule wajib punya test vuln dan safe | CI gagal bila tidak |
+| D11 | Ground truth berlabel dan verdict manual sebelum klaim akurasi | Format di `spec.md` |
+| D12 | Adaptor eksternal (gitleaks, osv-scanner, Semgrep) opsional | Ada fallback bawaan atau dilewati dengan catatan di laporan |
+
+## 16. Konvensi engineering
+
+- **Alur per paket kerja (WP)**: tulis test dulu (unit atau rule vuln/safe) → implementasi → `uv run ruff check . && uv run mypy && uv run pytest` hijau → centang WP di `work-packages.md` → commit satu WP satu commit (atau beberapa commit kecil) → push. Setiap sesi kerja diakhiri dengan commit dan push.
+- **Gerbang CI**: ruff, mypy (strict untuk `core/`), pytest, cek "setiap rule punya test", cek skema rule valid.
+- **Tanpa jaringan di test**: test tidak boleh butuh internet. Target lab dikloning oleh skrip terpisah (`benchmarks/fetch_targets.sh`, SHA di-pin di `benchmarks/targets.lock`, direktori `benchmarks/targets/` di-gitignore).
+- **Data privat**: migration aplikasi Supabase milikmu disalin ke `benchmarks/labs/private/` (di-gitignore) dan tidak pernah di-commit. Hanya `expected.json` yang sudah dianonimkan yang boleh masuk repo.
+- **Snapshot**: e2e membandingkan keluaran JSON ternormalisasi (tanpa timestamp/path absolut) dengan snapshot; perubahan snapshot harus disengaja dan direview di diff.
+- **Benchmark**: `uv run python benchmarks/evaluate.py --target <nama>` menghasilkan tabel precision/recall per rule dan tingkat; hasil per milestone disimpan di `benchmarks/results/`.
+- **Dependensi baru** harus dicatat di `THIRD_PARTY_LICENSES.md` beserta lisensinya.
+
+## 17. Gate milestone (kriteria angka)
+
+Milestone dianggap selesai hanya jika semua gate terpenuhi dan hasil benchmark disimpan di `benchmarks/results/<milestone>.md`.
+
+**M1 (Supabase + TypeScript)**
+- Lab `supabase-vuln`: recall ≥ 90% pada label tingkat A; precision ≥ 90% pada temuan yang sudah di-review; **0 false positive** pada decoy (kode/skema aman).
+- Cross-check: setiap akses ke tabel tanpa RLS di lab terdeteksi dengan trace ke migration dan ke baris kode.
+- Waktu scan lab < 10 detik; tidak ada crash pada migration yang tidak valid (menghasilkan `Unresolved`, bukan exception).
+- Satu aplikasi Supabase nyata (milikmu) dipindai; setiap temuan diberi verdict manual; precision tercatat.
+
+**M2 (Taint)**
+- NodeGoat + Juice Shop: recall ≥ 60% pada label SQLi/XSS/command injection yang dalam scope; precision ≥ 75%.
+- Tidak ada scan > 60 detik per target; timeout per file bekerja dan dilaporkan.
+- Trace lengkap (source → sink) pada ≥ 95% temuan taint.
+
+**M3 (Tiga stack)**
+- DVWA + lab Laravel buatan sendiri (PHP) dan django.nV + lab Django buatan sendiri (Python): recall ≥ 60%, precision ≥ 75% pada label dalam scope.
+- IDOR tingkat B: recall ≥ 50% pada label, precision ≥ 70% (default confidence medium).
+- Kontrak plugin dibekukan; tidak ada perubahan core yang dibutuhkan untuk menambah rule baru.
+
+**M4 (Rilis)**
+- Output SARIF valid terhadap skema SARIF 2.1.0; GitHub Action berjalan pada repo contoh.
+- Mode diff (`--since`) memberi hasil identik dengan scan penuh pada file yang berubah + dependennya (uji otomatis).
+- Dokumentasi: menulis rule, menulis plugin, referensi rule, batasan yang diketahui. `THIRD_PARTY_LICENSES.md` lengkap.
+- Tabel precision/recall per rule dipublikasikan; rule di bawah ambang diturunkan confidence-nya atau dihapus.
+
+Ambang precision per severity: critical ≥ 90%, high ≥ 80%, medium ≥ 70%, low/info tanpa ambang (tersembunyi default).
+
+## 18. Tangga pemangkasan scope
+
+Bila pekerjaan tertinggal, potong dari atas ke bawah. Yang **tidak boleh** dipotong: ground truth, test rule, coverage & limitations, tidak mengeksekusi kode target.
+
+1. Fase 11 (DAST, plugin tambahan)
+2. Triase LLM
+3. Laporan HTML mandiri (JSON, SARIF, console cukup)
+4. SCA (Fase 8) dan pemindaian riwayat git
+5. Plugin Laravel (M3 menjadi dua stack + Supabase)
+6. Taint antar-file (5c); berhenti di 5b
+7. IDOR tingkat B di luar Supabase
+8. Mode diff/PR
+
+M1 sudah merupakan produk yang berguna; berhenti di sana adalah hasil yang sah.
+
+## 19. Catatan lingkungan pengembangan
+
+- Tersedia: Python 3.11, `uv`, `poetry`, `node` 22, `php`, `git`; `pglast` 8.x dan tree-sitter (Python/JS/TS/PHP) terpasang lewat pip tanpa masalah.
+- Target lab (Juice Shop, NodeGoat, DVWA, django.nV, repo Supabase) bisa dikloning dari GitHub.
+- **`api.osv.dev` diblokir** (HTTP 403) dari sandbox ini: SCA online tidak bisa diuji di sini; gunakan dump OSV lokal atau lewati dengan catatan.
+- gitleaks dan osv-scanner belum terpasang: adaptor harus mendeteksi ketiadaan binary dan menurun ke fallback bawaan.
+- `php` tersedia untuk memvalidasi sintaks lab PHP (`php -l`); `node` untuk lab TS.
+- Sandbox bersifat sementara: **commit dan push setelah setiap WP**.
