@@ -1,0 +1,82 @@
+rules:
+  - id: dj-modelform-all
+    stack: django
+    languages: [python]
+    severity: medium
+    confidence: medium
+    cwe: [CWE-915]
+    owasp: "A04:2021"
+    title: "ModelForm exposes every model field"
+    message: "fields = '__all__' (or exclude) lets a request set columns the form was not meant to expose (mass assignment)."
+    pattern-either:
+      - "fields = '__all__'"
+      - 'fields = "__all__"'
+    fix: "List the editable fields explicitly."
+    tests: {vulnerable: [vuln.py], safe: [safe.py]}
+
+  - id: dj-sql-raw
+    stack: django
+    languages: [python]
+    severity: high
+    confidence: medium
+    cwe: [CWE-89]
+    owasp: "A03:2021"
+    title: "Raw SQL built with string interpolation"
+    message: "Manager.raw()/extra()/RawSQL() receives a query built by formatting or concatenation."
+    pattern-either:
+      - "$M.raw($Q, ...)"
+      - "$M.extra(where=[$Q], ...)"
+      - "$M.extra(select=$Q, ...)"
+      - "RawSQL($Q, ...)"
+    where:
+      - {metavariable: Q, kind: unsafe_interpolation}
+    fix: "Pass values as params: Model.objects.raw(sql, [value]); prefer the ORM's filter()."
+    tests: {vulnerable: [vuln.py], safe: [safe.py]}
+
+  - id: dj-mark-safe
+    stack: django
+    languages: [python]
+    severity: medium
+    confidence: medium
+    cwe: [CWE-79]
+    owasp: "A03:2021"
+    title: "mark_safe applied to interpolated text"
+    message: "mark_safe() on a string built from variables disables Django's escaping."
+    pattern: "mark_safe($X)"
+    where:
+      - {metavariable: X, kind: unsafe_interpolation}
+    fix: "Use format_html() so arguments are escaped."
+    tests: {vulnerable: [vuln.py], safe: [safe.py]}
+
+  - id: dj-dispatch-input
+    kind: taint
+    stack: django
+    languages: [python]
+    severity: high
+    confidence: medium
+    cwe: [CWE-470]
+    owasp: "A03:2021"
+    title: "Request data selects the code that runs"
+    message: "Untrusted input chooses an attribute, module or callable (unsafe reflection)."
+    sources:
+      - "field *request.GET"
+      - "field *request.POST"
+      - "field *request.data"
+      - "field *request.query_params"
+      - "field *request.body"
+      - "field *request.headers"
+      - "field *request.COOKIES"
+    sinks:
+      - "call getattr arg1"
+      - "call setattr arg1"
+      - "call importlib.import_module arg0"
+      - "call import_module arg0"
+      - "call __import__ arg0"
+      - "call import_string arg0"
+    validators:
+      - "call *.startswith"
+      - "call re.match"
+      - "call re.fullmatch"
+      - "call *.isalnum"
+    fix: "Map allowed names to callables explicitly (dict lookup) instead of getattr()."
+    tests: {vulnerable: [vuln.py], safe: [safe.py]}

@@ -352,31 +352,76 @@ _SAFE_PART = re.compile(
     r"(?is)^\s*(?:[\w$.]+\.)?(?:esc\w*|escape\w*|sanitiz\w*|encode\w*|purify\w*|safe\w*|"
     r"clean\w*|number|parseint|parsefloat|tofixed|tolocale\w*|json\.stringify)\s*\("
     r"|^\s*\d+(?:\.\d+)?\s*$|^\s*[\w$.]+\.(?:length|size|count)\s*$"
+    r"|^\s*(?:int|float|bool|len|intval|floatval|abs|round|uuid\w*)\s*\("
 )
 
 
 def _interpolated_parts(node: Node) -> list[Node]:
-    """Non-literal pieces of a template literal / ``+`` concatenation."""
+    """Non-literal pieces of a built string: template literal, f-string, ``%``/``.format``,
+    PHP interpolation and ``+``/``.`` concatenation."""
     if node.type == "template_string":
         parts: list[Node] = []
         for child in node.children:
             if child.type == "template_substitution":
                 parts.extend(c for c in child.children if c.is_named)
         return parts
+    if node.type == "string":  # python f-string
+        return [
+            inner
+            for child in node.children
+            if child.type == "interpolation"
+            for inner in child.children[:2]
+            if inner.is_named
+        ][:16]
+    if node.type == "encapsed_string":  # php "...$x..." / "{$x->y}"
+        return [c for c in node.children if c.is_named and c.type != "string_content"]
+    if node.type == "call":  # python "...{}".format(x)
+        fn = node.child_by_field_name("function")
+        args = node.child_by_field_name("arguments")
+        if fn is not None and fn.type == "attribute" and args is not None:
+            attr = fn.child_by_field_name("attribute")
+            obj = fn.child_by_field_name("object")
+            if (
+                attr is not None
+                and _t(attr) == "format"
+                and obj is not None
+                and obj.type == "string"
+            ):
+                out: list[Node] = []
+                for a in args.children:
+                    if a.type == "keyword_argument":
+                        value = a.child_by_field_name("value")
+                        if value is not None:
+                            out.append(value)
+                    elif a.is_named:
+                        out.append(a)
+                return [x for x in out if not is_literal(x)]
+        return []
     if node.type == "parenthesized_expression":
         inner = [c for c in node.children if c.is_named]
         return _interpolated_parts(inner[0]) if inner else []
-    if node.type == "binary_expression":
+    if node.type in ("binary_expression", "binary_operator"):
         op = next((c for c in node.children if not c.is_named), None)
-        if op is not None and _t(op) == "+":
-            out: list[Node] = []
-            for side in (node.child_by_field_name("left"), node.child_by_field_name("right")):
+        if op is None:
+            return []
+        symbol = _t(op)
+        left = node.child_by_field_name("left")
+        right = node.child_by_field_name("right")
+        if symbol == "%" and node.type == "binary_operator" and right is not None:
+            # python "..." % value | "..." % (a, b)
+            items = [c for c in right.children if c.is_named] if right.type == "tuple" else [right]
+            return [x for x in items if not is_literal(x)]
+        if symbol in ("+", "."):
+            out = []
+            for side in (left, right):
                 if side is None or is_literal(side):
                     continue
                 nested = _interpolated_parts(side)
                 out.extend(
                     nested
-                    if nested or side.type in ("template_string", "binary_expression")
+                    if nested
+                    or side.type
+                    in ("template_string", "binary_expression", "binary_operator", "string")
                     else [side]
                 )
             return out

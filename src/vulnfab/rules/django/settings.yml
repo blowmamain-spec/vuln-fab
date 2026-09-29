@@ -128,3 +128,16 @@ rules:
     check: "vulnfab.plugins.django.checks:password_validators_missing"
     fix: "Enable Django's default AUTH_PASSWORD_VALIDATORS."
     tests: {vulnerable: [settings_vuln.py], safe: [settings_safe.py]}
+
+  - id: dj-db-password
+    kind: schema
+    stack: django
+    severity: medium
+    confidence: medium
+    cwe: [CWE-798]
+    owasp: "A07:2021"
+    title: "Database password in settings"
+    message: "DATABASES contains a literal password."
+    check: "vulnfab.plugins.django.checks:database_password_literal"
+    fix: "Read the database credentials from environment variables or a secret manager."
+    tests: {vulnerable: [settings_vuln.py], safe: [settings_safe.py]}

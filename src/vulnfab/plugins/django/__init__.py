@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from vulnfab.core.models import (
@@ -14,6 +14,7 @@ from vulnfab.core.models import (
     DataAccess,
     DispatchHint,
     Entrypoint,
+    Finding,
     ParsedUnit,
     SchemaModel,
     SkippedFile,
@@ -222,6 +223,25 @@ class DjangoPlugin:
     def rule_packs(self) -> list[Path]:
         return [Path(__file__).resolve().parents[2] / "rules" / "django"]
 
+    def refine(
+        self, raw: list[tuple[Finding, str]], model: SchemaModel
+    ) -> list[tuple[Finding, str]]:
+        """Use the models to judge IDOR candidates: rows without any owner relation are
+        reference data, so fetching them by id is not an object-level authorization gap."""
+        out: list[tuple[Finding, str]] = []
+        for finding, symbol in raw:
+            if finding.rule_id == "tpy-idor":
+                table = _queried_table(finding.snippet, model)
+                if table is not None and not _has_owner(table):
+                    finding = replace(
+                        finding,
+                        confidence=Confidence.LOW,
+                        message=f"{finding.message} (model {table.name} has no relation to a user, "
+                        "so it may be shared reference data)",
+                    )
+            out.append((finding, symbol))
+        return out
+
     def fixture_path(self, filename: str) -> str | None:
         if filename.startswith("settings"):
             return "proj/settings.py"
@@ -280,3 +300,26 @@ def _root_modules(index: urlconf.UrlIndex, root_urlconf: str | None) -> list[url
                     included.add(child.path)
     roots = [m for m in modules if m.path not in included]
     return roots or modules
+
+
+_QUERIED = re.compile(r"(\w+)\.objects\.|get_object_or_404\(\s*(\w+)|get_list_or_404\(\s*(\w+)")
+_OWNER_NAMES = re.compile(
+    r"^(user|owner|author|created_by|creator|member|account|profile|users?_?\w*)$", re.I
+)
+
+
+def _queried_table(snippet: str, model: SchemaModel):  # type: ignore[no-untyped-def]
+    match = _QUERIED.search(snippet)
+    if not match:
+        return None
+    name = next(g for g in match.groups() if g).lower()
+    candidates = [t for t in model.tables.values() if t.name == name]
+    return candidates[0] if len(candidates) == 1 else None
+
+
+def _has_owner(table) -> bool:  # type: ignore[no-untyped-def]
+    for column in table.columns:
+        target = column.references or ""
+        if "User" in target or "AUTH_USER_MODEL" in target or _OWNER_NAMES.match(column.name):
+            return True
+    return False

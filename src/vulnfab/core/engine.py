@@ -193,6 +193,12 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
     except (CheckError, ScannerError) as exc:
         raise RuleLoadError([RuleError("engine", 1, None, str(exc))]) from exc
 
+    for sel in selected:
+        refine = getattr(sel.plugin, "refine", None)
+        model_for_plugin = schemas.get(sel.plugin.name)
+        if refine is not None and model_for_plugin is not None:
+            raw = refine(raw, model_for_plugin)
+
     coverage.files_scanned = len(scanned)
     coverage.syntax_errors = sorted(set(coverage.syntax_errors))
     coverage.files_skipped.sort(key=lambda s: (s.file, s.reason))

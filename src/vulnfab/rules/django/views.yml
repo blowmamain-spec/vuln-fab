@@ -13,3 +13,18 @@ rules:
     message: "A URL-mapped view handles data but has no authentication or permission check."
     fix: "Add @login_required / LoginRequiredMixin (or permission_classes) and check ownership."
     tests: {vulnerable: [vuln.py], safe: [safe.py]}
+
+  - id: dj-csrf-exempt
+    kind: crosscheck
+    stack: django
+    facts: Entrypoint
+    check: "vulnfab.plugins.django.checks:csrf_exempt_view"
+    severity: medium
+    confidence: medium
+    tier: A
+    cwe: [CWE-352]
+    owasp: "A01:2021"
+    title: "View exempt from CSRF protection"
+    message: "A view is decorated with @csrf_exempt."
+    fix: "Remove @csrf_exempt; send the CSRF token from the client, or authenticate with a header token."
+    tests: {vulnerable: [vuln.py], safe: [safe.py]}

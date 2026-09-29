@@ -277,3 +277,47 @@ def view_no_auth(ctx: CheckContext) -> Iterator[SchemaHit]:
             symbol=f"{entry.file}:{entry.handler}",
             confidence=confidence,
         )
+
+
+def csrf_exempt_view(ctx: CheckContext) -> Iterator[SchemaHit]:
+    """Views that opt out of CSRF protection while changing data."""
+    seen: set[tuple[str, str]] = set()
+    for entry in ctx.entrypoints:
+        if "csrf-exempt" not in entry.traits or (entry.file, entry.handler) in seen:
+            continue
+        seen.add((entry.file, entry.handler))
+        writes = "writes" in entry.traits
+        yield SchemaHit(
+            entry.file,
+            entry.line,
+            entry.line,
+            f"View {entry.handler} is @csrf_exempt"
+            + (" and changes data" if writes else "")
+            + ": another site can make a logged-in user's browser submit requests to it.",
+            trace=(TraceStep(entry.route_file, entry.route_line, "call", f"route {entry.route}"),)
+            if entry.route_file
+            else (),
+            symbol=f"{entry.file}:{entry.handler}",
+            confidence=Confidence.MEDIUM if writes else Confidence.LOW,
+        )
+
+
+def database_password_literal(ctx: CheckContext) -> Iterator[SchemaHit]:
+    for doc in _docs(ctx):
+        databases = doc.data.get("DATABASES")
+        if not isinstance(databases, dict):
+            continue
+        for alias, cfg in databases.items():
+            password = cfg.get("PASSWORD") if isinstance(cfg, dict) else None
+            if isinstance(password, str) and password and not _is_dev(doc.path):
+                line = doc.lines.get(("DATABASES",), 1)
+                yield SchemaHit(
+                    doc.path,
+                    line,
+                    line,
+                    f"DATABASES['{alias}'] contains a literal PASSWORD. Credentials in the "
+                    "repository are exposed to everyone who can read it.",
+                    snippet="'PASSWORD': '…'",
+                    symbol=f"{doc.path}:DATABASES:{alias}",
+                    confidence=Confidence.MEDIUM,
+                )

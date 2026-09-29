@@ -114,3 +114,48 @@ def test_extract_schema_builds_tables_with_inheritance(tmp_path: Path) -> None:
 def test_extract_schema_none_for_non_django(tmp_path: Path) -> None:
     repo = repo_with(tmp_path, {"app.py": "x = 1\n"})
     assert DjangoPlugin().extract_schema(repo) is None
+
+
+def _idor_finding(snippet: str):
+    from vulnfab.core.models import Finding, Severity
+
+    return Finding(
+        rule_id="tpy-idor",
+        title="t",
+        cwe=(),
+        owasp=None,
+        severity=Severity.MEDIUM,
+        confidence=Confidence.MEDIUM,
+        tier="B",
+        file="v.py",
+        line=1,
+        end_line=1,
+        snippet=snippet,
+        message="m",
+    )
+
+
+def test_refine_lowers_idor_on_models_without_owner(tmp_path: Path) -> None:
+    repo = repo_with(
+        tmp_path,
+        {
+            "manage.py": "import django\n",
+            "shop/models.py": (
+                "from django.db import models\n"
+                "class Country(models.Model):\n    name = models.CharField(max_length=5)\n"
+                "class Order(models.Model):\n"
+                "    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)\n"
+            ),
+        },
+    )
+    plugin = DjangoPlugin()
+    model = plugin.extract_schema(repo)
+    assert model is not None
+    raw = [
+        (_idor_finding("c = Country.objects.get(pk=pk)"), "s1"),
+        (_idor_finding("o = get_object_or_404(Order, pk=pk)"), "s2"),
+        (_idor_finding("x = unknown_call(pk)"), "s3"),
+    ]
+    out = plugin.refine(raw, model)
+    assert [f.confidence for f, _ in out] == [Confidence.LOW, Confidence.MEDIUM, Confidence.MEDIUM]
+    assert "reference data" in out[0][0].message
