@@ -102,7 +102,7 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
 
 ## Fase 5: Taint engine → **M2**
 
-- [ ] **WP-5.1 Normalisasi TIR** (XL) — dep: 4.1. Penerjemah tree-sitter → TIR untuk Python, TS/JS, PHP; `vulnfab ir <file>`.
+- [x] **WP-5.1 Normalisasi TIR** (XL) — dep: 4.1. Penerjemah tree-sitter → TIR untuk Python, TS/JS, PHP; `vulnfab ir <file>`.
   *Lulus jika*: golden test TIR per bahasa untuk konstruksi inti (assign, call, f-string/template/interpolasi, concat, subscript, atribut, branch, loop, return); konstruksi tak dikenal → `Unknown` bukan crash.
 - [ ] **WP-5.2 Loader rule taint** (M) — dep: 2.3, 5.1. Sources/sinks/sanitizers/propagators sebagai pola snippet yang dicocokkan pada TIR.
   *Lulus jika*: validasi rule taint + test pencocokan pola pada TIR.

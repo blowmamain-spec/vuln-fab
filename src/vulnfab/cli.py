@@ -197,3 +197,31 @@ def rules_test(
     typer.echo(f"{len(rules) - failed}/{len(rules)} rules passed")
     if failed:
         raise typer.Exit(EXIT_FINDINGS)
+
+
+@app.command("ir")
+def ir_command(
+    file: Annotated[Path, typer.Argument(help="Source file to lower into TIR (debugging aid).")],
+) -> None:
+    """Print the taint IR (TIR) of a Python, JS/TS or PHP file."""
+    from vulnfab.core.loader import detect_language
+    from vulnfab.core.lower import lower_file
+    from vulnfab.core.models import SourceFile
+    from vulnfab.core.parsing import ParseFailure, parse_file
+    from vulnfab.core.tir import format_module
+
+    if not file.is_file():
+        typer.echo(f"error: {file} is not a file", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    language = detect_language(file.name)
+    if language is None:
+        typer.echo(f"error: cannot tell the language of {file.name}", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    text = file.read_text(encoding="utf-8", errors="replace")
+    try:
+        parsed = parse_file(SourceFile(file.name, language, text, "0" * 64))
+        module = lower_file(parsed)
+    except (ParseFailure, ValueError) as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+    typer.echo(format_module(module), nl=False)

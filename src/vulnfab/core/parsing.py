@@ -140,6 +140,23 @@ def walk(node: Node, deadline: Deadline | None = None) -> Iterator[Node]:
                 return
 
 
+class LineIndex:
+    """O(log n) byte offset -> line lookups (``line_of`` is O(n) per call)."""
+
+    def __init__(self, source: bytes) -> None:
+        import bisect
+
+        self._bisect = bisect.bisect_right
+        self._starts = [0] + [i + 1 for i, b in enumerate(source) if b == 10]
+
+    def line(self, byte_offset: int) -> int:
+        return int(self._bisect(self._starts, max(byte_offset, 0)))
+
+    def lines(self, node: Node) -> tuple[int, int]:
+        end = max(node.end_byte - 1, node.start_byte)
+        return self.line(node.start_byte), self.line(end)
+
+
 def line_of(source: bytes, byte_offset: int) -> int:
     """1-based line number of a byte offset.
 
