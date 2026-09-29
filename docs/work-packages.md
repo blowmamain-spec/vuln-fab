@@ -110,7 +110,7 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
   *Lulus jika*: ≥ 40 kasus vuln/safe (sanitizer, percabangan, reassign, kill) lulus; **titik evaluasi**: catat keputusan lanjut sendiri vs backend Semgrep di `docs/decisions/d5.md`.
 - [x] **WP-5.4 Antar-fungsi satu file (5b)** (XL) — dep: 5.3. Ringkasan fungsi (param→return, param→sink), batas kedalaman.
   *Lulus jika*: kasus rekursi, fungsi saling memanggil, dan kedalaman melebihi batas tidak hang dan menambah `unresolved_hops`.
-- [ ] **WP-5.5 Antar-file (5c) + call graph** (XL) — dep: 5.4. Resolusi import (Python module, TS import/export, PHP `use`/namespace), call graph, edge `unresolved`.
+- [x] **WP-5.5 Antar-file (5c) + call graph** (XL) — dep: 5.4. Resolusi import (Python module, TS import/export, PHP `use`/namespace), call graph, edge `unresolved`.
   *Lulus jika*: proyek fixture multi-file (3+ file) menghasilkan trace lintas file dengan urutan baris/berkas benar.
 - [ ] **WP-5.6 Batas & ketahanan** (M) — dep: 5.5. Timeout per file, batas path per sink, fixpoint loop ≤ 3, laporan `unresolved` di coverage.
   *Lulus jika*: file patologis (loop bersarang, grafik panggilan besar) selesai < batas dan melaporkan pemotongan.

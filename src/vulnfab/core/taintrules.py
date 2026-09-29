@@ -1,12 +1,15 @@
-"""Run taint rules over parsed files: lower to TIR, analyse each function, emit findings."""
+"""Run taint rules over parsed files: lower to TIR, analyse across the project, emit findings."""
 
 from __future__ import annotations
+
+from collections.abc import Iterable
 
 from vulnfab.core.lower import lower_file
 from vulnfab.core.models import Finding, ParsedFile
 from vulnfab.core.rules import TaintRule
-from vulnfab.core.taint import ModuleAnalysis
+from vulnfab.core.taint import ProjectAnalysis
 from vulnfab.core.taintspec import TaintSpec
+from vulnfab.core.tir import ModuleIR
 
 SNIPPET_LIMIT = 300
 
@@ -15,18 +18,25 @@ def spec_for(rule: TaintRule) -> TaintSpec:
     return TaintSpec.from_rule(rule.sources, rule.sinks, rule.sanitizers, rule.propagators)
 
 
-def taint_findings_for_file(rules: list[TaintRule], pf: ParsedFile) -> list[tuple[Finding, str]]:
-    """Return ``(finding-without-fingerprint, enclosing-symbol)`` for one parsed file."""
-    applicable = [r for r in rules if r.enabled and pf.language in r.languages]
-    if not applicable:
-        return []
-    module = lower_file(pf)
-    lines = pf.source.decode("utf-8", errors="replace").split("\n")
+def taint_findings(
+    rules: list[TaintRule], files: Iterable[ParsedFile]
+) -> list[tuple[Finding, str]]:
+    """Return ``(finding-without-fingerprint, enclosing-symbol)`` for a set of parsed files."""
+    active = [r for r in rules if r.enabled]
+    parsed = [pf for pf in files if not pf.has_syntax_errors]
     out: list[tuple[Finding, str]] = []
-    for rule in applicable:
-        spec = spec_for(rule)
-        for hit in ModuleAnalysis(module, spec).run():
-            text = lines[hit.line - 1].strip() if 0 < hit.line <= len(lines) else ""
+    if not active or not parsed:
+        return out
+    lines = {pf.path: pf.source.decode("utf-8", errors="replace").split("\n") for pf in parsed}
+    lowered: dict[str, ModuleIR] = {}
+    for pf in parsed:
+        if any(pf.language in r.languages for r in active):
+            lowered[pf.path] = lower_file(pf)
+    for rule in active:
+        modules = [m for m in lowered.values() if m.language in rule.languages]
+        for hit in ProjectAnalysis(modules, spec_for(rule)).run():
+            file_lines = lines.get(hit.file, [])
+            text = file_lines[hit.line - 1].strip() if 0 < hit.line <= len(file_lines) else ""
             out.append(
                 (
                     Finding(
@@ -37,7 +47,7 @@ def taint_findings_for_file(rules: list[TaintRule], pf: ParsedFile) -> list[tupl
                         severity=rule.severity,
                         confidence=rule.confidence,
                         tier=rule.tier,
-                        file=pf.path,
+                        file=hit.file,
                         line=hit.line,
                         end_line=hit.line,
                         snippet=text[:SNIPPET_LIMIT],
@@ -49,5 +59,8 @@ def taint_findings_for_file(rules: list[TaintRule], pf: ParsedFile) -> list[tupl
                     hit.function,
                 )
             )
-
     return out
+
+
+def taint_findings_for_file(rules: list[TaintRule], pf: ParsedFile) -> list[tuple[Finding, str]]:
+    return taint_findings(rules, [pf])

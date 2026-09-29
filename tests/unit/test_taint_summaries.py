@@ -8,7 +8,7 @@ import pytest
 from vulnfab.core.lower import lower_file
 from vulnfab.core.models import SourceFile
 from vulnfab.core.parsing import parse_file
-from vulnfab.core.taint import ModuleAnalysis
+from vulnfab.core.taint import ProjectAnalysis
 from vulnfab.core.taintspec import TaintSpec
 
 PY = TaintSpec.from_rule(
@@ -23,7 +23,7 @@ PHP = TaintSpec.from_rule(["var _GET"], ["call system"], ["call intval"], [])
 def run(code: str, lang: str, spec: TaintSpec):
     ext = {"python": "py", "javascript": "js", "php": "php"}[lang]
     pf = parse_file(SourceFile(f"t.{ext}", lang, code, "0" * 64))
-    return ModuleAnalysis(lower_file(pf), spec).run()
+    return ProjectAnalysis([lower_file(pf)], spec).run()
 
 
 PY_VULN = {

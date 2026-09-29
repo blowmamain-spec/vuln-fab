@@ -33,7 +33,7 @@ from vulnfab.core.rules import (
 from vulnfab.core.scannerrules import ScannerError, run_scanner_rules
 from vulnfab.core.schemarules import CheckError, run_crosscheck_rules, run_schema_rules
 from vulnfab.core.suppress import PerFileIgnores, is_nosec, load_baseline, write_baseline
-from vulnfab.core.taintrules import taint_findings_for_file
+from vulnfab.core.taintrules import taint_findings
 from vulnfab.plugins import registry
 
 DEFAULT_FILE_TIMEOUT = 10.0
@@ -146,14 +146,14 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
                 raw.extend(run_schema_rules(mine, schema, repo))
             except CheckError as exc:
                 raise RuleLoadError([RuleError(plugin.name, 1, None, str(exc))]) from exc
+        if plugin_taint:
+            raw.extend(taint_findings(plugin_taint, unit.files.values()))
         for pf in unit.files.values():
             scanned.add(pf.path)
             if pf.has_syntax_errors:
                 coverage.syntax_errors.append(pf.path)
             try:
                 raw.extend(findings_for_file(plugin_rules, pf, Deadline(file_timeout)))
-                if plugin_taint and not pf.has_syntax_errors:
-                    raw.extend(taint_findings_for_file(plugin_taint, pf))
             except TimeoutExceeded:
                 coverage.files_skipped.append(
                     SkippedFile(pf.path, "timeout", f"exceeded {file_timeout:g}s")

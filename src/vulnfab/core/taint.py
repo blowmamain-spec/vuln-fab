@@ -15,6 +15,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 
 from vulnfab.core.models import TraceStep
+from vulnfab.core.modindex import ModuleIndex
 from vulnfab.core.taintspec import (
     Matcher,
     TaintSpec,
@@ -27,6 +28,7 @@ from vulnfab.core.tir import (
     Branch,
     Call,
     Concat,
+    Const,
     Field,
     FunctionIR,
     Index,
@@ -84,6 +86,7 @@ class TaintHit:
     hops: int
     function: str
     sink: str
+    file: str = ""
 
 
 @dataclass(frozen=True)
@@ -93,6 +96,7 @@ class SinkRef:
     line: int
     sink: str
     function: str
+    file: str
     trace: tuple[TraceStep, ...]  # steps after the parameter marker, ending with the sink step
     hops: int
 
@@ -294,13 +298,13 @@ class FunctionAnalyzer:
         return min(candidates, key=lambda t: t.hops) if candidates else None
 
     def report_ref(self, entered: Taint, ref: SinkRef) -> None:
-        key = (ref.line, ref.sink)
+        key = (ref.line, ref.sink + "@" + ref.file)
         if key in self.ctx.seen:
             return
         self.ctx.seen.add(key)
         trace = (*entered.trace, *ref.trace)
         self.ctx.hits.append(
-            TaintHit(ref.line, trace, entered.hops + ref.hops, ref.function, ref.sink)
+            TaintHit(ref.line, trace, entered.hops + ref.hops, ref.function, ref.sink, ref.file)
         )
 
     @staticmethod
@@ -325,7 +329,9 @@ class FunctionAnalyzer:
             return
         self.ctx.seen.add(key)
         trace = taint.step(self.ctx.file, line, "sink", sink).trace
-        self.ctx.hits.append(TaintHit(line, trace, taint.hops, self.fn.qualname, sink))
+        self.ctx.hits.append(
+            TaintHit(line, trace, taint.hops, self.fn.qualname, sink, self.ctx.file)
+        )
 
 
 def _glob(name: str, pattern: str) -> bool:
@@ -347,20 +353,99 @@ MAX_SUMMARY_DEPTH = 8
 _BOUND = ("self.", "cls.", "this.", "$this.")
 
 
-class ModuleAnalysis:
-    """Intra-file taint: per-function summaries applied at same-file call sites (WP-5.4)."""
+class ProjectAnalysis:
+    """Taint over a set of modules: summaries are shared across files through import resolution."""
 
-    def __init__(self, module: ModuleIR, spec: TaintSpec) -> None:
+    def __init__(self, modules: list[ModuleIR], spec: TaintSpec) -> None:
+        self.spec = spec
+        self.stack: list[tuple[str, str]] = []
+        self.index = ModuleIndex({m.file: m.language for m in modules})
+        self.modules: dict[str, ModuleAnalysis] = {}
+        for m in modules:
+            self.modules[m.file] = ModuleAnalysis(m, spec, self)
+
+    def run(self) -> list[TaintHit]:
+        out: list[TaintHit] = []
+        seen: set[tuple[str, int, str]] = set()
+        for ma in self.modules.values():
+            for h in ma.run():
+                if (h.file, h.line, h.sink) not in seen:
+                    seen.add((h.file, h.line, h.sink))
+                    out.append(h)
+        return sorted(out, key=lambda h: (h.file, h.line, h.sink))
+
+
+class ModuleAnalysis:
+    """Per-file taint: function summaries applied at call sites, same file or imported."""
+
+    def __init__(
+        self, module: ModuleIR, spec: TaintSpec, project: ProjectAnalysis | None = None
+    ) -> None:
         self.module = module
         self.spec = spec
+        self.project = project or ProjectAnalysis([], spec)
         self.summaries: dict[str, Summary] = {}
         self.hits: dict[str, list[TaintHit]] = {}
-        self._stack: list[str] = []
         self._by_name: dict[str, list[FunctionIR]] = {}
         for fn in module.functions:
             self._by_name.setdefault(fn.name, []).append(fn)
+        self.exported: dict[str, FunctionIR] = {}
+        self._scan_commonjs()
+
+    # --- CommonJS: require() imports and exports.x = function -------------------------------
+
+    def _scan_commonjs(self) -> None:
+        if self.module.language not in ("javascript", "typescript", "tsx"):
+            return
+        required: dict[str, str] = {}
+        for fn in self.module.functions:
+            for instr in _walk(fn.body):
+                if (
+                    isinstance(instr, Call)
+                    and instr.callee == "require"
+                    and len(instr.args) == 1
+                    and isinstance(instr.args[0], Const)
+                    and isinstance(instr.args[0].value, str)
+                ):
+                    required[instr.dst.name] = instr.args[0].value
+                elif isinstance(instr, Assign):
+                    src, dst = instr.src, access_path(instr.dst)
+                    if isinstance(src, Var) and src.name in required and isinstance(instr.dst, Var):
+                        self.module.imports.setdefault(instr.dst.name, (required[src.name], "*"))
+                    elif (
+                        isinstance(src, Field)
+                        and isinstance(src.base, Var)
+                        and src.base.name in required
+                        and isinstance(instr.dst, Var)
+                    ):
+                        self.module.imports.setdefault(
+                            instr.dst.name, (required[src.base.name], src.name)
+                        )
+                    elif (
+                        dst
+                        and isinstance(src, Var)
+                        and dst.startswith(("exports.", "module.exports."))
+                    ):
+                        target = self.module.function(src.name)
+                        if target is not None:
+                            self.exported[dst.rsplit(".", 1)[1]] = target
+
+    # --- resolution -------------------------------------------------------------------------
 
     def resolve(self, callee: str, caller: FunctionIR) -> Resolved | None:
+        found = self._resolve_local(callee, caller) or self._resolve_import(callee)
+        if found is None:
+            return None
+        ma, target, offset = found
+        if (ma.module.file, target.qualname) in self.project.stack:
+            return None
+        if len(self.project.stack) >= MAX_SUMMARY_DEPTH:
+            return None
+        return Resolved(target, offset, ma.summary(target))
+
+    def _resolve_local(
+        self, callee: str, caller: FunctionIR
+    ) -> tuple[ModuleAnalysis, FunctionIR, int] | None:
         target: FunctionIR | None = None
         offset = 0
         bound = next((p for p in _BOUND if callee.startswith(p)), None)
@@ -381,19 +466,45 @@ class ModuleAnalysis:
             target = cands[0] if len(cands) == 1 else None
         else:
             target = self.module.function(callee.replace("::", "."))
-        if target is None or target.qualname in self._stack:
+        return (self, target, offset) if target is not None else None
+
+    def _resolve_import(self, callee: str) -> tuple[ModuleAnalysis, FunctionIR, int] | None:
+        head, _, rest = callee.partition(".")
+        imp = self.module.imports.get(head)
+        if imp is None:
             return None
-        if len(self._stack) >= MAX_SUMMARY_DEPTH:
+        module, name = imp
+        path = self.project.index.resolve(self.module.file, module)
+        ma = self.project.modules.get(path) if path else None
+        if ma is None:
             return None
-        return Resolved(target, offset, self.summary(target))
+        if name == "*":
+            func = callee[len(module) + 1 :] if callee.startswith(module + ".") else rest
+            if not func or "." in func:
+                return None
+            target = ma.lookup(func)
+        elif not rest:
+            target = ma.lookup(head if name == "default" else name)
+        else:
+            target = ma.module.function(f"{name}.{rest}")
+        return (ma, target, 0) if target is not None else None
+
+    def lookup(self, name: str) -> FunctionIR | None:
+        if name in self.exported:
+            return self.exported[name]
+        cands = [f for f in self._by_name.get(name, []) if f.class_name is None]
+        return cands[0] if len(cands) == 1 else None
+
+    # --- summaries --------------------------------------------------------------------------
 
     def summary(self, fn: FunctionIR) -> Summary:
         cached = self.summaries.get(fn.qualname)
         if cached is not None:
             return cached
-        self._stack.append(fn.qualname)
+        file = self.module.file
+        self.project.stack.append((file, fn.qualname))
         try:
-            base = _Ctx(self.spec, self.module.file, resolver=self.resolve)
+            base = _Ctx(self.spec, file, resolver=self.resolve)
             FunctionAnalyzer(base, fn).run()
             summary = Summary()
             returned = [t for t in base.returns if not t.trace[0].detail.startswith(MARKER)]
@@ -401,24 +512,24 @@ class ModuleAnalysis:
                 summary.source_return = min(returned, key=lambda t: t.hops)
             to_return: set[int] = set()
             for idx, param in enumerate(fn.params[:MAX_SUMMARY_PARAMS]):
-                marker = Taint((TraceStep(self.module.file, fn.line, "source", MARKER + param),))
-                ctx = _Ctx(
-                    self.spec, self.module.file, resolver=self.resolve, seeds={param: marker}
-                )
+                marker = Taint((TraceStep(file, fn.line, "source", MARKER + param),))
+                ctx = _Ctx(self.spec, file, resolver=self.resolve, seeds={param: marker})
                 FunctionAnalyzer(ctx, fn).run()
                 if any(t.trace[0].detail == MARKER + param for t in ctx.returns):
                     to_return.add(idx)
                 for hit in ctx.hits:
                     if hit.trace and hit.trace[0].detail == MARKER + param:
                         summary.to_sink.setdefault(idx, []).append(
-                            SinkRef(hit.line, hit.sink, hit.function, hit.trace[1:], hit.hops)
+                            SinkRef(
+                                hit.line, hit.sink, hit.function, hit.file, hit.trace[1:], hit.hops
+                            )
                         )
             summary.to_return = frozenset(to_return)
             self.hits[fn.qualname] = [
                 h for h in base.hits if not (h.trace and h.trace[0].detail.startswith(MARKER))
             ]
         finally:
-            self._stack.pop()
+            self.project.stack.pop()
         self.summaries[fn.qualname] = summary
         return summary
 
@@ -426,10 +537,20 @@ class ModuleAnalysis:
         for fn in self.module.functions:
             self.summary(fn)
         out: list[TaintHit] = []
-        seen: set[tuple[int, str]] = set()
+        seen: set[tuple[str, int, str]] = set()
         for hits in self.hits.values():
             for h in hits:
-                if (h.line, h.sink) not in seen:
-                    seen.add((h.line, h.sink))
+                if (h.file, h.line, h.sink) not in seen:
+                    seen.add((h.file, h.line, h.sink))
                     out.append(h)
-        return sorted(out, key=lambda h: (h.line, h.sink))
+        return sorted(out, key=lambda h: (h.file, h.line, h.sink))
+
+
+def _walk(body: tuple[Instr, ...]):  # type: ignore[no-untyped-def]
+    for instr in body:
+        yield instr
+        if isinstance(instr, Branch):
+            yield from _walk(instr.then)
+            yield from _walk(instr.other)
+        elif isinstance(instr, Loop):
+            yield from _walk(instr.body)
