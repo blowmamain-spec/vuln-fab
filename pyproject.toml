@@ -1,0 +1,55 @@
+[project]
+name = "vulnfab"
+version = "0.1.0"
+description = "Multi-stack static application security testing (SAST) scanner: Supabase/Postgres, Django, Laravel, TypeScript."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "GPL-3.0-or-later" }
+dependencies = [
+    "pglast>=7,<9",
+    "tree-sitter>=0.23",
+    "tree-sitter-python>=0.23",
+    "tree-sitter-javascript>=0.23",
+    "tree-sitter-typescript>=0.23",
+    "tree-sitter-php>=0.23",
+    "pydantic>=2.6",
+    "pyyaml>=6",
+    "typer>=0.12",
+    "rich>=13",
+]
+
+[project.scripts]
+vulnfab = "vulnfab.cli:app"
+
+[project.entry-points."vulnfab.plugins"]
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.5", "mypy>=1.10", "types-pyyaml"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vulnfab"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["benchmarks/targets", "benchmarks/labs", "tests/rules"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["src/vulnfab"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "vulnfab.core.*"
+strict = true

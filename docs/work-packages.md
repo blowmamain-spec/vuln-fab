@@ -12,7 +12,7 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
 
 ## Fase 0: Fondasi
 
-- [ ] **WP-0.1 Scaffold repo** (S). Lisensi GPL-3.0-or-later, `pyproject.toml` (uv, Python ≥ 3.11), `src/vulnfab/`, ruff, mypy (strict untuk `core/`), pytest, `.gitignore` (termasuk `benchmarks/targets/`, `benchmarks/labs/private/`), README stub, `THIRD_PARTY_LICENSES.md`, workflow CI GitHub Actions, `CHANGELOG.md`.
+- [x] **WP-0.1 Scaffold repo** (S). Lisensi GPL-3.0-or-later, `pyproject.toml` (uv, Python ≥ 3.11), `src/vulnfab/`, ruff, mypy (strict untuk `core/`), pytest, `.gitignore` (termasuk `benchmarks/targets/`, `benchmarks/labs/private/`), README stub, `THIRD_PARTY_LICENSES.md`, workflow CI GitHub Actions, `CHANGELOG.md`.
   *Lulus jika*: `uv run vulnfab --version` mencetak versi; ruff, mypy, pytest hijau lokal; workflow CI valid.
 - [ ] **WP-0.2 Model & kontrak** (M) — dep: 0.1. `core/models.py` (Finding, TraceStep, IR dan SchemaModel sesuai `spec.md`), `plugins/base.py` (Protocol), `core/sqlparser.py` (antarmuka + impl. `pglast`), `core/fingerprint.py`.
   *Lulus jika*: test serialisasi JSON; test fingerprint (stabil terhadap sisipan baris/komentar, berubah bila kode berubah); mypy strict bersih; hanya `sqlparser.py` yang meng-import `pglast` (dicek test).
