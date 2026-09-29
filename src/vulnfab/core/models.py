@@ -202,8 +202,12 @@ class Policy:
     roles: tuple[str, ...] = ("public",)
     using_expr: str | None = None
     check_expr: str | None = None
+    using_node: Any = None  # parser-specific expression AST (pglast), None if absent
+    check_node: Any = None
     file: str = ""
     line: int = 0
+    end_line: int = 0
+    sql: str = ""
 
 
 @dataclass
@@ -213,6 +217,7 @@ class Grant:
     with_grant: bool = False
     file: str = ""
     line: int = 0
+    inherited_default: bool = False  # came from (baseline or explicit) default privileges
 
 
 @dataclass
@@ -227,6 +232,12 @@ class Table:
     grants: list[Grant] = field(default_factory=list)
     file: str = ""
     line: int = 0
+    end_line: int = 0
+    # Location of the statement that determined the final RLS state (CREATE if never changed).
+    rls_file: str = ""
+    rls_line: int = 0
+    rls_end_line: int = 0
+    external: bool = False  # not created by the scanned migrations (e.g. storage.objects)
 
     @property
     def qualified_name(self) -> str:
@@ -243,6 +254,9 @@ class Function:
     body: str = ""
     file: str = ""
     line: int = 0
+    end_line: int = 0
+    sql: str = ""
+    param_names: tuple[str, ...] = ()
 
 
 @dataclass
@@ -253,15 +267,21 @@ class View:
     definition: str = ""
     file: str = ""
     line: int = 0
+    end_line: int = 0
 
 
 @dataclass
 class DefaultPrivilege:
-    role: str
-    schema: str | None
-    object_type: str
+    role: str | None  # FOR ROLE ..., None = current role
+    schema: str | None  # IN SCHEMA ..., None = all schemas
+    object_type: str  # table | sequence | function | type
     privileges: frozenset[str]
-    grantee: str = ""
+    grantees: tuple[str, ...] = ()
+    is_grant: bool = True
+    file: str = ""
+    line: int = 0
+    end_line: int = 0
+    baseline: bool = False  # provided by the Supabase platform, not by the migrations
 
 
 @dataclass
@@ -270,6 +290,16 @@ class Bucket:
     public: bool = False
     file: str = ""
     line: int = 0
+    end_line: int = 0
+
+
+@dataclass
+class ConfigDoc:
+    """A parsed configuration file with the source line of every key."""
+
+    path: str
+    data: dict[str, Any]
+    lines: dict[tuple[str, ...], int] = field(default_factory=dict)  # key path -> 1-based line
 
 
 @dataclass
@@ -280,6 +310,8 @@ class SchemaModel:
     default_privileges: list[DefaultPrivilege] = field(default_factory=list)
     buckets: dict[str, Bucket] = field(default_factory=dict)
     unresolved: list[Unresolved] = field(default_factory=list)
+    configs: dict[str, ConfigDoc] = field(default_factory=dict)
+    assumptions: list[str] = field(default_factory=list)
 
 
 # --- Serialisation -------------------------------------------------------------------------

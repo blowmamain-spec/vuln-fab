@@ -38,11 +38,12 @@ def test_plpgsql_dynamic_execute_is_visible() -> None:
     assert "PLpgSQL_stmt_dynexecute" in str(funcs[0].raw)
 
 
-def test_only_sqlparser_imports_pglast() -> None:
+def test_pglast_is_confined_to_sqlparser_and_supabase_plugin() -> None:
     src = Path(__file__).resolve().parents[2] / "src" / "vulnfab"
     offenders = []
     for path in src.rglob("*.py"):
-        if path.name == "sqlparser.py":
+        rel = path.relative_to(src).as_posix()
+        if rel == "core/sqlparser.py" or rel.startswith("plugins/supabase/"):
             continue
         tree = ast.parse(path.read_text())
         for node in ast.walk(tree):
