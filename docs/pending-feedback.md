@@ -20,3 +20,8 @@ untuk WP-0.7.)
 
 ## D. WP-0.7
 Migrasi Supabase pribadi hanya dijalankan lokal (`benchmarks/labs/private/` di-gitignore); jangan di-commit.
+
+## E. Ditinjau ulang secara independen (dibuat oleh pembuat tool)
+- `benchmarks/verdicts/juice-shop.json`, `dvwa.json`, `django-nv.json`: verdict TP/FP saya atas temuan tak berlabel.
+- Label "reviewer" (bukan resmi) di `benchmarks/truth/*.json` dan `benchmarks/labels/*.py`.
+- Angka M2/M3 di `benchmarks/results/` sebelum dikutip di luar repo.
