@@ -1,0 +1,140 @@
+rules:
+  - id: cfg-docker-root
+    stack: generic
+    kind: scanner
+    scanner: "vulnfab.scanners.infra:docker_runs_as_root"
+    languages: [dockerfile]
+    severity: medium
+    confidence: medium
+    cwe: [CWE-250]
+    owasp: "A05:2021"
+    title: "Container runs as root"
+    message: "The image does not drop root privileges."
+    fix: "Create an unprivileged user and add a USER instruction to the final stage."
+    tests: {vulnerable: [Dockerfile], safe: [Dockerfile.safe]}
+
+  - id: cfg-docker-latest
+    stack: generic
+    kind: scanner
+    scanner: "vulnfab.scanners.infra:docker_latest_tag"
+    languages: [dockerfile]
+    severity: low
+    confidence: medium
+    cwe: [CWE-1104]
+    owasp: "A06:2021"
+    title: "Base image is not pinned"
+    message: "FROM uses :latest or no tag."
+    fix: "Pin the image to a version (better: a digest)."
+    tests: {vulnerable: [Dockerfile], safe: [Dockerfile.safe]}
+
+  - id: cfg-docker-secret-env
+    stack: generic
+    kind: scanner
+    scanner: "vulnfab.scanners.infra:docker_secret_env"
+    languages: [dockerfile]
+    severity: high
+    confidence: medium
+    cwe: [CWE-798, CWE-522]
+    owasp: "A07:2021"
+    title: "Credential baked into an image layer"
+    message: "ENV/ARG stores a credential in the image."
+    fix: "Pass secrets at runtime (env at `docker run`, Docker/BuildKit secrets), never in ENV/ARG."
+    tests: {vulnerable: [Dockerfile], safe: [Dockerfile.safe]}
+
+  - id: cfg-docker-pipe-shell
+    stack: generic
+    kind: scanner
+    scanner: "vulnfab.scanners.infra:docker_pipe_to_shell"
+    languages: [dockerfile]
+    severity: medium
+    confidence: medium
+    cwe: [CWE-494]
+    owasp: "A08:2021"
+    title: "Remote script piped into a shell during build"
+    message: "curl/wget output is executed without verification."
+    fix: "Download to a file, verify a checksum or signature, then run it."
+    tests: {vulnerable: [Dockerfile], safe: [Dockerfile.safe]}
+
+  - id: cfg-compose-privileged
+    stack: generic
+    kind: scanner
+    scanner: "vulnfab.scanners.infra:compose_privileged"
+    languages: [yaml]
+    severity: high
+    confidence: medium
+    cwe: [CWE-250]
+    owasp: "A05:2021"
+    title: "Privileged container / host networking"
+    message: "A compose service weakens container isolation."
+    fix: "Drop `privileged`; add only the specific capabilities needed; avoid host networking."
+    tests: {vulnerable: [docker-compose.yml], safe: [docker-compose.safe.yml]}
+
+  - id: cfg-compose-docker-sock
+    stack: generic
+    kind: scanner
+    scanner: "vulnfab.scanners.infra:compose_docker_socket"
+    languages: [yaml]
+    severity: high
+    confidence: high
+    cwe: [CWE-250]
+    owasp: "A05:2021"
+    title: "Docker socket mounted into a container"
+    message: "/var/run/docker.sock is mounted."
+    fix: "Avoid mounting the socket; use a restricted socket proxy if the service really needs the API."
+    tests: {vulnerable: [docker-compose.yml], safe: [docker-compose.safe.yml]}
+
+  - id: cfg-compose-secret-env
+    stack: generic
+    kind: scanner
+    scanner: "vulnfab.scanners.infra:compose_secret_env"
+    languages: [yaml]
+    severity: medium
+    confidence: medium
+    cwe: [CWE-798]
+    owasp: "A07:2021"
+    title: "Credential in docker-compose file"
+    message: "A compose file contains a literal credential."
+    fix: "Use `env_file` kept out of version control or Docker secrets."
+    tests: {vulnerable: [docker-compose.yml], safe: [docker-compose.safe.yml]}
+
+  - id: cfg-nginx-autoindex
+    stack: generic
+    kind: scanner
+    scanner: "vulnfab.scanners.infra:nginx_autoindex"
+    languages: [nginx]
+    severity: medium
+    confidence: high
+    cwe: [CWE-548]
+    owasp: "A05:2021"
+    title: "Directory listing enabled"
+    message: "nginx autoindex is on."
+    fix: "Remove `autoindex on;` or restrict the location."
+    tests: {vulnerable: [nginx.conf], safe: [nginx.safe.conf]}
+
+  - id: cfg-nginx-cors-wildcard
+    stack: generic
+    kind: scanner
+    scanner: "vulnfab.scanners.infra:nginx_cors_wildcard"
+    languages: [nginx]
+    severity: medium
+    confidence: medium
+    cwe: [CWE-942]
+    owasp: "A05:2021"
+    title: "Wildcard CORS origin"
+    message: "Access-Control-Allow-Origin is *."
+    fix: "Allow-list the specific origins that need access."
+    tests: {vulnerable: [nginx.conf], safe: [nginx.safe.conf]}
+
+  - id: cfg-env-debug
+    stack: generic
+    kind: scanner
+    scanner: "vulnfab.scanners.infra:env_debug_flags"
+    languages: [env]
+    severity: medium
+    confidence: medium
+    cwe: [CWE-489]
+    owasp: "A05:2021"
+    title: "Debug mode enabled in an env file"
+    message: "A debug flag is set in an env file."
+    fix: "Turn debug off outside local development."
+    tests: {vulnerable: [.env.vuln], safe: [.env.safe]}

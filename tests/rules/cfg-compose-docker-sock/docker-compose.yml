@@ -1,0 +1,5 @@
+services:
+  ci:
+    image: runner:1.0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # vuln: cfg-compose-docker-sock

@@ -1,0 +1,4 @@
+FROM alpine:3.19
+RUN curl -fsSLo install.sh https://example.com/install.sh \
+ && echo "abc123  install.sh" | sha256sum -c - \
+ && sh install.sh

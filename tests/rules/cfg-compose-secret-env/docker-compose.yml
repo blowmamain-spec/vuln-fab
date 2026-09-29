@@ -1,0 +1,5 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: Xk9-pL2$mQ7zR4vN8  # vuln: cfg-compose-secret-env

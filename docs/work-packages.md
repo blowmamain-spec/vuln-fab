@@ -149,7 +149,7 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
 
 ## Fase 8: Scanner pelengkap (opsional, lihat tangga pemangkasan)
 
-- [ ] **WP-8.1 Config scanner** (M) — dep: 1.4. Dockerfile, `docker-compose`, nginx (CORS longgar, header), `.env` ter-commit, `APP_DEBUG` lintas stack.
+- [x] **WP-8.1 Config scanner** (M) — dep: 1.4. Dockerfile, `docker-compose`, nginx (CORS longgar, header), `.env` ter-commit, `APP_DEBUG` lintas stack.
   *Lulus jika*: vuln + safe per rule.
 - [ ] **WP-8.2 SCA offline** (M) — dep: 0.3d. Parse `package-lock.json`, `composer.lock`, `requirements.txt`/`poetry.lock`/`uv.lock`; cocokkan dengan dump OSV lokal; adaptor osv-scanner opsional.
   *Lulus jika*: lockfile fixture + dump OSV mini menghasilkan temuan yang benar tanpa jaringan.

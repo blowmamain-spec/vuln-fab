@@ -1,0 +1,5 @@
+FROM python:3.12-slim
+COPY . /app
+RUN useradd -m app
+USER app
+CMD ["python", "/app/main.py"]

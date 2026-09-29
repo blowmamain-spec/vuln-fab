@@ -3,7 +3,7 @@
 Dibuat otomatis oleh `scripts/gen_rule_docs.py` dari rule pack (vulnfab 0.3.x).
 **Jangan edit tangan**; perbarui rule YAML lalu jalankan skripnya. CI memeriksa kesinkronan.
 
-Total: 113 rule. Tingkat: **A** struktural/pasti, **B** pola kepemilikan (IDOR; confidence maksimum medium), **C** kandidat semantik (tersembunyi secara default).
+Total: 123 rule. Tingkat: **A** struktural/pasti, **B** pola kepemilikan (IDOR; confidence maksimum medium), **C** kandidat semantik (tersembunyi secara default).
 
 Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignores` di `.vulnfab.yml`, atau baseline.
 
@@ -203,10 +203,20 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 - Perbaikan: Add @login_required / LoginRequiredMixin (or permission_classes) and check ownership.
 - OWASP: [A01:2021](https://owasp.org/Top10/)
 
-## Stack `generic` (56 rule)
+## Stack `generic` (66 rule)
 
 | Rule | Jenis | Severity | Confidence | Tier | CWE |
 |---|---|---|---|---|---|
+| [`cfg-compose-docker-sock`](#cfg-compose-docker-sock) | scanner | high | high | — | [CWE-250](https://cwe.mitre.org/data/definitions/250.html) |
+| [`cfg-compose-privileged`](#cfg-compose-privileged) | scanner | high | medium | — | [CWE-250](https://cwe.mitre.org/data/definitions/250.html) |
+| [`cfg-compose-secret-env`](#cfg-compose-secret-env) | scanner | medium | medium | — | [CWE-798](https://cwe.mitre.org/data/definitions/798.html) |
+| [`cfg-docker-latest`](#cfg-docker-latest) | scanner | low | medium | — | [CWE-1104](https://cwe.mitre.org/data/definitions/1104.html) |
+| [`cfg-docker-pipe-shell`](#cfg-docker-pipe-shell) | scanner | medium | medium | — | [CWE-494](https://cwe.mitre.org/data/definitions/494.html) |
+| [`cfg-docker-root`](#cfg-docker-root) | scanner | medium | medium | — | [CWE-250](https://cwe.mitre.org/data/definitions/250.html) |
+| [`cfg-docker-secret-env`](#cfg-docker-secret-env) | scanner | high | medium | — | [CWE-798](https://cwe.mitre.org/data/definitions/798.html), [CWE-522](https://cwe.mitre.org/data/definitions/522.html) |
+| [`cfg-env-debug`](#cfg-env-debug) | scanner | medium | medium | — | [CWE-489](https://cwe.mitre.org/data/definitions/489.html) |
+| [`cfg-nginx-autoindex`](#cfg-nginx-autoindex) | scanner | medium | high | — | [CWE-548](https://cwe.mitre.org/data/definitions/548.html) |
+| [`cfg-nginx-cors-wildcard`](#cfg-nginx-cors-wildcard) | scanner | medium | medium | — | [CWE-942](https://cwe.mitre.org/data/definitions/942.html) |
 | [`env-service-role-client`](#env-service-role-client) | scanner | critical | high | A | [CWE-522](https://cwe.mitre.org/data/definitions/522.html) |
 | [`js-dangerous-html`](#js-dangerous-html) | pattern | high | medium | — | [CWE-79](https://cwe.mitre.org/data/definitions/79.html) |
 | [`js-document-write`](#js-document-write) | pattern | medium | medium | — | [CWE-79](https://cwe.mitre.org/data/definitions/79.html) |
@@ -263,6 +273,86 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 | [`tpy-ssrf`](#tpy-ssrf) | taint | high | medium | — | [CWE-918](https://cwe.mitre.org/data/definitions/918.html) |
 | [`tpy-ssti`](#tpy-ssti) | taint | high | medium | — | [CWE-1336](https://cwe.mitre.org/data/definitions/1336.html) |
 | [`tpy-xss`](#tpy-xss) | taint | medium | medium | — | [CWE-79](https://cwe.mitre.org/data/definitions/79.html) |
+
+### cfg-compose-docker-sock
+
+**Docker socket mounted into a container** — /var/run/docker.sock is mounted.
+
+- Jenis: scanner — Text scanner over files (secrets, env files, templates).
+- Perbaikan: Avoid mounting the socket; use a restricted socket proxy if the service really needs the API.
+- OWASP: [A05:2021](https://owasp.org/Top10/)
+
+### cfg-compose-privileged
+
+**Privileged container / host networking** — A compose service weakens container isolation.
+
+- Jenis: scanner — Text scanner over files (secrets, env files, templates).
+- Perbaikan: Drop `privileged`; add only the specific capabilities needed; avoid host networking.
+- OWASP: [A05:2021](https://owasp.org/Top10/)
+
+### cfg-compose-secret-env
+
+**Credential in docker-compose file** — A compose file contains a literal credential.
+
+- Jenis: scanner — Text scanner over files (secrets, env files, templates).
+- Perbaikan: Use `env_file` kept out of version control or Docker secrets.
+- OWASP: [A07:2021](https://owasp.org/Top10/)
+
+### cfg-docker-latest
+
+**Base image is not pinned** — FROM uses :latest or no tag.
+
+- Jenis: scanner — Text scanner over files (secrets, env files, templates).
+- Perbaikan: Pin the image to a version (better: a digest).
+- OWASP: [A06:2021](https://owasp.org/Top10/)
+
+### cfg-docker-pipe-shell
+
+**Remote script piped into a shell during build** — curl/wget output is executed without verification.
+
+- Jenis: scanner — Text scanner over files (secrets, env files, templates).
+- Perbaikan: Download to a file, verify a checksum or signature, then run it.
+- OWASP: [A08:2021](https://owasp.org/Top10/)
+
+### cfg-docker-root
+
+**Container runs as root** — The image does not drop root privileges.
+
+- Jenis: scanner — Text scanner over files (secrets, env files, templates).
+- Perbaikan: Create an unprivileged user and add a USER instruction to the final stage.
+- OWASP: [A05:2021](https://owasp.org/Top10/)
+
+### cfg-docker-secret-env
+
+**Credential baked into an image layer** — ENV/ARG stores a credential in the image.
+
+- Jenis: scanner — Text scanner over files (secrets, env files, templates).
+- Perbaikan: Pass secrets at runtime (env at `docker run`, Docker/BuildKit secrets), never in ENV/ARG.
+- OWASP: [A07:2021](https://owasp.org/Top10/)
+
+### cfg-env-debug
+
+**Debug mode enabled in an env file** — A debug flag is set in an env file.
+
+- Jenis: scanner — Text scanner over files (secrets, env files, templates).
+- Perbaikan: Turn debug off outside local development.
+- OWASP: [A05:2021](https://owasp.org/Top10/)
+
+### cfg-nginx-autoindex
+
+**Directory listing enabled** — nginx autoindex is on.
+
+- Jenis: scanner — Text scanner over files (secrets, env files, templates).
+- Perbaikan: Remove `autoindex on;` or restrict the location.
+- OWASP: [A05:2021](https://owasp.org/Top10/)
+
+### cfg-nginx-cors-wildcard
+
+**Wildcard CORS origin** — Access-Control-Allow-Origin is *.
+
+- Jenis: scanner — Text scanner over files (secrets, env files, templates).
+- Perbaikan: Allow-list the specific origins that need access.
+- OWASP: [A05:2021](https://owasp.org/Top10/)
 
 ### env-service-role-client
 

@@ -1,0 +1,5 @@
+FROM node:20.11-alpine AS build
+RUN echo hi
+FROM build
+FROM gcr.io/distroless/static@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+FROM scratch

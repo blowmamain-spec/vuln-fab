@@ -1,0 +1,5 @@
+services:
+  ci:
+    image: runner:1.0
+    volumes:
+      - ./data:/data

@@ -1,0 +1,7 @@
+services:
+  app:
+    image: app:1.0
+    privileged: true  # vuln: cfg-compose-privileged
+  worker:
+    image: app:1.0
+    network_mode: host  # vuln: cfg-compose-privileged

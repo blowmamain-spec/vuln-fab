@@ -51,8 +51,10 @@ def detect_language(rel_path: str) -> str | None:
         return "env"
     if lower in _NAME_LANGUAGE:
         return _NAME_LANGUAGE[lower]
-    if lower.startswith("dockerfile."):
+    if lower.startswith("dockerfile.") or lower.endswith(".dockerfile"):
         return "dockerfile"
+    if lower.endswith(".conf") and "nginx" in rel_path.lower():
+        return "nginx"
     dot = lower.rfind(".")
     return _EXTENSION_LANGUAGE.get(lower[dot:]) if dot >= 0 else None
 
