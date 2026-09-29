@@ -182,6 +182,29 @@ def rules_list(
     typer.echo(f"{len(rules)} rule(s)")
 
 
+@app.command("explain")
+def explain(
+    rule_id: Annotated[str, typer.Argument(help="Rule id, e.g. tpy-sqli.")],
+    rules_path: Annotated[list[Path] | None, typer.Option("--rules")] = None,
+) -> None:
+    """Describe a rule: what it flags, why it matters, how to fix and suppress it."""
+    from vulnfab.core.ruledocs import explain_text
+    from vulnfab.core.rules import RuleLoadError
+
+    try:
+        rules = _collect_rules(rules_path, None)
+    except RuleLoadError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+    match = next((r for r in rules if r.id == rule_id), None)
+    if match is None:
+        near = sorted(r.id for r in rules if rule_id.split("-")[-1] in r.id)[:5]
+        hint = f" Did you mean: {', '.join(near)}?" if near else " Use `vulnfab rules list`."
+        typer.echo(f"error: no rule with id {rule_id!r}.{hint}", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    typer.echo(explain_text(match))
+
+
 @rules_app.command("test")
 def rules_test(
     rule: Annotated[str | None, typer.Option("--rule", help="Only this rule id.")] = None,

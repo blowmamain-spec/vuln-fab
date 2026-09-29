@@ -13,19 +13,23 @@ Status: dalam pengembangan awal. Lihat [`docs/`](docs/):
 
 ```bash
 uv run vulnfab scan <path>                          # laporan di terminal
-uv run vulnfab scan <path> --format json -o out.json
-uv run vulnfab scan <path> --min-confidence low     # tampilkan juga temuan berconfidence rendah
+uv run vulnfab scan <path> --format sarif -o r.sarif   # atau json | html
 uv run vulnfab scan <path> --fail-on high           # exit code 1 untuk CI
-uv run vulnfab scan <path> --schema-dump live.sql   # bandingkan migration dengan pg_dump database
+uv run vulnfab scan <path> --since origin/main      # hanya yang terpengaruh perubahan
 uv run vulnfab scan <path> --baseline base.json     # hanya temuan baru
+uv run vulnfab explain tpy-sqli                     # jelaskan satu rule
 uv run vulnfab rules list | rules test
 ```
 
-Yang dipahami saat ini: **Supabase/Postgres** (RLS, policy, grant, fungsi, view, storage,
-config.toml, seed, drift), **TypeScript/JavaScript** (supabase-js, Next.js, edge functions),
-rule generik Python/JS/PHP, dan secret. Setiap laporan memuat bagian *Coverage & limitations*
-yang menyebut apa yang tidak dianalisis. Hasil terukur ada di
-[`benchmarks/results/`](benchmarks/results/).
+Yang dipahami: **Supabase/Postgres** (RLS, policy, grant, fungsi, view, storage, config, drift), **Django**
+(settings, model, URL→view + auth, template), **Laravel** (migration, Eloquent, rute, Blade, config),
+**TypeScript/JavaScript** (supabase-js, Next.js, edge functions), analisis alur data (SQLi, XSS, command injection,
+path traversal, SSRF, deserialisasi, open redirect, IDOR tingkat B) untuk Python/JS/PHP, dan secret.
+Setiap laporan memuat bagian *Coverage & limitations*. Hasil terukur: [`benchmarks/results/`](benchmarks/results/).
+
+Panduan: [pemakaian & CI](docs/usage.md) · [referensi rule](docs/rules.md) ·
+[menulis rule](docs/writing-rules.md) · [menulis plugin](docs/writing-plugins.md) ·
+[batasan](docs/known-limitations.md).
 
 ## Pengembangan
 

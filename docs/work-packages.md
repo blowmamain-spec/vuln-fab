@@ -179,7 +179,7 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
   *Lulus jika*: scan kedua pada repo tak berubah ≥ 5× lebih cepat; hasil identik dengan tanpa cache.
 - [x] **WP-10.5 GitHub Action + pre-commit** (M) — dep: 10.1. Action komposit, hook.
   *Lulus jika*: workflow contoh pada repo fixture mengunggah SARIF dan gagal sesuai `--fail-on`.
-- [ ] **WP-10.6 `vulnfab explain` + dokumentasi** (L) — dep: 9.3. Panduan menulis rule/plugin, referensi rule (dihasilkan otomatis dari YAML), batasan yang diketahui, `THIRD_PARTY_LICENSES.md` final.
+- [x] **WP-10.6 `vulnfab explain` + dokumentasi** (L) — dep: 9.3. Panduan menulis rule/plugin, referensi rule (dihasilkan otomatis dari YAML), batasan yang diketahui, `THIRD_PARTY_LICENSES.md` final.
   *Lulus jika*: referensi rule ter-generate di CI dan sinkron dengan rule pack; tautan dokumen valid.
 - [ ] **WP-10.7 Gate M4 + rilis** (M) — dep: semua di atas. `benchmarks/results/m4.md`; tag `v1.0.0`; build wheel via `uv build`.
   *Lulus jika*: gate M4 di rencana Bagian 17 terpenuhi.
