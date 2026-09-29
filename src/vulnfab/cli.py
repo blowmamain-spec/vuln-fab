@@ -55,7 +55,7 @@ def scan_command(
     format: Annotated[OutputFormat, typer.Option("--format", help="Output format.")] = (
         OutputFormat.console
     ),
-    output: Annotated[Path | None, typer.Option("--output", help="Write to file.")] = None,
+    output: Annotated[Path | None, typer.Option("--output", "-o", help="Write to file.")] = None,
     stack: Annotated[
         list[str] | None, typer.Option("--stack", help="Force a stack (repeatable).")
     ] = None,

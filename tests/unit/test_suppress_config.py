@@ -204,3 +204,13 @@ def test_dedupe_and_supersedes_and_sorting() -> None:
     crit = F("x-b", 2, sev=Severity.CRITICAL, conf=Confidence.LOW)
     high = F("x-c", 3, sev=Severity.HIGH, conf=Confidence.HIGH)
     assert [f.rule_id for f in sort_by_priority([low, crit, high])] == ["x-c", "x-b", "x-a"]
+
+
+def test_short_output_option_and_loose_sql_warning(tmp_path: Path) -> None:
+    (tmp_path / "sql").mkdir()
+    (tmp_path / "sql" / "schema.sql").write_text("create table t (id int);\n")
+    out = tmp_path / "out.json"
+    result = CliRunner().invoke(app, ["scan", str(tmp_path), "--format", "json", "-o", str(out)])
+    assert result.exit_code == 0
+    data = json.loads(out.read_text())
+    assert any("NOT analysed" in a for a in data["coverage"]["assumptions"])

@@ -154,6 +154,13 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
                 )
 
     active = {s.plugin.name for s in selected}
+    loose_sql = sorted(f.path for f in loaded.files if f.language == "sql")
+    if loose_sql and "supabase" not in active:
+        coverage.assumptions.append(
+            f"{len(loose_sql)} .sql file(s) were NOT analysed: no Supabase project layout "
+            "(supabase/migrations/*.sql) was found. Put your SQL files in "
+            "<project>/supabase/migrations/ (file names must sort in the order they should run)."
+        )
     try:
         raw.extend(run_scanner_rules([r for r in scanner_rules if r.stack in active], loaded.files))
         cross = [r for r in crosscheck_rules if r.stack in active]
