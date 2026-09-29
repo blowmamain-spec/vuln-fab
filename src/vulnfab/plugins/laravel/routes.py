@@ -206,6 +206,18 @@ class RouteCollector:
     def _group(self, ctx: Ctx, args: list[Node]) -> None:
         if not args:
             return
+        if len(args) >= 2 and args[0].type == "array_creation_expression":
+            for key, value in ast.array_items(args[0], self.source):
+                if key == "middleware":
+                    ctx = replace(ctx, middleware=(*ctx.middleware, *_mw_list(value, self.source)))
+                elif key == "prefix":
+                    ctx = replace(
+                        ctx, prefix=_join(ctx.prefix, ast.string_value(value, self.source) or "")
+                    )
+                elif key == "controller":
+                    ctx = replace(
+                        ctx, controller=ast.class_ref(value, self.source) or ctx.controller
+                    )
         closure = args[-1]
         if closure.type in ("anonymous_function", "arrow_function"):
             body = closure.child_by_field_name("body")

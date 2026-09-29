@@ -129,10 +129,11 @@ def test_api_routes_are_never_csrf_exempt() -> None:
     assert "csrf-exempt" not in entries[0].traits
 
 
-def test_group_with_array_attributes_is_understood_or_reported() -> None:
-    web = "<?php\nRoute::group(['middleware' => 'auth', 'prefix' => 'a'], function () {\n    Route::get('/x', [PostController::class, 'show']);\n});\n"
-    entries, unresolved = collect(
-        {"routes/web.php": web, "app/Http/Controllers/PostController.php": CONTROLLER}
+def test_group_with_array_attributes() -> None:
+    web = (
+        "<?php\nRoute::group(['middleware' => ['auth'], 'prefix' => 'a'], function () {\n"
+        "    Route::get('/x', [PostController::class, 'show']);\n});\n"
     )
-    # array-attribute groups are a known limitation: the route is still found, and no crash
-    assert entries and entries[0].route.endswith("/x")
+    ctrl = CONTROLLER.replace("$this->middleware('auth')->except(['index']);", "")
+    entries, _ = collect({"routes/web.php": web, "app/Http/Controllers/PostController.php": ctrl})
+    assert entries[0].route == "GET /a/x" and entries[0].auth.required is True
