@@ -131,7 +131,7 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
   *Lulus jika*: fixture template dengan dan tanpa autoescape.
 - [x] **WP-6.4 Model ORM & rule pack** (L) — dep: 6.2, 5.7. Sink `.raw()`/`.extra()`/`cursor.execute`, sanitizer ORM terparameter; rule settings (`DEBUG`, `ALLOWED_HOSTS`, `SECRET_KEY`), `csrf_exempt`, `ModelForm __all__`, view tanpa auth (tier A), `dj-idor-get-by-pk` (tier B), `dj-dynamic-dispatch-input`.
   *Lulus jika*: vuln + safe per rule.
-- [ ] **WP-6.5 Refactor kontrak + bekukan** (M) — dep: 6.4. Catat semua perubahan core yang dibutuhkan Django; perbarui `spec.md`; bekukan kontrak.
+- [x] **WP-6.5 Refactor kontrak + bekukan** (M) — dep: 6.4. Catat semua perubahan core yang dibutuhkan Django; perbarui `spec.md`; bekukan kontrak.
   *Lulus jika*: `docs/decisions/plugin-contract-freeze.md` menyebut versi kontrak; test kontrak (plugin contoh minimal) lulus.
 
 ## Fase 7: Plugin Laravel → **M3**

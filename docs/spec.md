@@ -116,7 +116,9 @@ class ParsedUnit:
     entrypoints: list[Entrypoint]
 
 @dataclass
-class Entrypoint: kind: str; file: str; line: int; handler: str; params: list[str]; auth: AuthInfo | None
+class Entrypoint:
+    kind: str; file: str; line: int; handler: str; params: list[str]; auth: AuthInfo | None
+    route: str = ""; route_file: str = ""; route_line: int = 0; traits: list[str] = []  # writes|reads-data|csrf-exempt
 @dataclass
 class DispatchHint: file: str; line: int; targets: list[str]          # resolusi dinamis berbasis konvensi
 @dataclass
@@ -143,7 +145,7 @@ Nilai di TIR: `Var`, `Const(literal)`, `Param(i)`, `Field(base, name)`. Constant
 
 ```
 Table(name, schema, columns[], constraints[], rls_enabled, rls_forced, policies[], grants[])
-Column(name, type, nullable, default, unique, sensitive_hint)
+Column(name, type, nullable, default, unique, sensitive_hint, references?)
 Policy(name, table, permissive: bool, command: all|select|insert|update|delete, roles[], using_expr, check_expr)
 Function(name, schema, security_definer, search_path, language, body_ast?)
 View(name, schema, security_invoker, definition)
@@ -178,7 +180,9 @@ class StackPlugin(Protocol):
     def rule_packs(self) -> list[Path]: ...
 ```
 
-Semua method selain `detect`, `parse`, `rule_packs` boleh mengembalikan daftar kosong/`None`. Penemuan lewat entry point `vulnfab.plugins`. Plugin tidak boleh mengimpor plugin lain. Dibekukan setelah plugin ke-3 (Django).
+Semua method selain `detect`, `parse`, `rule_packs` boleh mengembalikan daftar kosong/`None`. Penemuan lewat entry point `vulnfab.plugins`. Plugin tidak boleh mengimpor plugin lain. **Kontrak 1.0 dibekukan** setelah plugin ke-3 (Django); lihat `docs/decisions/plugin-contract-freeze.md`.
+
+Hook opsional (dicari dengan `getattr`): `fixture_path(filename)`, `attach_drift(model, name, dump)`, `refine(raw, model)`.
 
 Antarmuka SQL:
 
@@ -195,11 +199,11 @@ Implementasi awal memakai `pglast`; hanya `core/sqlparser.py` yang boleh meng-im
 Field umum: `id` (unik, `^[a-z]+-[a-z0-9-]+$`), `stack`, `kind` (`pattern` default, `taint`, `schema`, `scanner`, `crosscheck`), `languages`, `severity`, `confidence`, `tier?`, `cwe[]`, `owasp?`, `message`, `fix?`, `supersedes?`, `tests`, `enabled` (default true).
 
 - `pattern`: `pattern` (snippet dengan metavariable `$X`, `...` untuk wildcard argumen) atau `patterns: [...]` (semua harus cocok), `pattern-not`, `pattern-inside`, `where: [{metavariable: X, kind: fstring_or_concat|literal|identifier|regex, regex?}]`.
-- `taint`: `sources[]`, `sinks[]`, `sanitizers[]`, `propagators[]?` (pola snippet).
+- `taint`: `sources[]`, `sinks[]`, `sanitizers[]`, `propagators[]?`, `guards[]?`, `validators[]?`. Setiap entri: `<call|field|var|param|assign> <glob> [arg0|argN|args|any|recv|kw:nama]` (pemilih argumen hanya untuk sink `call`; nama callee boleh `new Foo`). `sanitizers` membersihkan hasil panggilan; `propagators` meneruskan taint tanpa `unresolved hop`; `guards` = bukti kepemilikan (fungsi yang memakainya tidak dilaporkan; tier B/IDOR); `validators` = panggilan yang bila dipakai di kondisi `if` membersihkan operandnya (di kedua cabang; setelah cabang hanya bila satu cabang berhenti dengan return/throw). Panggilan tak dikenal meneruskan taint tetapi menambah `unresolved hop`.
 - `schema`: `check` (`modul:fungsi` Python teruji) **atau** `condition` (ekspresi aman; hanya akses atribut, perbandingan, `and/or/not`, `in`, literal).
-- `crosscheck`: `facts` (`DataAccess`), `check` (`modul:fungsi`).
+- `crosscheck`: `facts` (`DataAccess` atau `Entrypoint`), `check` (`modul:fungsi`), `model?` (plugin pemilik SchemaModel; default = stack rule; rule `Entrypoint` tidak memerlukan skema).
 - `tests.vulnerable[]` dan `tests.safe[]`: path relatif ke `tests/rules/<rule_id>/`. Validator gagal bila kosong.
-Rule `schema` dijalankan pada repo fixture sementara (plugin menyediakan `fixture_path`); berkas `<nama>.dump.sql` di samping berkas uji dipakai sebagai dump database untuk cek drift. Rule `scanner`/`crosscheck` dijalankan lewat engine penuh; `schema.sql` di direktori uji menjadi migration untuk rule cross-check. Harness menghitung semua temuan (confidence rendah ikut dihitung).
+Rule `schema` dijalankan pada repo fixture sementara (plugin menyediakan `fixture_path`); berkas `<nama>.dump.sql` di samping berkas uji dipakai sebagai dump database untuk cek drift. Rule `scanner`/`crosscheck`/`taint` dijalankan lewat engine penuh (taint: langsung pada berkas uji); `schema.sql` di direktori uji menjadi migration untuk rule cross-check; isi direktori `_repo/` disalin ke repo fixture lebih dulu (mis. `manage.py` agar plugin Django aktif). Harness menghitung semua temuan (confidence rendah ikut dihitung).
 
 Rule `pattern` tanpa satu pun file `safe` ditolak. Anotasi pada file uji: komentar `# vuln: <rule_id>` (atau `// vuln:`) pada baris yang harus dilaporkan; harness memeriksa kecocokan tepat (baris + rule) dan bahwa file `safe` tidak menghasilkan temuan rule itu.
 
