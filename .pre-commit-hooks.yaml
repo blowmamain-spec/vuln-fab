@@ -1,0 +1,16 @@
+- id: vulnfab
+  name: vulnfab (security scan)
+  description: Scan the repository with vulnfab and fail on high-severity findings.
+  entry: vulnfab scan . --min-confidence medium --fail-on high
+  language: python
+  pass_filenames: false
+  always_run: true
+  stages: [pre-commit, pre-push]
+- id: vulnfab-changed
+  name: vulnfab (changed files only)
+  description: Report only findings affected by uncommitted changes (diff mode against HEAD).
+  entry: vulnfab scan . --since HEAD --min-confidence medium --fail-on high
+  language: python
+  pass_filenames: false
+  always_run: true
+  stages: [pre-commit]
