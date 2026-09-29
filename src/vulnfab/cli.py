@@ -85,6 +85,10 @@ def scan_command(
         Path | None,
         typer.Option("--schema-dump", help="pg_dump --schema-only of the live database (drift)."),
     ] = None,
+    no_cache: Annotated[
+        bool, typer.Option("--no-cache", help="Do not read or write the result cache.")
+    ] = False,
+    jobs: Annotated[int, typer.Option("--jobs", "-j", min=1, help="Worker processes.")] = 1,
 ) -> None:
     """Scan a repository."""
     if not path.is_dir():
@@ -102,6 +106,8 @@ def scan_command(
         write_baseline=write_baseline,
         extra_rule_paths=rules_path,
         schema_dump=schema_dump,
+        use_cache=not no_cache,
+        jobs=jobs,
     )
     try:
         result = scan(path, options)

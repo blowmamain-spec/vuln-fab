@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from pathlib import Path
 
+from vulnfab.core import cache as scan_cache
 from vulnfab.core import scoring
 from vulnfab.core.config import ScanConfig, load_config
 from vulnfab.core.fingerprint import FingerprintAllocator
@@ -50,6 +51,8 @@ class ScanOptions:
     write_baseline: Path | None = None
     extra_rule_paths: list[Path] | None = None
     schema_dump: Path | None = None
+    use_cache: bool = False  # opt-in for library callers; the CLI enables it by default
+    jobs: int = 1
 
 
 def _load_plugin_rules(selected: list[registry.Selected], extra: list[Path] | None) -> list[object]:
@@ -108,6 +111,30 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
 
     loaded = repo.load()
     texts = {f.path: f.text for f in loaded.files}
+    key = ""
+    if options.use_cache:
+        key = scan_cache.scan_key(
+            {
+                "code": scan_cache.code_fingerprint(),
+                "files": sorted((f.path, f.sha256) for f in loaded.files),
+                "skipped": sorted((s.file, s.reason) for s in loaded.skipped),
+                "config": config.__dict__ if hasattr(config, "__dict__") else str(config),
+                "stacks": sorted(s.plugin.name for s in selected),
+                "limits": [max_file_bytes, file_timeout],
+                "extra_rules": scan_cache.rule_digest(options.extra_rule_paths or []),
+                "dump": scan_cache.file_digest(options.schema_dump),
+            }
+        )
+        hit = scan_cache.load(path, key)
+        if hit is not None:
+            return _finish(
+                path,
+                selected,
+                scan_cache.findings_from_json(hit["findings"]),
+                scan_cache.coverage_from_json(hit["coverage"]),
+                options,
+                min_confidence,
+            )
     coverage = Coverage(
         files_skipped=list(loaded.skipped),
         files_ignored=loaded.ignored_count,
@@ -233,6 +260,27 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
             kept.append(f)
     findings = kept
 
+    if options.use_cache and key:
+        scan_cache.store(
+            path,
+            key,
+            {
+                "findings": scan_cache.findings_to_json(findings),
+                "coverage": scan_cache.coverage_to_json(coverage),
+            },
+        )
+    return _finish(path, selected, findings, coverage, options, min_confidence)
+
+
+def _finish(
+    path: Path,
+    selected: list[registry.Selected],
+    findings: list[Finding],
+    coverage: Coverage,
+    options: ScanOptions,
+    min_confidence: Confidence,
+) -> ScanResult:
+    """Steps that depend on the caller's options only (baseline, visibility threshold)."""
     if options.write_baseline:
         write_baseline(options.write_baseline, findings)
     if options.baseline:
