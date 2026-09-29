@@ -5,7 +5,7 @@ from __future__ import annotations
 from vulnfab.core.lower import lower_file
 from vulnfab.core.models import Finding, ParsedFile
 from vulnfab.core.rules import TaintRule
-from vulnfab.core.taint import analyze_function
+from vulnfab.core.taint import ModuleAnalysis
 from vulnfab.core.taintspec import TaintSpec
 
 SNIPPET_LIMIT = 300
@@ -25,29 +25,29 @@ def taint_findings_for_file(rules: list[TaintRule], pf: ParsedFile) -> list[tupl
     out: list[tuple[Finding, str]] = []
     for rule in applicable:
         spec = spec_for(rule)
-        for fn in module.functions:
-            for hit in analyze_function(fn, spec, pf.path):
-                text = lines[hit.line - 1].strip() if 0 < hit.line <= len(lines) else ""
-                out.append(
-                    (
-                        Finding(
-                            rule_id=rule.id,
-                            title=rule.display_title,
-                            cwe=tuple(rule.cwe),
-                            owasp=rule.owasp,
-                            severity=rule.severity,
-                            confidence=rule.confidence,
-                            tier=rule.tier,
-                            file=pf.path,
-                            line=hit.line,
-                            end_line=hit.line,
-                            snippet=text[:SNIPPET_LIMIT],
-                            trace=hit.trace,
-                            unresolved_hops=hit.hops,
-                            fix=rule.fix,
-                            message=rule.message,
-                        ),
-                        hit.function,
-                    )
+        for hit in ModuleAnalysis(module, spec).run():
+            text = lines[hit.line - 1].strip() if 0 < hit.line <= len(lines) else ""
+            out.append(
+                (
+                    Finding(
+                        rule_id=rule.id,
+                        title=rule.display_title,
+                        cwe=tuple(rule.cwe),
+                        owasp=rule.owasp,
+                        severity=rule.severity,
+                        confidence=rule.confidence,
+                        tier=rule.tier,
+                        file=pf.path,
+                        line=hit.line,
+                        end_line=hit.line,
+                        snippet=text[:SNIPPET_LIMIT],
+                        trace=hit.trace,
+                        unresolved_hops=hit.hops,
+                        fix=rule.fix,
+                        message=rule.message,
+                    ),
+                    hit.function,
                 )
+            )
+
     return out

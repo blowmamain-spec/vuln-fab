@@ -11,7 +11,8 @@
 
 ## Unreleased
 - TIR (WP-5.1) dan taint engine intra-fungsi (WP-5.2/5.3): DSL source/sink/sanitizer/propagator, rule `kind: taint` (tpy-sqli, tpy-cmdi, tjs-sqli), trace + hop `unresolved`.
-- Berikutnya: ringkasan fungsi (5.4), antar-file (5.5).
+- Ringkasan fungsi intra-file (WP-5.4): param→return, param→sink, source→return; rekursi aman.
+- Berikutnya: antar-file (5.5).
 
 ## Spec
 Perubahan pada `docs/spec.md` dicatat di sini.

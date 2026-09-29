@@ -108,7 +108,7 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
   *Lulus jika*: validasi rule taint + test pencocokan pola pada TIR.
 - [x] **WP-5.3 Taint intra-fungsi (5a)** (XL) — dep: 5.1, 5.2. Propagasi lewat assign/concat/format, constant propagation, sanitizer, trace.
   *Lulus jika*: ≥ 40 kasus vuln/safe (sanitizer, percabangan, reassign, kill) lulus; **titik evaluasi**: catat keputusan lanjut sendiri vs backend Semgrep di `docs/decisions/d5.md`.
-- [ ] **WP-5.4 Antar-fungsi satu file (5b)** (XL) — dep: 5.3. Ringkasan fungsi (param→return, param→sink), batas kedalaman.
+- [x] **WP-5.4 Antar-fungsi satu file (5b)** (XL) — dep: 5.3. Ringkasan fungsi (param→return, param→sink), batas kedalaman.
   *Lulus jika*: kasus rekursi, fungsi saling memanggil, dan kedalaman melebihi batas tidak hang dan menambah `unresolved_hops`.
 - [ ] **WP-5.5 Antar-file (5c) + call graph** (XL) — dep: 5.4. Resolusi import (Python module, TS import/export, PHP `use`/namespace), call graph, edge `unresolved`.
   *Lulus jika*: proyek fixture multi-file (3+ file) menghasilkan trace lintas file dengan urutan baris/berkas benar.

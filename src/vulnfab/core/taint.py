@@ -11,6 +11,7 @@ A value is *tainted* if data from a source may reach it. Propagation:
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 
 from vulnfab.core.models import TraceStep
@@ -31,6 +32,7 @@ from vulnfab.core.tir import (
     Index,
     Instr,
     Loop,
+    ModuleIR,
     Operand,
     Return,
     Var,
@@ -84,12 +86,44 @@ class TaintHit:
     sink: str
 
 
+@dataclass(frozen=True)
+class SinkRef:
+    """A sink inside a function reached by one of its parameters."""
+
+    line: int
+    sink: str
+    function: str
+    trace: tuple[TraceStep, ...]  # steps after the parameter marker, ending with the sink step
+    hops: int
+
+
+@dataclass
+class Summary:
+    to_return: frozenset[int] = frozenset()
+    to_sink: dict[int, list[SinkRef]] = field(default_factory=dict)
+    source_return: Taint | None = None  # the function returns data from a real source
+
+
+@dataclass(frozen=True)
+class Resolved:
+    fn: FunctionIR
+    offset: int  # number of leading parameters (self/cls) not passed positionally
+    summary: Summary
+
+
+Resolver = Callable[[str, FunctionIR], Resolved | None]
+MARKER = "\0param:"
+
+
 @dataclass
 class _Ctx:
     spec: TaintSpec
     file: str
     hits: list[TaintHit] = field(default_factory=list)
     seen: set[tuple[int, str]] = field(default_factory=set)
+    resolver: Resolver | None = None
+    seeds: dict[str, Taint] = field(default_factory=dict)
+    returns: list[Taint] = field(default_factory=list)
 
 
 def _merge(a: State, b: State) -> State:
@@ -139,7 +173,7 @@ class FunctionAnalyzer:
     # --- execution --------------------------------------------------------------------------
 
     def run(self) -> None:
-        state: State = {}
+        state: State = dict(self.ctx.seeds)
         for param in self.fn.params:
             if any(m.kind == "param" and m.matches_name(param) for m in self.ctx.spec.sources):
                 state[param] = Taint(
@@ -181,7 +215,10 @@ class FunctionAnalyzer:
                 current = merged
             state = current
         elif isinstance(instr, Return):
-            pass
+            if instr.value is not None:
+                taint = self.read(instr.value, state, instr.line)
+                if taint is not None:
+                    self.ctx.returns.append(taint)
         return state
 
     def assign_sink(self, instr: Assign, taint: Taint | None) -> None:
@@ -205,11 +242,14 @@ class FunctionAnalyzer:
                 if hit is not None:
                     self.report(instr.line, hit, f"call to {callee}")
 
+        resolved = self.ctx.resolver(callee, self.fn) if self.ctx.resolver else None
         result: Taint | None
         if any(m.kind == "call" and m.matches_name(callee) for m in spec.sanitizers):
             result = None
         elif any(m.kind == "call" and m.matches_name(callee) for m in spec.sources):
             result = Taint((TraceStep(self.ctx.file, instr.line, "source", f"{callee}(…)"),))
+        elif resolved is not None:
+            result = self.apply_summary(instr, resolved, in_args, in_kwargs)
         else:
             inputs = [t for t in [*in_args, *in_kwargs.values(), in_recv] if t is not None]
             if not inputs:
@@ -222,6 +262,46 @@ class FunctionAnalyzer:
                 result = first if known else first.hop()
                 result = result.step(self.ctx.file, instr.line, "call", f"via {callee}(…)")
         self.write(instr.dst, result, state)
+
+    def apply_summary(
+        self,
+        instr: Call,
+        resolved: Resolved,
+        in_args: list[Taint | None],
+        in_kwargs: dict[str, Taint | None],
+    ) -> Taint | None:
+        by_index: dict[int, Taint] = {}
+        for i, t in enumerate(in_args):
+            if t is not None:
+                by_index[i + resolved.offset] = t
+        for name, t in in_kwargs.items():
+            if t is not None and name in resolved.fn.params:
+                by_index[resolved.fn.params.index(name)] = t
+        summary = resolved.summary
+        for idx, taint in by_index.items():
+            entered = taint.step(
+                self.ctx.file, instr.line, "call", f"passed to {resolved.fn.qualname}(…)"
+            )
+            for ref in summary.to_sink.get(idx, []):
+                self.report_ref(entered, ref)
+        candidates = [
+            t.step(self.ctx.file, instr.line, "return", f"returned by {resolved.fn.qualname}(…)")
+            for idx, t in by_index.items()
+            if idx in summary.to_return
+        ]
+        if summary.source_return is not None:
+            candidates.append(summary.source_return)
+        return min(candidates, key=lambda t: t.hops) if candidates else None
+
+    def report_ref(self, entered: Taint, ref: SinkRef) -> None:
+        key = (ref.line, ref.sink)
+        if key in self.ctx.seen:
+            return
+        self.ctx.seen.add(key)
+        trace = (*entered.trace, *ref.trace)
+        self.ctx.hits.append(
+            TaintHit(ref.line, trace, entered.hops + ref.hops, ref.function, ref.sink)
+        )
 
     @staticmethod
     def _sink_taint(
@@ -254,7 +334,102 @@ def _glob(name: str, pattern: str) -> bool:
     return fnmatch.fnmatchcase(name, pattern)
 
 
-def analyze_function(fn: FunctionIR, spec: TaintSpec, file: str) -> list[TaintHit]:
-    ctx = _Ctx(spec, file)
+def analyze_function(
+    fn: FunctionIR, spec: TaintSpec, file: str, resolver: Resolver | None = None
+) -> list[TaintHit]:
+    ctx = _Ctx(spec, file, resolver=resolver)
     FunctionAnalyzer(ctx, fn).run()
     return ctx.hits
+
+
+MAX_SUMMARY_PARAMS = 8
+MAX_SUMMARY_DEPTH = 8
+_BOUND = ("self.", "cls.", "this.", "$this.")
+
+
+class ModuleAnalysis:
+    """Intra-file taint: per-function summaries applied at same-file call sites (WP-5.4)."""
+
+    def __init__(self, module: ModuleIR, spec: TaintSpec) -> None:
+        self.module = module
+        self.spec = spec
+        self.summaries: dict[str, Summary] = {}
+        self.hits: dict[str, list[TaintHit]] = {}
+        self._stack: list[str] = []
+        self._by_name: dict[str, list[FunctionIR]] = {}
+        for fn in module.functions:
+            self._by_name.setdefault(fn.name, []).append(fn)
+
+    def resolve(self, callee: str, caller: FunctionIR) -> Resolved | None:
+        target: FunctionIR | None = None
+        offset = 0
+        bound = next((p for p in _BOUND if callee.startswith(p)), None)
+        if bound is not None and caller.class_name:
+            name = callee[len(bound) :]
+            target = next(
+                (
+                    f
+                    for f in self._by_name.get(name, [])
+                    if f.class_name == caller.class_name and "." not in name
+                ),
+                None,
+            )
+            if target is not None and target.params[:1] in (("self",), ("cls",)):
+                offset = 1
+        elif "." not in callee:
+            cands = [f for f in self._by_name.get(callee, []) if f.class_name is None]
+            target = cands[0] if len(cands) == 1 else None
+        else:
+            target = self.module.function(callee.replace("::", "."))
+        if target is None or target.qualname in self._stack:
+            return None
+        if len(self._stack) >= MAX_SUMMARY_DEPTH:
+            return None
+        return Resolved(target, offset, self.summary(target))
+
+    def summary(self, fn: FunctionIR) -> Summary:
+        cached = self.summaries.get(fn.qualname)
+        if cached is not None:
+            return cached
+        self._stack.append(fn.qualname)
+        try:
+            base = _Ctx(self.spec, self.module.file, resolver=self.resolve)
+            FunctionAnalyzer(base, fn).run()
+            summary = Summary()
+            returned = [t for t in base.returns if not t.trace[0].detail.startswith(MARKER)]
+            if returned:
+                summary.source_return = min(returned, key=lambda t: t.hops)
+            to_return: set[int] = set()
+            for idx, param in enumerate(fn.params[:MAX_SUMMARY_PARAMS]):
+                marker = Taint((TraceStep(self.module.file, fn.line, "source", MARKER + param),))
+                ctx = _Ctx(
+                    self.spec, self.module.file, resolver=self.resolve, seeds={param: marker}
+                )
+                FunctionAnalyzer(ctx, fn).run()
+                if any(t.trace[0].detail == MARKER + param for t in ctx.returns):
+                    to_return.add(idx)
+                for hit in ctx.hits:
+                    if hit.trace and hit.trace[0].detail == MARKER + param:
+                        summary.to_sink.setdefault(idx, []).append(
+                            SinkRef(hit.line, hit.sink, hit.function, hit.trace[1:], hit.hops)
+                        )
+            summary.to_return = frozenset(to_return)
+            self.hits[fn.qualname] = [
+                h for h in base.hits if not (h.trace and h.trace[0].detail.startswith(MARKER))
+            ]
+        finally:
+            self._stack.pop()
+        self.summaries[fn.qualname] = summary
+        return summary
+
+    def run(self) -> list[TaintHit]:
+        for fn in self.module.functions:
+            self.summary(fn)
+        out: list[TaintHit] = []
+        seen: set[tuple[int, str]] = set()
+        for hits in self.hits.values():
+            for h in hits:
+                if (h.line, h.sink) not in seen:
+                    seen.add((h.line, h.sink))
+                    out.append(h)
+        return sorted(out, key=lambda h: (h.line, h.sink))
