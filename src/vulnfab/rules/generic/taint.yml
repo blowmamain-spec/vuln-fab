@@ -1,0 +1,49 @@
+rules:
+  - id: tpy-sqli
+    kind: taint
+    stack: generic
+    languages: [python]
+    severity: high
+    confidence: medium
+    cwe: [CWE-89]
+    owasp: "A03:2021"
+    title: "SQL injection (tainted data reaches a query)"
+    message: "Request data flows into a SQL statement without parameter binding."
+    sources: ["field request.args", "field request.form", "field request.GET", "field request.POST", "field request.json", "field request.values"]
+    sinks: ["call *.execute arg0", "call *.executemany arg0", "call *.raw arg0"]
+    sanitizers: ["call int", "call float", "call bool"]
+    supersedes: [py-sql-execute-interp]
+    fix: "Use parameterised queries: cursor.execute(sql, params)."
+    tests: {vulnerable: [vuln.py], safe: [safe.py]}
+
+  - id: tpy-cmdi
+    kind: taint
+    stack: generic
+    languages: [python]
+    severity: high
+    confidence: medium
+    cwe: [CWE-78]
+    owasp: "A03:2021"
+    title: "OS command injection (tainted data reaches a shell)"
+    message: "Request data flows into an OS command."
+    sources: ["field request.args", "field request.form", "field request.GET", "field request.POST", "field request.json", "field request.values"]
+    sinks: ["call os.system arg0", "call os.popen arg0", "call subprocess.getoutput arg0"]
+    sanitizers: ["call int", "call shlex.quote"]
+    fix: "Pass an argument list to subprocess without shell=True; validate input."
+    tests: {vulnerable: [vuln.py], safe: [safe.py]}
+
+  - id: tjs-sqli
+    kind: taint
+    stack: generic
+    languages: [javascript, typescript, tsx]
+    severity: high
+    confidence: medium
+    cwe: [CWE-89]
+    owasp: "A03:2021"
+    title: "SQL injection (tainted data reaches a query)"
+    message: "Request data flows into a SQL statement without parameter binding."
+    sources: ["field req.query", "field req.body", "field req.params"]
+    sinks: ["call *.query arg0", "call *.raw arg0", "call *.execute arg0"]
+    sanitizers: ["call parseInt", "call Number", "call parseFloat"]
+    fix: "Use placeholders: db.query('... WHERE id = $1', [id])."
+    tests: {vulnerable: [vuln.js], safe: [safe.js]}

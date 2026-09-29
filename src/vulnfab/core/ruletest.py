@@ -18,7 +18,7 @@ from vulnfab.core.matcher import PatternError, compile_rule
 from vulnfab.core.models import SourceFile
 from vulnfab.core.parsing import ParseFailure, parse_file
 from vulnfab.core.ruleengine import findings_for_file
-from vulnfab.core.rules import CrosscheckRule, PatternRule, ScannerRule, SchemaRule
+from vulnfab.core.rules import CrosscheckRule, PatternRule, ScannerRule, SchemaRule, TaintRule
 from vulnfab.core.schemarules import CheckError, run_schema_rules
 
 ANNOTATION_RE = re.compile(r"(?:#|//|--)\s*vuln:\s*([a-z][a-z0-9-]*)")
@@ -104,6 +104,9 @@ def run_rule_tests(rule: object, tests_root: Path) -> RuleTestResult:
     if isinstance(rule, (ScannerRule, CrosscheckRule)):
         _check_lines(result, rule, base, lambda path: _engine_lines(rule, base, path))
         return result
+    if isinstance(rule, TaintRule):
+        _check_lines(result, rule, base, lambda path: _taint_lines(rule, path))
+        return result
     if not isinstance(rule, PatternRule):
         result.skipped = f"kind {getattr(rule, 'kind', '?')!r}: only file presence is checked here"
         return result
@@ -142,6 +145,20 @@ def run_rule_tests(rule: object, tests_root: Path) -> RuleTestResult:
                 f"{name}: safe file produced finding(s) at line(s) {sorted(got)}"
             )
     return result
+
+
+def _taint_lines(rule: TaintRule, path: Path) -> tuple[set[int], str | None]:
+    from vulnfab.core.taintrules import taint_findings_for_file
+
+    language = detect_language(path.name)
+    if language is None or language not in rule.languages:
+        return set(), f"{path.name}: language {language!r} is not in rule languages"
+    sf = SourceFile(path.name, language, path.read_text(encoding="utf-8"), "0" * 64)
+    try:
+        pf = parse_file(sf)
+    except ParseFailure as exc:
+        return set(), f"{path.name}: cannot parse ({exc})"
+    return {f.line for f, _ in taint_findings_for_file([rule], pf)}, None
 
 
 def _engine_lines(

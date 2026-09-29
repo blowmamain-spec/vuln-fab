@@ -104,9 +104,9 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
 
 - [x] **WP-5.1 Normalisasi TIR** (XL) — dep: 4.1. Penerjemah tree-sitter → TIR untuk Python, TS/JS, PHP; `vulnfab ir <file>`.
   *Lulus jika*: golden test TIR per bahasa untuk konstruksi inti (assign, call, f-string/template/interpolasi, concat, subscript, atribut, branch, loop, return); konstruksi tak dikenal → `Unknown` bukan crash.
-- [ ] **WP-5.2 Loader rule taint** (M) — dep: 2.3, 5.1. Sources/sinks/sanitizers/propagators sebagai pola snippet yang dicocokkan pada TIR.
+- [x] **WP-5.2 Loader rule taint** (M) — dep: 2.3, 5.1. Sources/sinks/sanitizers/propagators sebagai pola snippet yang dicocokkan pada TIR.
   *Lulus jika*: validasi rule taint + test pencocokan pola pada TIR.
-- [ ] **WP-5.3 Taint intra-fungsi (5a)** (XL) — dep: 5.1, 5.2. Propagasi lewat assign/concat/format, constant propagation, sanitizer, trace.
+- [x] **WP-5.3 Taint intra-fungsi (5a)** (XL) — dep: 5.1, 5.2. Propagasi lewat assign/concat/format, constant propagation, sanitizer, trace.
   *Lulus jika*: ≥ 40 kasus vuln/safe (sanitizer, percabangan, reassign, kill) lulus; **titik evaluasi**: catat keputusan lanjut sendiri vs backend Semgrep di `docs/decisions/d5.md`.
 - [ ] **WP-5.4 Antar-fungsi satu file (5b)** (XL) — dep: 5.3. Ringkasan fungsi (param→return, param→sink), batas kedalaman.
   *Lulus jika*: kasus rekursi, fungsi saling memanggil, dan kedalaman melebihi batas tidak hang dan menambah `unresolved_hops`.

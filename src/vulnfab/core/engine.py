@@ -27,11 +27,13 @@ from vulnfab.core.rules import (
     RuleLoadError,
     ScannerRule,
     SchemaRule,
+    TaintRule,
     load_rules,
 )
 from vulnfab.core.scannerrules import ScannerError, run_scanner_rules
 from vulnfab.core.schemarules import CheckError, run_crosscheck_rules, run_schema_rules
 from vulnfab.core.suppress import PerFileIgnores, is_nosec, load_baseline, write_baseline
+from vulnfab.core.taintrules import taint_findings_for_file
 from vulnfab.plugins import registry
 
 DEFAULT_FILE_TIMEOUT = 10.0
@@ -100,6 +102,7 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
     schema_rules = [r for r in rules if isinstance(r, SchemaRule)]
     scanner_rules = [r for r in rules if isinstance(r, ScannerRule)]
     crosscheck_rules = [r for r in rules if isinstance(r, CrosscheckRule)]
+    taint_rules = [r for r in rules if isinstance(r, TaintRule)]
     supersedes = {r.id: list(r.supersedes) for r in rules if getattr(r, "supersedes", None)}  # type: ignore[attr-defined]
 
     loaded = repo.load()
@@ -117,6 +120,7 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
     for sel in selected:
         plugin = sel.plugin
         plugin_rules = [c for c in crules if c.rule.stack == plugin.name]
+        plugin_taint = [r for r in taint_rules if r.stack == plugin.name]
         unit: ParsedUnit = plugin.parse([f for f in loaded.files if f.language in plugin.languages])
         facts.extend(plugin.data_access(unit))
         coverage.files_skipped.extend(unit.skipped)
@@ -148,6 +152,8 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
                 coverage.syntax_errors.append(pf.path)
             try:
                 raw.extend(findings_for_file(plugin_rules, pf, Deadline(file_timeout)))
+                if plugin_taint and not pf.has_syntax_errors:
+                    raw.extend(taint_findings_for_file(plugin_taint, pf))
             except TimeoutExceeded:
                 coverage.files_skipped.append(
                     SkippedFile(pf.path, "timeout", f"exceeded {file_timeout:g}s")

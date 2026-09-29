@@ -182,6 +182,12 @@ class TaintRule(_LanguageRule):
     def _non_empty(self) -> TaintRule:
         if not self.sources or not self.sinks:
             raise ValueError("taint rules need at least one source and one sink")
+        from vulnfab.core.taintspec import SpecError, TaintSpec
+
+        try:
+            TaintSpec.from_rule(self.sources, self.sinks, self.sanitizers, self.propagators)
+        except SpecError as exc:
+            raise ValueError(str(exc)) from exc
         return self
 
 

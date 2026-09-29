@@ -56,8 +56,8 @@ rules:
     severity: high
     confidence: medium
     message: m
-    sources: ['$request->input(...)']
-    sinks: ['DB::raw($X)']
+    sources: ['call request->input']
+    sinks: ['call DB::raw arg0']
     tests: {vulnerable: [a.php], safe: [b.php]}
   - id: sb-rls-missing
     stack: supabase

@@ -10,7 +10,8 @@
 - Bug upstream ditemukan dan dihindari: py-tree-sitter 0.26.0 `Point` use-after-free (lihat docs/decisions).
 
 ## Unreleased
-- Fase 5 (taint engine) dan seterusnya.
+- TIR (WP-5.1) dan taint engine intra-fungsi (WP-5.2/5.3): DSL source/sink/sanitizer/propagator, rule `kind: taint` (tpy-sqli, tpy-cmdi, tjs-sqli), trace + hop `unresolved`.
+- Berikutnya: ringkasan fungsi (5.4), antar-file (5.5).
 
 ## Spec
 Perubahan pada `docs/spec.md` dicatat di sini.
