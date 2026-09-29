@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from typing import Any
 
 from vulnfab.core.lower import lower_file
 from vulnfab.core.models import Finding, ParsedFile, Unresolved
+from vulnfab.core.parallel import pmap
 from vulnfab.core.rules import TaintRule
-from vulnfab.core.taint import FactCache, ProjectAnalysis
+from vulnfab.core.taint import ProjectAnalysis, TaintHit
 from vulnfab.core.taintspec import TaintSpec
 from vulnfab.core.tir import ModuleIR
 
@@ -26,10 +28,21 @@ def spec_for(rule: TaintRule) -> TaintSpec:
     )
 
 
+def _analyse_rule(
+    index: int, shared: dict[str, Any]
+) -> tuple[list[TaintHit], list[tuple[str, str, int]]]:
+    """One rule over the whole project (runs in a worker when ``jobs`` > 1)."""
+    rule: TaintRule = shared["rules"][index]
+    modules = [m for m in shared["lowered"].values() if m.language in rule.languages]
+    analysis = ProjectAnalysis(modules, spec_for(rule), facts={})
+    return analysis.run(), analysis.truncated
+
+
 def taint_findings(
     rules: list[TaintRule],
     files: Iterable[ParsedFile],
     notes: list[Unresolved] | None = None,
+    jobs: int = 1,
 ) -> list[tuple[Finding, str]]:
     """Return ``(finding-without-fingerprint, enclosing-symbol)`` for a set of parsed files."""
     active = [r for r in rules if r.enabled]
@@ -42,11 +55,9 @@ def taint_findings(
     for pf in parsed:
         if any(pf.language in r.languages for r in active):
             lowered[pf.path] = lower_file(pf)
-    facts: FactCache = {}
-    for rule in active:
-        modules = [m for m in lowered.values() if m.language in rule.languages]
-        analysis = ProjectAnalysis(modules, spec_for(rule), facts=facts)
-        hits = analysis.run()
+    shared = {"rules": active, "lowered": lowered}
+    results = pmap(_analyse_rule, list(range(len(active))), jobs, shared)
+    for rule, (hits, truncated) in zip(active, results, strict=True):
         if notes is not None:
             notes.extend(
                 Unresolved(
@@ -56,7 +67,7 @@ def taint_findings(
                     f"{rule.id}: analysis of {function} hit its work limit; "
                     "flows through it are missed",
                 )
-                for file, function, line in analysis.truncated
+                for file, function, line in truncated
             )
         for hit in hits:
             file_lines = lines.get(hit.file, [])

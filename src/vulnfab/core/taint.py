@@ -14,6 +14,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field, replace
+from functools import lru_cache
 
 from vulnfab.core.models import TraceStep
 from vulnfab.core.modindex import ModuleIndex
@@ -181,6 +182,31 @@ def _merge(a: State, b: State) -> State:
         if current is None or value.hops < current.hops:
             out[key] = value
     return out
+
+
+@dataclass(frozen=True)
+class CalleeKinds:
+    sinks: tuple[Matcher, ...]
+    sanitizer: bool
+    escaper: bool
+    source: bool
+    propagator: bool
+
+
+@lru_cache(maxsize=200_000)
+def classify_callee(spec: TaintSpec, callee: str) -> CalleeKinds:
+    """What the rule says about a callee name (memoised: evaluated for every call instruction)."""
+
+    def hit(matchers: tuple[Matcher, ...]) -> bool:
+        return any(m.kind == "call" and m.matches_name(callee) for m in matchers)
+
+    return CalleeKinds(
+        sinks=tuple(m for m in spec.sinks if m.kind == "call" and m.matches_name(callee)),
+        sanitizer=hit(spec.sanitizers),
+        escaper=hit(spec.escapers),
+        source=hit(spec.sources),
+        propagator=hit(spec.propagators) or any(_glob(callee, g) for g in DEFAULT_PROPAGATORS),
+    )
 
 
 def _receiver_is_source(spec: TaintSpec, callee: str) -> bool:
@@ -413,22 +439,20 @@ class FunctionAnalyzer:
         in_kwargs = {k: self.read(v, state, instr.line) for k, v in instr.kwargs}
         in_recv = self.read(instr.recv, state, instr.line) if instr.recv is not None else None
 
-        for sink in spec.sinks:
-            if sink.kind == "call" and sink.matches_name(callee):
-                hit = self._sink_taint(sink, in_args, in_kwargs, in_recv)
-                if hit is not None:
-                    self.report(instr.line, hit, f"call to {callee}")
+        kinds = classify_callee(spec, callee)
+        for sink in kinds.sinks:
+            hit = self._sink_taint(sink, in_args, in_kwargs, in_recv)
+            if hit is not None:
+                self.report(instr.line, hit, f"call to {callee}")
 
         resolved = self.ctx.resolver(callee, self.fn) if self.ctx.resolver else None
         result: Taint | None
-        if any(m.kind == "call" and m.matches_name(callee) for m in spec.sanitizers):
+        if kinds.sanitizer:
             result = None
-        elif any(m.kind == "call" and m.matches_name(callee) for m in spec.escapers):
+        elif kinds.escaper:
             inputs = [t for t in [*in_args, *in_kwargs.values(), in_recv] if t is not None]
             result = replace(min(inputs, key=lambda t: t.hops), escaped=True) if inputs else None
-        elif any(m.kind == "call" and m.matches_name(callee) for m in spec.sources) or matches_path(
-            spec.sources, "field", callee
-        ):
+        elif kinds.source or _receiver_is_source(spec, callee):
             result = Taint((TraceStep(self.ctx.file, instr.line, "source", f"{callee}(…)"),))
         elif resolved is not None:
             result = self.apply_summary(instr, resolved, in_args, in_kwargs)
@@ -445,11 +469,7 @@ class FunctionAnalyzer:
                 result = None
             else:
                 first = min(inputs, key=lambda t: t.hops)
-                known = (
-                    any(m.kind == "call" and m.matches_name(callee) for m in spec.propagators)
-                    or any(_glob(callee, g) for g in DEFAULT_PROPAGATORS)
-                    or callee.endswith(".get")
-                )
+                known = kinds.propagator or callee.endswith(".get")
                 result = first if known else first.hop()
                 result = result.step(self.ctx.file, instr.line, "call", f"via {callee}(…)")
         self.write(instr.dst, result, state)

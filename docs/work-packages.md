@@ -175,7 +175,7 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
   *Lulus jika*: test XSS (snippet berisi `<script>`/atribut) tidak menghasilkan HTML aktif.
 - [ ] **WP-10.3 Mode diff/PR** (L) — dep: 5.5. `--since REF`: file berubah + dependen via call graph/impor.
   *Lulus jika*: uji otomatis: hasil diff = hasil scan penuh yang dibatasi pada set terdampak.
-- [ ] **WP-10.4 Cache & paralelisasi** (M) — dep: 1.4. Cache berbasis hash file + versi rule; `--jobs`.
+- [x] **WP-10.4 Cache & paralelisasi** (M) — dep: 1.4. Cache berbasis hash file + versi rule; `--jobs`.
   *Lulus jika*: scan kedua pada repo tak berubah ≥ 5× lebih cepat; hasil identik dengan tanpa cache.
 - [ ] **WP-10.5 GitHub Action + pre-commit** (M) — dep: 10.1. Action komposit, hook.
   *Lulus jika*: workflow contoh pada repo fixture mengunggah SARIF dan gagal sesuai `--fail-on`.

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from pathlib import Path
+from typing import Any
 
 from vulnfab.core import cache as scan_cache
 from vulnfab.core import scoring
@@ -20,6 +21,7 @@ from vulnfab.core.models import (
     SchemaModel,
     SkippedFile,
 )
+from vulnfab.core.parallel import pmap
 from vulnfab.core.parsing import Deadline, TimeoutExceeded, clear_parse_cache
 from vulnfab.core.report import Coverage, ScanResult
 from vulnfab.core.ruleengine import compile_pattern_rules, findings_for_file
@@ -85,6 +87,15 @@ def scan(path: Path, options: ScanOptions | None = None) -> ScanResult:
         return _scan(path, options or ScanOptions())
     finally:
         clear_parse_cache()
+
+
+def _pattern_task(path: str, shared: dict[str, Any]) -> list[tuple[Finding, str]] | SkippedFile:
+    """Pattern rules over one file (runs in a worker when ``jobs`` > 1)."""
+    timeout = shared["timeout"]
+    try:
+        return findings_for_file(shared["rules"], shared["files"][path], Deadline(timeout))
+    except TimeoutExceeded:
+        return SkippedFile(path, "timeout", f"exceeded {timeout:g}s")
 
 
 def _scan(path: Path, options: ScanOptions) -> ScanResult:
@@ -177,17 +188,19 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
             except CheckError as exc:
                 raise RuleLoadError([RuleError(plugin.name, 1, None, str(exc))]) from exc
         if plugin_taint:
-            raw.extend(taint_findings(plugin_taint, unit.files.values(), coverage.unresolved))
+            raw.extend(
+                taint_findings(plugin_taint, unit.files.values(), coverage.unresolved, options.jobs)
+            )
         for pf in unit.files.values():
             scanned.add(pf.path)
             if pf.has_syntax_errors:
                 coverage.syntax_errors.append(pf.path)
-            try:
-                raw.extend(findings_for_file(plugin_rules, pf, Deadline(file_timeout)))
-            except TimeoutExceeded:
-                coverage.files_skipped.append(
-                    SkippedFile(pf.path, "timeout", f"exceeded {file_timeout:g}s")
-                )
+        shared = {"rules": plugin_rules, "files": unit.files, "timeout": file_timeout}
+        for outcome in pmap(_pattern_task, list(unit.files), options.jobs, shared):
+            if isinstance(outcome, SkippedFile):
+                coverage.files_skipped.append(outcome)
+            else:
+                raw.extend(outcome)
 
     active = {s.plugin.name for s in selected}
     loose_sql = sorted(f.path for f in loaded.files if f.language == "sql")

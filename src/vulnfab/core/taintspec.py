@@ -19,6 +19,7 @@ from __future__ import annotations
 import fnmatch
 import re
 from dataclasses import dataclass
+from functools import lru_cache
 
 from vulnfab.core.tir import Const, Field, Index, Operand, Var
 
@@ -113,7 +114,9 @@ def path_prefixes(path: str) -> list[str]:
     return [".".join(parts[: i + 1]) for i in range(len(parts))]
 
 
+@lru_cache(maxsize=500_000)
 def matches_path(matchers: tuple[Matcher, ...], kind: str, path: str) -> bool:
+    """Does any ``kind`` matcher match ``path`` or one of its prefixes? (memoised: hot path)"""
     return any(
         m.kind == kind and any(m.matches_name(p) for p in path_prefixes(path)) for m in matchers
     )
