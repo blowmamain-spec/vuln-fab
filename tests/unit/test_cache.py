@@ -41,17 +41,20 @@ def test_cached_result_is_identical(tmp_path: Path) -> None:
 
 def test_cache_hit_is_much_faster(tmp_path: Path) -> None:
     make_repo(tmp_path)
-    for i in range(60):  # enough parse/analysis work for the difference to be visible
-        (tmp_path / f"m{i}.py").write_text(
-            "import os\n" + "def f(x):\n    return os.system(x)\n" * 30
-        )
+    for i in range(100):  # enough analysis work for the difference to be clear even under load
+        body = "import os\n" + "def f(x):\n    return os.system(x)\n" * 60
+        (tmp_path / f"m{i}.py").write_text(body)
     start = time.perf_counter()
     scan(tmp_path, opts())
     cold = time.perf_counter() - start
-    start = time.perf_counter()
-    scan(tmp_path, opts())
-    warm = time.perf_counter() - start
+    warm = min(_timed(tmp_path) for _ in range(3))
     assert warm * 5 <= cold, (cold, warm)
+
+
+def _timed(root: Path) -> float:
+    start = time.perf_counter()
+    scan(root, opts())
+    return time.perf_counter() - start
 
 
 def test_changing_a_file_invalidates(tmp_path: Path) -> None:
