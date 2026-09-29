@@ -11,7 +11,7 @@ from vulnfab.core.fingerprint import FingerprintAllocator
 from vulnfab.core.loader import DEFAULT_MAX_FILE_BYTES, Repo
 from vulnfab.core.matcher import CompiledRule
 from vulnfab.core.models import Confidence, Finding, ParsedUnit, SkippedFile
-from vulnfab.core.parsing import Deadline, TimeoutExceeded
+from vulnfab.core.parsing import Deadline, TimeoutExceeded, clear_parse_cache
 from vulnfab.core.report import Coverage, ScanResult
 from vulnfab.core.ruleengine import compile_pattern_rules, findings_for_file
 from vulnfab.core.rules import RuleError, RuleLoadError, SchemaRule, load_rules
@@ -59,7 +59,14 @@ def _load_plugin_rules(selected: list[registry.Selected], extra: list[Path] | No
 
 
 def scan(path: Path, options: ScanOptions | None = None) -> ScanResult:
-    options = options or ScanOptions()
+    clear_parse_cache()
+    try:
+        return _scan(path, options or ScanOptions())
+    finally:
+        clear_parse_cache()
+
+
+def _scan(path: Path, options: ScanOptions) -> ScanResult:
     config: ScanConfig = load_config(path)
     min_confidence = options.min_confidence or config.min_confidence or Confidence.MEDIUM
     max_file_bytes = options.max_file_bytes or (

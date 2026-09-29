@@ -27,6 +27,13 @@ _PHP_SUPERGLOBALS = frozenset(
 _WRAPPER_TYPES = frozenset({"module", "program", "expression_statement", "php_tag", "text"})
 _SKIP_TOKENS = frozenset({",", ";"})
 _MAX_PATTERN_STEPS = 200_000
+# Wrappers that do not change what an expression *is*: `await x`, `x!`, `x as T`, `(x)`.
+_TRANSPARENT_WRAPPERS = frozenset(
+    {
+        "await_expression", "non_null_expression", "as_expression", "satisfies_expression",
+        "type_assertion", "parenthesized_expression",
+    }
+)  # fmt: skip
 # Type-only syntax: ignored on the target side unless the pattern itself spells it out.
 _TYPE_ONLY = frozenset({"type_arguments", "type_annotation"})
 
@@ -179,6 +186,15 @@ class _Budget:
         return self.steps >= 0
 
 
+def _wrapped_expression(node: Node) -> Node | None:
+    named = [c for c in node.children if c.is_named and c.type != "comment"]
+    if node.type == "type_assertion":  # <T>expr -> the expression is the last named child
+        return named[-1] if named else None
+    if node.type in ("as_expression", "satisfies_expression"):
+        return named[0] if named else None
+    return named[0] if len(named) == 1 else None
+
+
 def _match(p: Node, t: Node, env: Env, budget: _Budget) -> Env | None:
     if not budget.spend():
         return None
@@ -190,10 +206,10 @@ def _match(p: Node, t: Node, env: Env, budget: _Budget) -> Env | None:
             new[name] = t
             return new
         return env if _normalise(_t(bound)) == _normalise(_t(t)) else None
-    if t.type == "await_expression" and p.type != "await_expression":
-        inner = [c for c in t.children if c.is_named]
-        if len(inner) == 1:
-            return _match(p, inner[0], env, budget)
+    if t.type in _TRANSPARENT_WRAPPERS and p.type != t.type:
+        inner = _wrapped_expression(t)
+        if inner is not None:
+            return _match(p, inner, env, budget)
     if p.type != t.type:
         return None
     pv, tv = string_value(p), string_value(t)

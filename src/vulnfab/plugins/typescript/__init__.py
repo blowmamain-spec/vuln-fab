@@ -1,7 +1,4 @@
-"""Built-in language-level plugin: parses every tree-sitter language for generic rules.
-
-It carries no framework knowledge; stack plugins (supabase, typescript, django, ...) add that.
-"""
+"""TypeScript/JavaScript plugin: supabase-js data access facts and frontend/API-route rules."""
 
 from __future__ import annotations
 
@@ -19,21 +16,30 @@ from vulnfab.core.models import (
     SourceFile,
     TemplateUnit,
 )
-from vulnfab.core.parsing import PARSEABLE_LANGUAGES, ParseFailure, parse_file_cached
+from vulnfab.core.parsing import ParseFailure, parse_file_cached
 from vulnfab.plugins.base import RepoView
+from vulnfab.plugins.typescript import dataaccess
+
+TS_LANGUAGES = ("typescript", "tsx", "javascript")
 
 
-class GenericPlugin:
-    name = "generic"
-    languages = sorted(PARSEABLE_LANGUAGES)
+class TypeScriptPlugin:
+    name = "typescript"
+    languages = [*TS_LANGUAGES, "env", "toml"]
 
     def detect(self, repo: RepoView) -> Confidence:
-        return Confidence.HIGH
+        paths = getattr(repo, "paths", None) or []
+        markers = ("package.json", "tsconfig.json", "deno.json", "deno.jsonc")
+        if any(p.rsplit("/", 1)[-1] in markers for p in paths):
+            return Confidence.HIGH
+        if any(p.endswith((".ts", ".tsx")) for p in paths):
+            return Confidence.MEDIUM
+        return Confidence.LOW
 
     def parse(self, files: Iterable[SourceFile]) -> ParsedUnit:
         unit = ParsedUnit()
         for sf in files:
-            if sf.language not in PARSEABLE_LANGUAGES:
+            if sf.language not in TS_LANGUAGES:
                 continue
             try:
                 unit.files[sf.path] = parse_file_cached(sf)
@@ -48,7 +54,9 @@ class GenericPlugin:
         return []
 
     def data_access(self, unit: ParsedUnit) -> list[DataAccess]:
-        return []
+        accesses, unresolved = dataaccess.extract(unit.files)
+        unit.unresolved.extend(unresolved)
+        return accesses
 
     def dispatch_hints(self, unit: ParsedUnit) -> list[DispatchHint]:
         return []
@@ -57,4 +65,4 @@ class GenericPlugin:
         return []
 
     def rule_packs(self) -> list[Path]:
-        return [Path(__file__).resolve().parents[2] / "rules" / "generic"]
+        return [Path(__file__).resolve().parents[2] / "rules" / "typescript"]

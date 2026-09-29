@@ -138,6 +138,9 @@ class DataAccess:
     line: int
     filter_columns: tuple[str, ...] = ()
     client_kind: ClientKind = "unknown"
+    end_line: int = 0
+    filters: tuple[tuple[str, str], ...] = ()  # (column, source text of the compared value)
+    snippet: str = ""
 
 
 @dataclass(frozen=True)

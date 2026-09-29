@@ -19,6 +19,7 @@ ENTRY_POINT_GROUP = "vulnfab.plugins"
 BUILTIN_PLUGINS = (
     "vulnfab.plugins.generic:GenericPlugin",
     "vulnfab.plugins.supabase:SupabasePlugin",
+    "vulnfab.plugins.typescript:TypeScriptPlugin",
 )
 
 ACTIVATION_THRESHOLD = Confidence.MEDIUM

@@ -109,6 +109,23 @@ def parse_file(sf: SourceFile, *, max_depth: int = MAX_AST_DEPTH) -> ParsedFile:
     )
 
 
+_PARSE_CACHE: dict[tuple[str, str, str], ParsedFile] = {}
+
+
+def parse_file_cached(sf: SourceFile) -> ParsedFile:
+    """Like :func:`parse_file` but shared between plugins during one scan."""
+    key = (sf.path, sf.sha256, sf.language)
+    cached = _PARSE_CACHE.get(key)
+    if cached is None:
+        cached = parse_file(sf)
+        _PARSE_CACHE[key] = cached
+    return cached
+
+
+def clear_parse_cache() -> None:
+    _PARSE_CACHE.clear()
+
+
 def walk(node: Node, deadline: Deadline | None = None) -> Iterator[Node]:
     """Iterative pre-order traversal."""
     cursor = node.walk()

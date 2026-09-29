@@ -325,3 +325,20 @@ def test_pathological_pattern_is_bounded() -> None:
     pattern = "f(" + ", ".join(["..."] * 8) + ", x)"
     code = "f(" + ", ".join(["a"] * 60) + ")"
     assert count("python", pattern, code) == 0  # completes quickly, no exponential blow-up
+
+
+TS_WRAPPERS = [
+    ("createClient($U, process.env.$V)", "createClient(u, process.env.KEY!)", 1),
+    ("createClient($U, process.env.$V)", "createClient(u, process.env.KEY as string)", 1),
+    ("createClient($U, process.env.$V)", "createClient(u, (process.env.KEY))", 1),
+    ("createClient($U, process.env.$V)", "createClient(u, process.env.KEY satisfies string)", 1),
+    ("createClient($U, process.env.$V)", "createClient(u, process.env['KEY'])", 0),
+    ("createClient($U, process.env.$V)", "createClient(u, other.env.KEY!)", 0),
+    ("$X.from($T).select(...)", "(await supabase.from('a')).select('*')", 1),
+    ("eval($X)", "eval(<any>input)", 1),
+]
+
+
+@pytest.mark.parametrize(("pattern", "code", "expected"), TS_WRAPPERS)
+def test_typescript_wrappers_are_transparent(pattern: str, code: str, expected: int) -> None:
+    assert count("typescript", pattern, code) == expected
