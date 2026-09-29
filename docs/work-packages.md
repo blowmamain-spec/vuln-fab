@@ -162,7 +162,7 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
   *Lulus jika*: `benchmarks/run_all.sh` menghasilkan `benchmarks/results/latest.md` tanpa langkah manual.
 - [x] **WP-9.2 `vulnfab triage`** (S) — dep: 2.5. Simpan verdict (fingerprint → tp/fp/dup) yang dibaca evaluator.
   *Lulus jika*: verdict tersimpan dan mengubah hasil evaluator.
-- [ ] **WP-9.3 Pengetatan rule** (L) — dep: 9.1. Semua rule di bawah ambang precision diperbaiki/diturunkan confidence-nya/dihapus; catat di `CHANGELOG`.
+- [x] **WP-9.3 Pengetatan rule** (L) — dep: 9.1. Semua rule di bawah ambang precision diperbaiki/diturunkan confidence-nya/dihapus; catat di `CHANGELOG`.
   *Lulus jika*: tabel per rule memenuhi ambang di rencana Bagian 17.
 - [x] **WP-9.4 Dogfooding di CI** (S) — dep: 1.4. Scan repo sendiri dan lab di CI; regresi snapshot gagal CI.
   *Lulus jika*: CI menjalankan scan dan membandingkan snapshot.
@@ -181,7 +181,7 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
   *Lulus jika*: workflow contoh pada repo fixture mengunggah SARIF dan gagal sesuai `--fail-on`.
 - [x] **WP-10.6 `vulnfab explain` + dokumentasi** (L) — dep: 9.3. Panduan menulis rule/plugin, referensi rule (dihasilkan otomatis dari YAML), batasan yang diketahui, `THIRD_PARTY_LICENSES.md` final.
   *Lulus jika*: referensi rule ter-generate di CI dan sinkron dengan rule pack; tautan dokumen valid.
-- [ ] **WP-10.7 Gate M4 + rilis** (M) — dep: semua di atas. `benchmarks/results/m4.md`; tag `v1.0.0`; build wheel via `uv build`.
+- [x] **WP-10.7 Gate M4 + rilis** (M) — dep: semua di atas. `benchmarks/results/m4.md`; tag `v1.0.0`; build wheel via `uv build`.
   *Lulus jika*: gate M4 di rencana Bagian 17 terpenuhi.
 - [ ] **WP-10.8 (opsional) Triase LLM** (L) — dep: 10.7. Snippet minimal + trace, kode diperlakukan sebagai data, keluaran LLM tidak pernah menjadi detektor tunggal; nonaktif secara default.
   *Lulus jika*: uji prompt-injection pada komentar kode tidak mengubah verdict; tanpa kunci API fitur mati dengan pesan jelas.
