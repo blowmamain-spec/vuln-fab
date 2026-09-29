@@ -257,10 +257,14 @@ def walk_urls(index: UrlIndex, roots: list[Module], views: ViewResolver) -> list
         imports = _imports(module, index)
         for route in _collect_routes(module):
             full = prefix + route.pattern
-            here = (
-                *params,
-                *_NAMED_GROUP.findall(route.pattern),
-                *_CONVERTER.findall(route.pattern),
+            here = tuple(
+                dict.fromkeys(
+                    [
+                        *params,
+                        *_NAMED_GROUP.findall(route.pattern),
+                        *_CONVERTER.findall(route.pattern),
+                    ]
+                )
             )
             if route.include is not None:
                 child = _resolve_include(route, index, imports)
