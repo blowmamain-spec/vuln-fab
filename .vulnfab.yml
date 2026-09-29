@@ -1,0 +1,8 @@
+# Dogfooding: vulnfab scans its own source. Deliberately vulnerable code lives in the labs,
+# fixtures and third-party benchmark targets, which are excluded here.
+exclude:
+  - benchmarks/targets/**
+  - benchmarks/labs/**
+  - tests/**
+  - docs/**
+  - .venv/**

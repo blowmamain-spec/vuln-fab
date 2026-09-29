@@ -164,7 +164,7 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
   *Lulus jika*: verdict tersimpan dan mengubah hasil evaluator.
 - [ ] **WP-9.3 Pengetatan rule** (L) — dep: 9.1. Semua rule di bawah ambang precision diperbaiki/diturunkan confidence-nya/dihapus; catat di `CHANGELOG`.
   *Lulus jika*: tabel per rule memenuhi ambang di rencana Bagian 17.
-- [ ] **WP-9.4 Dogfooding di CI** (S) — dep: 1.4. Scan repo sendiri dan lab di CI; regresi snapshot gagal CI.
+- [x] **WP-9.4 Dogfooding di CI** (S) — dep: 1.4. Scan repo sendiri dan lab di CI; regresi snapshot gagal CI.
   *Lulus jika*: CI menjalankan scan dan membandingkan snapshot.
 
 ## Fase 10: Produk dan integrasi → **M4**

@@ -14,3 +14,13 @@ jobs:
       - run: uv run pytest
       - name: Tests under memory poisoning (catches use-after-free in native extensions)
         run: MALLOC_PERTURB_=165 PYTHONMALLOC=malloc uv run pytest
+      - name: Dogfooding - vulnfab scans its own source (no findings allowed)
+        run: uv run vulnfab scan . --min-confidence low --fail-on info --no-cache
+      - name: Lab regression gates and truth files
+        run: |
+          for lab in supabase-vuln django-vuln laravel-vuln; do
+            uv run python benchmarks/labs/truth_from_markers.py "$lab" --check
+          done
+          uv run python benchmarks/run_all.py --offline --only supabase-vuln django-vuln laravel-vuln
+      - name: Build wheel
+        run: uv build

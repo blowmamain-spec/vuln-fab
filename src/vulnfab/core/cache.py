@@ -69,7 +69,7 @@ def scan_key(parts: dict[str, Any]) -> str:
 
 
 def _target_dir(target: Path) -> Path:
-    return cache_dir() / hashlib.sha1(str(target.resolve()).encode()).hexdigest()[:16]  # noqa: S324
+    return cache_dir() / hashlib.sha256(str(target.resolve()).encode()).hexdigest()[:16]
 
 
 def load(target: Path, key: str) -> dict[str, Any] | None:
