@@ -18,7 +18,7 @@ from vulnfab.core.rules import RuleLoadError
 from vulnfab.core.suppress import BaselineError
 from vulnfab.plugins.registry import UnknownStackError
 from vulnfab.reporters import console as console_reporter
-from vulnfab.reporters import json_reporter
+from vulnfab.reporters import html_reporter, json_reporter, sarif
 
 app = typer.Typer(add_completion=False, help="Multi-stack SAST scanner.", no_args_is_help=True)
 
@@ -31,6 +31,8 @@ EXIT_INTERNAL = 3
 class OutputFormat(StrEnum):
     console = "console"
     json = "json"
+    sarif = "sarif"
+    html = "html"
 
 
 def _version_callback(value: bool) -> None:
@@ -110,8 +112,13 @@ def scan_command(
         typer.echo(f"internal error: {type(exc).__name__}: {exc}", err=True)
         raise typer.Exit(EXIT_INTERNAL) from exc
 
-    if format is OutputFormat.json:
-        text = json_reporter.render(result)
+    if format is not OutputFormat.console:
+        renderers = {
+            OutputFormat.json: json_reporter.render,
+            OutputFormat.sarif: sarif.render,
+            OutputFormat.html: html_reporter.render,
+        }
+        text = renderers[format](result)
         if output:
             output.write_text(text)
         else:

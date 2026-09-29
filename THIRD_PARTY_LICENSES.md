@@ -12,3 +12,9 @@ Proyek ini berlisensi GPL-3.0-or-later. Dependensi runtime:
 | rich | MIT | |
 
 Verifikasi ulang lisensi setiap kali dependensi ditambahkan atau versi mayor berubah.
+
+## Artefak yang disalin ke repositori
+
+| Berkas | Sumber | Catatan |
+|---|---|---|
+| `docs/schema/sarif-schema-2.1.0.json` | OASIS SARIF TC (`oasis-tcs/sarif-spec`) | Skema resmi SARIF 2.1.0, dipakai hanya untuk validasi uji offline; tidak dikirim di wheel |

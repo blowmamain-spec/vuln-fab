@@ -169,9 +169,9 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
 
 ## Fase 10: Produk dan integrasi → **M4**
 
-- [ ] **WP-10.1 SARIF** (M) — dep: 1.3. Sesuai SARIF 2.1.0, `partialFingerprints` dari fingerprint, code flows dari trace.
+- [x] **WP-10.1 SARIF** (M) — dep: 1.3. Sesuai SARIF 2.1.0, `partialFingerprints` dari fingerprint, code flows dari trace.
   *Lulus jika*: keluaran lolos validasi terhadap skema SARIF resmi (skema disimpan di repo untuk uji offline).
-- [ ] **WP-10.2 Laporan HTML mandiri** (M) — dep: 1.3. Satu berkas, di-escape penuh.
+- [x] **WP-10.2 Laporan HTML mandiri** (M) — dep: 1.3. Satu berkas, di-escape penuh.
   *Lulus jika*: test XSS (snippet berisi `<script>`/atribut) tidak menghasilkan HTML aktif.
 - [ ] **WP-10.3 Mode diff/PR** (L) — dep: 5.5. `--since REF`: file berubah + dependen via call graph/impor.
   *Lulus jika*: uji otomatis: hasil diff = hasil scan penuh yang dibatasi pada set terdampak.
