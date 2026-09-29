@@ -1,0 +1,12 @@
+<h1>Profile</h1>
+{# @lab decoy template-safe cwe=CWE-79 :: variabel di-escape otomatis #}
+<div>{{ bio }}</div>
+
+{# @lab decoy template-safe cwe=CWE-79 :: literal statis #}
+<div>{{ "<hr>"|safe }}</div>
+
+{# @lab decoy template-csrf cwe=CWE-352 :: token CSRF ada #}
+<form method="post" action="/orders/1/pay/">
+  {% csrf_token %}
+  <input name="note">
+</form>

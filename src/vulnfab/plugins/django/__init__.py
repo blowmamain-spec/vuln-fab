@@ -28,7 +28,7 @@ from vulnfab.core.sensitive import SENSITIVE_NAME
 from vulnfab.plugins.base import RepoView
 from vulnfab.plugins.django import pyconf, urlconf
 
-_SETTINGS_RE = re.compile(r"(?:^|.*/)settings(?:\.py|/[^/]+\.py)$")
+_SETTINGS_RE = re.compile(r"(?:^|.*/)(?:settings[\w.-]*\.py|settings/[^/]+\.py)$")
 _MODELS_RE = re.compile(r"(?:^|.*/)models(?:\.py|/[^/]+\.py)$")
 _SKIP_DIRS = ("site-packages/", "/venv/", "/.venv/", "node_modules/")
 _REQUIREMENTS_RE = re.compile(

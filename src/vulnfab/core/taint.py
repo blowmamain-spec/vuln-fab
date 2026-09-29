@@ -184,6 +184,16 @@ def _receiver_is_source(spec: TaintSpec, callee: str) -> bool:
     return receiver is not None and matches_path(spec.sources, "field", receiver)
 
 
+def _writes(body: tuple[Instr, ...], path: str) -> bool:
+    for instr in _walk(body):
+        dst = getattr(instr, "dst", None)
+        if dst is not None:
+            target = access_path(dst)
+            if target == path or (target or "").startswith(path + "."):
+                return True
+    return False
+
+
 def _terminates(body: tuple[Instr, ...]) -> bool:
     return bool(body) and isinstance(body[-1], Return)
 
@@ -302,7 +312,10 @@ class FunctionAnalyzer:
         if not (a_ends and b_ends):
             for target in validated:
                 path = access_path(target)
-                if path is not None and path in state and path not in merged:
+                repaired = path is not None and (
+                    _writes(instr.then, path) or _writes(instr.other, path)
+                )  # "if not valid(x): x = default" leaves x clean afterwards
+                if path is not None and path in state and path not in merged and not repaired:
                     merged[path] = state[path]
         return merged
 

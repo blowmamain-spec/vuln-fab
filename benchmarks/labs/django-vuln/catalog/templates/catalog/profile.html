@@ -1,0 +1,13 @@
+<h1>Profile</h1>
+{# @lab vuln template-safe cwe=CWE-79 tier=A :: bio pengguna dicetak tanpa escape #}
+<div>{{ bio|safe }}</div>
+
+{# @lab vuln template-autoescape cwe=CWE-79 tier=A :: autoescape dimatikan #}
+{% autoescape off %}
+<p>{{ bio }}</p>
+{% endautoescape %}
+
+{# @lab vuln template-csrf cwe=CWE-352 tier=A :: form POST tanpa token CSRF #}
+<form method="post" action="/orders/1/pay/">
+  <input name="note">
+</form>

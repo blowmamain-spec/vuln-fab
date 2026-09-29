@@ -275,3 +275,19 @@ def test_python_raise_terminates_and_php_throw() -> None:
     php = TaintSpec.from_rule(["var _GET"], ["call include"], [], [], None, ["call in_array"])
     code = "<?php\nfunction f(){ $p = $_GET['p'];\n if (!in_array($p, ['a','b'])) { throw new Exception('x'); }\n include($p); }\n"
     assert not hits(code, "php", php)
+
+
+def test_validate_or_reset_pattern_cleans_after_branch() -> None:
+    spec = TaintSpec.from_rule(
+        ["field request.GET"],
+        ["call redirect arg0"],
+        [],
+        [],
+        None,
+        ["call url_has_allowed_host_and_scheme"],
+    )
+    code = (
+        "def f():\n    t = request.GET['n']\n"
+        "    if not url_has_allowed_host_and_scheme(t):\n        t = '/'\n    return redirect(t)\n"
+    )
+    assert not hits(code, "python", spec)

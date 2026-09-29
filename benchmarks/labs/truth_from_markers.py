@@ -17,9 +17,10 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 TRUTH_DIR = HERE.parent / "truth"
 MARKER_RE = re.compile(
-    r"^\s*(?:--|//|#)\s*@lab\s+(?P<kind>vuln|decoy)\s+(?P<cls>[a-z0-9-]+)(?P<rest>.*)$"
+    r"^\s*(?:--|//|#|\{#|\{\{--|<!--)\s*@lab\s+(?P<kind>vuln|decoy)\s+(?P<cls>[a-z0-9-]+)(?P<rest>.*?)"
+    r"(?:\s*(?:#\}|--\}\}|-->))?\s*$"
 )
-TEXT_SUFFIXES = {".sql", ".ts", ".tsx", ".js", ".toml", ".local", ".env", ".py", ".php"}
+TEXT_SUFFIXES = {".sql", ".ts", ".tsx", ".js", ".toml", ".local", ".env", ".py", ".php", ".html", ".example"}
 SKIP_DIRS = {"node_modules", ".git"}
 
 

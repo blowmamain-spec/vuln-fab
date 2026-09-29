@@ -47,6 +47,9 @@ CLASS_ALIASES = {
     "cmdi": "cmd-injection",
     "deser": "deserialization",
     "pathtrav": "path-traversal",
+    "sql-raw": "sqli",
+    "mark-safe": "xss",
+    "mass-assign": "mass-assignment",
 }
 
 

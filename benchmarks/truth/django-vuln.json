@@ -1,0 +1,594 @@
+{
+  "target": "django-vuln",
+  "revision": "lab-1",
+  "items": [
+    {
+      "id": "T001",
+      "kind": "vulnerable",
+      "file": "catalog/forms.py",
+      "line_start": 10,
+      "line_end": 10,
+      "class": "modelform-all",
+      "cwe": [
+        "CWE-915"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "semua kolom bisa diisi klien"
+    },
+    {
+      "id": "D001",
+      "kind": "decoy",
+      "file": "catalog/forms.py",
+      "line_start": 17,
+      "line_end": 17,
+      "class": "modelform-all",
+      "cwe": [
+        "CWE-915"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "daftar kolom eksplisit"
+    },
+    {
+      "id": "T002",
+      "kind": "vulnerable",
+      "file": "catalog/templates/catalog/profile.html",
+      "line_start": 3,
+      "line_end": 3,
+      "class": "template-safe",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "bio pengguna dicetak tanpa escape"
+    },
+    {
+      "id": "T003",
+      "kind": "vulnerable",
+      "file": "catalog/templates/catalog/profile.html",
+      "line_start": 6,
+      "line_end": 6,
+      "class": "template-autoescape",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "autoescape dimatikan"
+    },
+    {
+      "id": "T004",
+      "kind": "vulnerable",
+      "file": "catalog/templates/catalog/profile.html",
+      "line_start": 11,
+      "line_end": 11,
+      "class": "template-csrf",
+      "cwe": [
+        "CWE-352"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "form POST tanpa token CSRF"
+    },
+    {
+      "id": "D002",
+      "kind": "decoy",
+      "file": "catalog/templates/catalog/profile_safe.html",
+      "line_start": 3,
+      "line_end": 3,
+      "class": "template-safe",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "variabel di-escape otomatis"
+    },
+    {
+      "id": "D003",
+      "kind": "decoy",
+      "file": "catalog/templates/catalog/profile_safe.html",
+      "line_start": 6,
+      "line_end": 6,
+      "class": "template-safe",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "literal statis"
+    },
+    {
+      "id": "D004",
+      "kind": "decoy",
+      "file": "catalog/templates/catalog/profile_safe.html",
+      "line_start": 9,
+      "line_end": 9,
+      "class": "template-csrf",
+      "cwe": [
+        "CWE-352"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "token CSRF ada"
+    },
+    {
+      "id": "T005",
+      "kind": "vulnerable",
+      "file": "catalog/views.py",
+      "line_start": 23,
+      "line_end": 23,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "input GET digabung ke SQL"
+    },
+    {
+      "id": "D005",
+      "kind": "decoy",
+      "file": "catalog/views.py",
+      "line_start": 32,
+      "line_end": 32,
+      "class": "sqli",
+      "cwe": [
+        "CWE-89"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "query berparameter"
+    },
+    {
+      "id": "T006",
+      "kind": "vulnerable",
+      "file": "catalog/views.py",
+      "line_start": 40,
+      "line_end": 40,
+      "class": "cmd-injection",
+      "cwe": [
+        "CWE-78"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "input GET masuk ke shell"
+    },
+    {
+      "id": "D006",
+      "kind": "decoy",
+      "file": "catalog/views.py",
+      "line_start": 47,
+      "line_end": 47,
+      "class": "cmd-injection",
+      "cwe": [
+        "CWE-78"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "argumen di-quote"
+    },
+    {
+      "id": "T007",
+      "kind": "vulnerable",
+      "file": "catalog/views.py",
+      "line_start": 54,
+      "line_end": 54,
+      "class": "xss",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "input GET ditandai aman"
+    },
+    {
+      "id": "D007",
+      "kind": "decoy",
+      "file": "catalog/views.py",
+      "line_start": 60,
+      "line_end": 60,
+      "class": "xss",
+      "cwe": [
+        "CWE-79"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "input di-escape dulu"
+    },
+    {
+      "id": "T008",
+      "kind": "vulnerable",
+      "file": "catalog/views.py",
+      "line_start": 66,
+      "line_end": 66,
+      "class": "ssrf",
+      "cwe": [
+        "CWE-918"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "URL dari klien diminta server"
+    },
+    {
+      "id": "D008",
+      "kind": "decoy",
+      "file": "catalog/views.py",
+      "line_start": 73,
+      "line_end": 73,
+      "class": "ssrf",
+      "cwe": [
+        "CWE-918"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "host tetap, input hanya parameter"
+    },
+    {
+      "id": "T009",
+      "kind": "vulnerable",
+      "file": "catalog/views.py",
+      "line_start": 80,
+      "line_end": 80,
+      "class": "path-traversal",
+      "cwe": [
+        "CWE-22"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "nama berkas dari klien"
+    },
+    {
+      "id": "D009",
+      "kind": "decoy",
+      "file": "catalog/views.py",
+      "line_start": 87,
+      "line_end": 87,
+      "class": "path-traversal",
+      "cwe": [
+        "CWE-22"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "hanya nama dasar"
+    },
+    {
+      "id": "T010",
+      "kind": "vulnerable",
+      "file": "catalog/views.py",
+      "line_start": 94,
+      "line_end": 94,
+      "class": "redirect",
+      "cwe": [
+        "CWE-601"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "redirect ke URL dari klien"
+    },
+    {
+      "id": "D010",
+      "kind": "decoy",
+      "file": "catalog/views.py",
+      "line_start": 102,
+      "line_end": 102,
+      "class": "redirect",
+      "cwe": [
+        "CWE-601"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "URL divalidasi"
+    },
+    {
+      "id": "T011",
+      "kind": "vulnerable",
+      "file": "catalog/views.py",
+      "line_start": 108,
+      "line_end": 108,
+      "class": "deserialization",
+      "cwe": [
+        "CWE-502"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "pickle atas data klien"
+    },
+    {
+      "id": "T012",
+      "kind": "vulnerable",
+      "file": "catalog/views.py",
+      "line_start": 115,
+      "line_end": 115,
+      "class": "idor",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": "B",
+      "in_scope": true,
+      "note": "pesanan diambil dari id URL tanpa cek pemilik"
+    },
+    {
+      "id": "D011",
+      "kind": "decoy",
+      "file": "catalog/views.py",
+      "line_start": 122,
+      "line_end": 122,
+      "class": "idor",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "dibatasi ke pemilik"
+    },
+    {
+      "id": "D012",
+      "kind": "decoy",
+      "file": "catalog/views.py",
+      "line_start": 129,
+      "line_end": 129,
+      "class": "idor",
+      "cwe": [
+        "CWE-639"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "data referensi bersama, tanpa pemilik"
+    },
+    {
+      "id": "T013",
+      "kind": "vulnerable",
+      "file": "catalog/views.py",
+      "line_start": 134,
+      "line_end": 134,
+      "class": "view-no-auth",
+      "cwe": [
+        "CWE-306"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "menghapus data tanpa login"
+    },
+    {
+      "id": "D013",
+      "kind": "decoy",
+      "file": "catalog/views.py",
+      "line_start": 142,
+      "line_end": 142,
+      "class": "view-no-auth",
+      "cwe": [
+        "CWE-306"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "butuh login"
+    },
+    {
+      "id": "D014",
+      "kind": "decoy",
+      "file": "catalog/views.py",
+      "line_start": 147,
+      "line_end": 147,
+      "class": "view-no-auth",
+      "cwe": [
+        "CWE-306"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "cek pengguna di dalam view"
+    },
+    {
+      "id": "T014",
+      "kind": "vulnerable",
+      "file": "catalog/views.py",
+      "line_start": 156,
+      "line_end": 156,
+      "class": "csrf-exempt",
+      "cwe": [
+        "CWE-352"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "mengubah data tanpa CSRF"
+    },
+    {
+      "id": "T015",
+      "kind": "vulnerable",
+      "file": "catalog/views.py",
+      "line_start": 165,
+      "line_end": 165,
+      "class": "dispatch-input",
+      "cwe": [
+        "CWE-470"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "klien memilih atribut yang dipanggil"
+    },
+    {
+      "id": "D015",
+      "kind": "decoy",
+      "file": "catalog/views.py",
+      "line_start": 172,
+      "line_end": 172,
+      "class": "dispatch-input",
+      "cwe": [
+        "CWE-470"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "daftar putih lewat dict"
+    },
+    {
+      "id": "T016",
+      "kind": "vulnerable",
+      "file": "shop/settings.py",
+      "line_start": 6,
+      "line_end": 6,
+      "class": "secret-key",
+      "cwe": [
+        "CWE-798"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "kunci rahasia tertulis di kode"
+    },
+    {
+      "id": "T017",
+      "kind": "vulnerable",
+      "file": "shop/settings.py",
+      "line_start": 9,
+      "line_end": 9,
+      "class": "debug-true",
+      "cwe": [
+        "CWE-489"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "DEBUG aktif"
+    },
+    {
+      "id": "T018",
+      "kind": "vulnerable",
+      "file": "shop/settings.py",
+      "line_start": 12,
+      "line_end": 12,
+      "class": "allowed-hosts",
+      "cwe": [
+        "CWE-644"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "semua host diterima"
+    },
+    {
+      "id": "T019",
+      "kind": "vulnerable",
+      "file": "shop/settings.py",
+      "line_start": 32,
+      "line_end": 32,
+      "class": "password-hasher",
+      "cwe": [
+        "CWE-916"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "hasher MD5 sebagai hasher utama"
+    },
+    {
+      "id": "T020",
+      "kind": "vulnerable",
+      "file": "shop/settings.py",
+      "line_start": 35,
+      "line_end": 35,
+      "class": "pickle-session",
+      "cwe": [
+        "CWE-502"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "sesi diserialisasi dengan pickle"
+    },
+    {
+      "id": "T021",
+      "kind": "vulnerable",
+      "file": "shop/settings.py",
+      "line_start": 38,
+      "line_end": 38,
+      "class": "cookie-httponly",
+      "cwe": [
+        "CWE-1004"
+      ],
+      "tier": "A",
+      "in_scope": true,
+      "note": "cookie sesi terbaca JavaScript"
+    },
+    {
+      "id": "D016",
+      "kind": "decoy",
+      "file": "shop/settings.py",
+      "line_start": 41,
+      "line_end": 41,
+      "class": "cookie-httponly",
+      "cwe": [
+        "CWE-1004"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "nilai bawaan aman"
+    },
+    {
+      "id": "D017",
+      "kind": "decoy",
+      "file": "shop/settings_prod.py",
+      "line_start": 4,
+      "line_end": 4,
+      "class": "secret-key",
+      "cwe": [
+        "CWE-798"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "kunci dibaca dari environment"
+    },
+    {
+      "id": "D018",
+      "kind": "decoy",
+      "file": "shop/settings_prod.py",
+      "line_start": 7,
+      "line_end": 7,
+      "class": "debug-true",
+      "cwe": [
+        "CWE-489"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "DEBUG dari environment"
+    },
+    {
+      "id": "D019",
+      "kind": "decoy",
+      "file": "shop/settings_prod.py",
+      "line_start": 10,
+      "line_end": 10,
+      "class": "allowed-hosts",
+      "cwe": [
+        "CWE-644"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "host eksplisit"
+    },
+    {
+      "id": "D020",
+      "kind": "decoy",
+      "file": "shop/settings_prod.py",
+      "line_start": 13,
+      "line_end": 13,
+      "class": "password-hasher",
+      "cwe": [
+        "CWE-916"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "PBKDF2 sebagai hasher utama"
+    },
+    {
+      "id": "D021",
+      "kind": "decoy",
+      "file": "shop/settings_prod.py",
+      "line_start": 19,
+      "line_end": 19,
+      "class": "pickle-session",
+      "cwe": [
+        "CWE-502"
+      ],
+      "tier": null,
+      "in_scope": true,
+      "note": "JSON"
+    }
+  ]
+}

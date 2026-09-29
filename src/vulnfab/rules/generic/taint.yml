@@ -333,6 +333,15 @@ rules:
   - call bleach.clean
   - call conditional_escape
   - call int
+  - call requests.*
+  - call httpx.*
+  - call urlopen
+  - call urllib.request.urlopen
+  - call open
+  - call *.execute
+  - call *.fetchall
+  - call *.fetchone
+  - call *.read
   validators:
   - call re.match
   - call re.fullmatch
@@ -868,6 +877,15 @@ rules:
   - call parseInt
   - call Number
   - call JSON.stringify
+  - call fetch
+  - call axios.*
+  - call axios
+  - call fs.readFile
+  - call fs.readFileSync
+  - call fs.promises.readFile
+  - call *.query
+  - call *.findByPk
+  - call *.findOne
   validators:
   - call *.match
   - call *.test
@@ -1449,6 +1467,13 @@ rules:
   - call esc_html
   - call e
   - call json_encode
+  - call file_get_contents
+  - call curl_exec
+  - call fread
+  - call mysqli_query
+  - call *.query
+  - call fgets
+  - call file
   validators:
   - call is_numeric
   - call ctype_digit
