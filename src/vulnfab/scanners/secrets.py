@@ -46,6 +46,7 @@ PLACEHOLDER_WORDS = (
     "your", "example", "placeholder", "changeme", "change_me", "change-me", "xxx", "dummy",
     "sample", "fake", "todo", "redacted", "insert", "replace", "enter", "secret_here",
     "<", ">", "${", "{{", "process.env", "os.environ", "getenv", "env(", "config(",
+    "encrypted:",  # dotenvx / sops style encrypted values
 )  # fmt: skip
 SKIP_FILE_SUFFIXES = (".min.js", ".lock", "package-lock.json", "pnpm-lock.yaml", "yarn.lock")
 MIN_ENTROPY = 3.2
@@ -77,12 +78,15 @@ def looks_like_secret_value(value: str) -> bool:
 
 
 def _jwt_role(payload_b64: str) -> str | None:
+    """Role of a JWT payload, or ``None`` (also for the public Supabase local-dev demo key)."""
     try:
         padded = payload_b64 + "=" * (-len(payload_b64) % 4)
         data: Any = json.loads(base64.urlsafe_b64decode(padded))
     except (ValueError, json.JSONDecodeError):
         return None
-    return str(data.get("role")) if isinstance(data, dict) else None
+    if not isinstance(data, dict) or data.get("iss") == "supabase-demo":
+        return None  # the demo keys ship with the Supabase CLI and are public by design
+    return str(data.get("role"))
 
 
 def scan_file(sf: SourceFile) -> Iterator[tuple[int, str, str, Confidence | None]]:

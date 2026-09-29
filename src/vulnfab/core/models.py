@@ -261,6 +261,7 @@ class Function:
     end_line: int = 0
     sql: str = ""
     param_names: tuple[str, ...] = ()
+    param_types: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass

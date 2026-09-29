@@ -44,6 +44,13 @@ def _policies(ctx: CheckContext) -> Iterator[tuple[Table, Policy]]:
             yield table, policy
 
 
+OWNER_COLUMNS = frozenset({"user_id", "owner_id", "created_by", "author_id", "profile_id"})
+
+
+def _has_owner_column(table: Table) -> bool:
+    return any(c.name in OWNER_COLUMNS for c in table.columns)
+
+
 def _client_facing(policy: Policy) -> bool:
     return bool(CLIENT_ROLES & set(policy.roles))
 
@@ -111,6 +118,8 @@ def policy_true(ctx: CheckContext) -> Iterator[SchemaHit]:
             "update": [p.using_node, p.check_node], "all": [p.using_node, p.check_node],
         }[p.command]  # fmt: skip
         if any(_is_literal_true(n) for n in nodes):
+            # Public read of rows nobody owns ("public profiles") is usually intentional.
+            public_read = p.command == "select" and not _has_owner_column(table)
             yield SchemaHit(
                 p.file,
                 p.line,
@@ -119,6 +128,7 @@ def policy_true(ctx: CheckContext) -> Iterator[SchemaHit]:
                 f"{', '.join(p.roles)} with no row condition (expression is TRUE).",
                 trace=_trace_policy(table, p, f"policy {p.name} is TRUE"),
                 symbol=f"{table.qualified_name}:{p.name}",
+                confidence=Confidence.LOW if public_read else None,
             )
 
 
@@ -126,10 +136,13 @@ def policy_anon_write(ctx: CheckContext) -> Iterator[SchemaHit]:
     for table, p in _policies(ctx):
         if table.schema == "storage" or not p.permissive or not ({"anon", "public"} & set(p.roles)):
             continue
-        open_commands = [
-            c for c in WRITE_COMMANDS.get(p.command, ())
-            if policy_expression(p, c, "anon").kind is not AccessKind.DENY
-        ]  # fmt: skip
+        results = {
+            c: policy_expression(p, c, "anon").kind for c in WRITE_COMMANDS.get(p.command, ())
+        }
+        open_commands = [c for c, kind in results.items() if kind is not AccessKind.DENY]
+        certain = any(
+            kind in (AccessKind.ALLOW, AccessKind.CONDITIONAL) for kind in results.values()
+        )
         if open_commands:
             yield SchemaHit(
                 p.file,
@@ -139,6 +152,8 @@ def policy_anon_write(ctx: CheckContext) -> Iterator[SchemaHit]:
                 f"{'/'.join(c.upper() for c in open_commands)} rows.",
                 trace=_trace_policy(table, p, f"anon may {', '.join(open_commands)}"),
                 symbol=f"{table.qualified_name}:{p.name}",
+                # a custom helper (authorize(), is_member()) usually rejects anon: cannot tell
+                confidence=None if certain else Confidence.LOW,
             )
 
 
@@ -225,8 +240,7 @@ def unsafe_dynamic_query(text: str) -> bool:
     skeleton = _SQL_STRING.sub("''", text)
     lowered = skeleton.lower()
     if "format(" in lowered:
-        fmt = _SQL_STRING.search(text[lowered.index("format(") :])
-        if fmt and _FORMAT_S.search(fmt.group()):
+        if _FORMAT_S.search(text.replace("%%", "")):
             return True
         outside = re.sub(r"format\s*\(.*\)", "", skeleton, flags=re.I | re.S)
         return "||" in outside and bool(
@@ -258,6 +272,19 @@ def _dynamic_queries(node: Any) -> Iterator[tuple[str, int]]:
             yield from _dynamic_queries(item)
 
 
+_NON_TEXT_TYPES = re.compile(
+    r"^(?:date|time|timestamp\w*|interval|int\w*|bigint|smallint|serial\w*|numeric|decimal|real|"
+    r"double precision|boolean|bool|uuid|oid|regclass)\b"
+)
+
+
+def _typed_arguments_only(fn: Any) -> bool:
+    """True when the function has parameters and none of them can carry injected SQL."""
+    if not fn.param_types:
+        return False
+    return all(_NON_TEXT_TYPES.match(t) for t in fn.param_types.values())
+
+
 def dynamic_sql(ctx: CheckContext) -> Iterator[SchemaHit]:
     parser = PglastParser()
     for fn in ctx.model.functions.values():
@@ -267,6 +294,8 @@ def dynamic_sql(ctx: CheckContext) -> Iterator[SchemaHit]:
             parsed = parser.parse_plpgsql(fn.sql)
         except Exception:  # unparsable body: reported through unresolved elsewhere
             continue
+        if _typed_arguments_only(fn):
+            continue  # every format() argument is a non-text parameter (date, int, uuid, ...)
         body_offset = fn.sql.find(fn.body) if fn.body else 0
         body_line = fn.line + fn.sql[: max(body_offset, 0)].count("\n")
         for item in parsed:
@@ -311,6 +340,7 @@ def grant_broad(ctx: CheckContext) -> Iterator[SchemaHit]:
         ]  # fmt: skip
         if danger and still_granted:
             names = ", ".join(t.qualified_name for t in still_granted[:3])
+            protected = all(t.rls_enabled for t in still_granted)  # RLS still gates the rows
             yield SchemaHit(
                 ev.file,
                 ev.line,
@@ -319,6 +349,7 @@ def grant_broad(ctx: CheckContext) -> Iterator[SchemaHit]:
                 f"{names} to {ev.role}: the API role can write without any policy-level limit "
                 "besides RLS.",
                 symbol=f"{ev.role}:{names}",
+                confidence=Confidence.LOW if protected else None,
             )
 
 
@@ -331,6 +362,7 @@ def default_priv(ctx: CheckContext) -> Iterator[SchemaHit]:
             continue
         risky = [g for g in dp.grantees if _dangerous(g, dp.privileges)]
         if risky:
+            platform_default = dp.role in ("postgres", "supabase_admin")  # `db pull` boilerplate
             yield SchemaHit(
                 dp.file,
                 dp.line,
@@ -338,6 +370,7 @@ def default_priv(ctx: CheckContext) -> Iterator[SchemaHit]:
                 f"ALTER DEFAULT PRIVILEGES grants write access on every future table to "
                 f"{', '.join(risky)}.",
                 symbol=f"default:{dp.schema}:{','.join(risky)}",
+                confidence=Confidence.LOW if platform_default else None,
             )
 
 
@@ -446,8 +479,10 @@ def config_signup(ctx: CheckContext) -> Iterator[SchemaHit]:
                 line,
                 line,
                 "Email sign-ups are open and confirmation is disabled: anyone can create verified "
-                "accounts with addresses they do not own.",
+                "accounts with addresses they do not own. (supabase init writes this as a local "
+                "development default; it matters when the file is pushed to a hosted project.)",
                 symbol=f"{doc.path}:auth.email",
+                confidence=Confidence.LOW,
             )
 
 
@@ -504,6 +539,26 @@ def schema_drift(ctx: CheckContext) -> Iterator[SchemaHit]:
                 )  # fmt: skip
 
 
+_PRIVILEGED_CODE = re.compile(
+    r"SERVICE_ROLE|service_role|serviceRole|[Ss]upabaseAdmin|SUPABASE_DB_URL|postgres\(|\.rpc\("
+    r"|(?<!Array)(?<!Buffer)(?<!Object)\.from\(\s*['\"`]"
+)
+
+
+def _function_is_privileged(ctx: CheckContext, config_path: str, name: str) -> bool:
+    """Does the function's source use a service_role client or touch the database?"""
+    base = config_path.rsplit("/", 1)[0] if "/" in config_path else ""
+    prefix = f"{base}/functions/{name}/" if base else f"functions/{name}/"
+    for path in getattr(ctx.repo, "paths", []):
+        if path.startswith(prefix) and path.endswith((".ts", ".js", ".tsx", ".mjs")):
+            try:
+                if _PRIVILEGED_CODE.search(ctx.repo.read_text(path)):
+                    return True
+            except OSError:
+                continue
+    return False
+
+
 def edge_no_jwt(ctx: CheckContext) -> Iterator[SchemaHit]:
     """Edge functions declared with ``verify_jwt = false`` in supabase/config.toml."""
     for doc in ctx.model.configs.values():
@@ -513,12 +568,19 @@ def edge_no_jwt(ctx: CheckContext) -> Iterator[SchemaHit]:
         for name, cfg in sorted(functions.items()):
             if isinstance(cfg, dict) and cfg.get("verify_jwt") is False:
                 line = doc.lines.get(("functions", name, "verify_jwt"), 1)
+                privileged = _function_is_privileged(ctx, doc.path, name)
                 yield SchemaHit(
                     doc.path,
                     line,
                     line,
                     f"Edge function {name!r} is publicly invokable: JWT verification is disabled. "
                     "Anyone on the internet can call it; make sure it authenticates callers itself "
-                    "(e.g. a webhook signature).",
+                    "(e.g. a webhook signature)."
+                    + (
+                        " It uses a service_role client or queries the database."
+                        if privileged
+                        else ""
+                    ),
                     symbol=f"{doc.path}:functions.{name}",
+                    confidence=Confidence.MEDIUM if privileged else Confidence.LOW,
                 )

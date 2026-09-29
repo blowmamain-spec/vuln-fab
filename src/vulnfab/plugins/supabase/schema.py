@@ -488,6 +488,11 @@ class SchemaBuilder:
             end_line=stmt.end_line,
             sql=stmt.sql,
             param_names=tuple(p.name for p in params if getattr(p, "name", None)),
+            param_types={
+                str(p.name): (deparse(p.argType) or "").lower()
+                for p in params
+                if getattr(p, "name", None)
+            },
         )
         self.model.functions[f"{schema}.{name}({len(params)})"] = fn
 

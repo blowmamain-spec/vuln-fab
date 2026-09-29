@@ -96,8 +96,9 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
   *Lulus jika*: temuan memuat trace ganda (baris kode + lokasi schema); e2e lab cocok truth.
 - [x] **WP-4.6 Entrypoint & Edge Functions** (M) — dep: 4.1, 3.5. Next.js route handler/server action, Express, `supabase/functions/*`; `verify_jwt = false` dari config; input tanpa validasi (pola).
   *Lulus jika*: fixture per framework menghasilkan entrypoint yang benar.
-- [ ] **WP-4.7 Gate M1** (M) — dep: 3.8, 4.5, 0.7. Evaluasi lengkap lab + aplikasi milikmu; simpan `benchmarks/results/m1.md`; tag `v0.1.0`.
+- [x] **WP-4.7 Gate M1** (M) — dep: 3.8, 4.5, 0.7. Evaluasi lengkap lab + aplikasi milikmu; simpan `benchmarks/results/m1.md`; tag `v0.1.0`.
   *Lulus jika*: seluruh gate M1 di rencana Bagian 17 terpenuhi; catatan false positive/negatif ditulis.
+  *Status*: gate lab terpenuhi (`benchmarks/results/m1.md`). Bagian "aplikasi milikmu" **belum**: contoh resmi supabase/supabase dipakai sebagai pengganti sementara sampai WP-0.7 tersedia.
 
 ## Fase 5: Taint engine → **M2**
 

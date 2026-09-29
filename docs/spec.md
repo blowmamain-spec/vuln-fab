@@ -50,6 +50,7 @@ Opsi `scan`:
     "files_unsupported": 30,      // berkas yang bahasanya tidak dikenali
     "syntax_errors": ["a.py"],    // dianalisis sebagian (tree-sitter tetap memberi pohon)
     "hidden_low_confidence": 0,   // temuan yang disembunyikan oleh --min-confidence
+    "suppressed_nosec": 0, "suppressed_baseline": 0, "suppressed_config": 0,
     "unresolved": [{"kind": "dynamic_call|dynamic_sql|do_block|import", "file": "…", "line": 10, "detail": "…"}],
     "assumptions": ["schema derived from migrations only (no drift check)"],
     "adapters": [{"name": "gitleaks", "status": "missing|ok|error"}]
@@ -77,6 +78,7 @@ class Finding:
     unresolved_hops: int
     fix: str | None
     fingerprint: str
+    message: str              # penjelasan spesifik temuan (mis. nama tabel/policy)
 ```
 
 `TraceStep(file, line, kind: source|propagate|call|return|sink|schema|policy, detail)`.
@@ -190,13 +192,14 @@ Implementasi awal memakai `pglast`; hanya `core/sqlparser.py` yang boleh meng-im
 
 ## 7. Skema rule (YAML, divalidasi pydantic)
 
-Field umum: `id` (unik, `^[a-z]+-[a-z0-9-]+$`), `stack`, `kind` (`pattern` default, `taint`, `schema`, `crosscheck`), `languages`, `severity`, `confidence`, `tier?`, `cwe[]`, `owasp?`, `message`, `fix?`, `supersedes?`, `tests`, `enabled` (default true).
+Field umum: `id` (unik, `^[a-z]+-[a-z0-9-]+$`), `stack`, `kind` (`pattern` default, `taint`, `schema`, `scanner`, `crosscheck`), `languages`, `severity`, `confidence`, `tier?`, `cwe[]`, `owasp?`, `message`, `fix?`, `supersedes?`, `tests`, `enabled` (default true).
 
 - `pattern`: `pattern` (snippet dengan metavariable `$X`, `...` untuk wildcard argumen) atau `patterns: [...]` (semua harus cocok), `pattern-not`, `pattern-inside`, `where: [{metavariable: X, kind: fstring_or_concat|literal|identifier|regex, regex?}]`.
 - `taint`: `sources[]`, `sinks[]`, `sanitizers[]`, `propagators[]?` (pola snippet).
 - `schema`: `check` (`modul:fungsi` Python teruji) **atau** `condition` (ekspresi aman; hanya akses atribut, perbandingan, `and/or/not`, `in`, literal).
 - `crosscheck`: `facts` (`DataAccess`), `check` (`modul:fungsi`).
 - `tests.vulnerable[]` dan `tests.safe[]`: path relatif ke `tests/rules/<rule_id>/`. Validator gagal bila kosong.
+Rule `schema` dijalankan pada repo fixture sementara (plugin menyediakan `fixture_path`); berkas `<nama>.dump.sql` di samping berkas uji dipakai sebagai dump database untuk cek drift. Rule `scanner`/`crosscheck` dijalankan lewat engine penuh; `schema.sql` di direktori uji menjadi migration untuk rule cross-check. Harness menghitung semua temuan (confidence rendah ikut dihitung).
 
 Rule `pattern` tanpa satu pun file `safe` ditolak. Anotasi pada file uji: komentar `# vuln: <rule_id>` (atau `// vuln:`) pada baris yang harus dilaporkan; harness memeriksa kecocokan tepat (baris + rule) dan bahwa file `safe` tidak menghasilkan temuan rule itu.
 
