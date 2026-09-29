@@ -22,11 +22,12 @@ from vulnfab.core.models import (
 )
 from vulnfab.core.parsing import ParseFailure, parse_file_cached
 from vulnfab.plugins.base import RepoView
-from vulnfab.plugins.laravel import eloquent
+from vulnfab.plugins.laravel import eloquent, routes
 from vulnfab.plugins.laravel.migrations import SCHEMA, MigrationBuilder
 
 _MIGRATION_RE = re.compile(r"(?:^|.*/)database/migrations/[^/]+\.php$")
 _MODEL_RE = re.compile(r"(?:^|.*/)app/(?:Models/)?[^/]+\.php$|(?:^|.*/)app/Models/.+\.php$")
+_ROUTES_RE = re.compile(r"(?:^|.*/)routes/[^/]+\.php$")
 _SKIP = ("/vendor/", "/node_modules/", "/storage/")
 _PHP_LANGS = ("php", "blade")
 
@@ -118,7 +119,28 @@ class LaravelPlugin:
     # --- contract stubs (filled in as the plugin grows) ------------------------------------------
 
     def entrypoints(self, unit: ParsedUnit) -> list[Entrypoint]:
-        return []
+        route_files = {
+            p: pf
+            for p, pf in unit.files.items()
+            if _ROUTES_RE.match(p) and not p.endswith(("console.php", "channels.php"))
+        }
+        if not route_files:
+            return []
+        collector = routes.RouteCollector(unit.unresolved)
+        imports_by_file: dict[str, dict[str, str]] = {}
+        for path, pf in sorted(route_files.items()):
+            collector.collect(path, pf)
+            imports_by_file[path] = collector.imports
+        controllers = routes.index_controllers(unit.files)
+        sources = {p: pf.source for p, pf in route_files.items()}
+        return routes.to_entrypoints(
+            collector.routes,
+            controllers,
+            imports_by_file,
+            sources,
+            routes.csrf_except(unit.files),
+            unit.unresolved,
+        )
 
     def data_access(self, unit: ParsedUnit) -> list[DataAccess]:
         return []
@@ -140,6 +162,8 @@ class LaravelPlugin:
     def fixture_path(self, filename: str) -> str | None:
         if filename.startswith("migration"):
             return "database/migrations/2024_01_01_000000_create_test.php"
+        if "routes" in filename:
+            return "routes/web.php"
         if filename.startswith("model"):
             return "app/Models/Model.php"
         return None

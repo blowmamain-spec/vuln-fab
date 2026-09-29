@@ -187,6 +187,12 @@ def _engine_lines(
             migration.parent.mkdir(parents=True)
             migration.write_text(schema.read_text(encoding="utf-8"), encoding="utf-8")
         rel = path.name if path.name.startswith(".env") else f"src/{path.name}"
+        from vulnfab.plugins import registry
+
+        plugin = next((p for p in registry.discover() if p.name == rule.stack), None)
+        placed = getattr(plugin, "fixture_path", lambda _name: None)(path.name)
+        if placed is not None and not path.name.startswith(".env"):
+            rel = placed
         target = root / rel
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")

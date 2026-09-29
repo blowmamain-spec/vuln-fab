@@ -1,0 +1,30 @@
+rules:
+  - id: lv-route-no-auth
+    kind: crosscheck
+    stack: laravel
+    facts: Entrypoint
+    check: "vulnfab.plugins.laravel.checks:route_no_auth"
+    severity: high
+    confidence: medium
+    tier: A
+    cwe: [CWE-306, CWE-862]
+    owasp: "A01:2021"
+    title: "Route that reads or changes data without authentication"
+    message: "A route handles data but is not behind auth middleware."
+    fix: "Put the route in a Route::middleware('auth') group (or auth:sanctum) and authorize the record."
+    tests: {vulnerable: [routes.php], safe: [safe_routes.php]}
+
+  - id: lv-csrf-exempt
+    kind: crosscheck
+    stack: laravel
+    facts: Entrypoint
+    check: "vulnfab.plugins.laravel.checks:csrf_exempt_route"
+    severity: medium
+    confidence: medium
+    tier: A
+    cwe: [CWE-352]
+    owasp: "A01:2021"
+    title: "Route excluded from CSRF verification"
+    message: "A route is excluded from CSRF verification."
+    fix: "Remove the exclusion, or authenticate the caller with a header token instead of cookies."
+    tests: {vulnerable: [routes.php], safe: [safe_routes.php]}
