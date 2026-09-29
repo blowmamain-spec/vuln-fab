@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.0
 
 - SCA offline: `sca-known-vuln`, `--osv-db`, `--osv-scanner` (WP-8.2).
 - `--history` / `--history-limit`: secrets removed from the tree but still in git history (`sec-secret-history`, WP-8.3).

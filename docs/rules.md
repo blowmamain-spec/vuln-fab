@@ -1,6 +1,6 @@
 # Referensi rule
 
-Dibuat otomatis oleh `scripts/gen_rule_docs.py` dari rule pack (vulnfab 0.3.x).
+Dibuat otomatis oleh `scripts/gen_rule_docs.py` dari rule pack (vulnfab 1.0.x).
 **Jangan edit tangan**; perbarui rule YAML lalu jalankan skripnya. CI memeriksa kesinkronan.
 
 Total: 124 rule. Tingkat: **A** struktural/pasti, **B** pola kepemilikan (IDOR; confidence maksimum medium), **C** kandidat semantik (tersembunyi secara default).
