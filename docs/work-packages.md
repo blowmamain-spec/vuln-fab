@@ -65,13 +65,13 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
 
 ## Fase 3: Plugin Supabase/Postgres (inti produk)
 
-- [ ] **WP-3.1 Loader migration** (S) — dep: 1.2. Urut timestamp/nama; tangani berkas tak valid sebagai `Unresolved` (tidak crash).
+- [x] **WP-3.1 Loader migration** (S) — dep: 1.2. Urut timestamp/nama; tangani berkas tak valid sebagai `Unresolved` (tidak crash).
   *Lulus jika*: test urutan, duplikat timestamp, SQL rusak.
-- [ ] **WP-3.2 SchemaBuilder: DDL inti** (L) — dep: 0.2, 3.1. `CREATE/ALTER/DROP TABLE`, `RENAME`, `SET SCHEMA`, kolom, constraint, `ENABLE/FORCE RLS`, `CREATE/ALTER/DROP POLICY`, `GRANT/REVOKE`, `ALTER DEFAULT PRIVILEGES`, `CREATE SCHEMA`, view (+ `security_invoker`).
+- [x] **WP-3.2 SchemaBuilder: DDL inti** (L) — dep: 0.2, 3.1. `CREATE/ALTER/DROP TABLE`, `RENAME`, `SET SCHEMA`, kolom, constraint, `ENABLE/FORCE RLS`, `CREATE/ALTER/DROP POLICY`, `GRANT/REVOKE`, `ALTER DEFAULT PRIVILEGES`, `CREATE SCHEMA`, view (+ `security_invoker`).
   *Lulus jika*: test tabel-per-pernyataan menghasilkan SchemaModel keadaan akhir yang benar (termasuk drop lalu recreate, rename).
 - [ ] **WP-3.3 Fungsi & plpgsql** (M) — dep: 3.2. `CREATE FUNCTION` (`security_definer`, `search_path`, bahasa), parse body via `parse_plpgsql`, deteksi `EXECUTE` dinamis; `DO $$` → `Unresolved`.
   *Lulus jika*: fungsi definer tanpa `search_path` dan `EXECUTE` konkatenasi terdeteksi di test; `DO` menghasilkan `Unresolved`.
-- [ ] **WP-3.4 Akses efektif** (L) — dep: 3.2. `effective_access` sesuai `spec.md` §5 (OR permissive, restrictive AND, deny-default, `auth.uid()` owner, `service_role` bypass).
+- [x] **WP-3.4 Akses efektif** (L) — dep: 3.2. `effective_access` sesuai `spec.md` §5 (OR permissive, restrictive AND, deny-default, `auth.uid()` owner, `service_role` bypass).
   *Lulus jika*: tabel kebenaran ≥ 25 kasus lulus (termasuk RLS aktif tanpa policy = deny, `(select auth.uid())`, policy `true`, `FORCE RLS`).
 - [ ] **WP-3.5 Storage, config.toml, seed.sql** (M) — dep: 3.2. Bucket (SQL `storage.buckets` + config), policy `storage.objects`, `config.toml` (signup, jwt, `verify_jwt` per fungsi), password/akun hardcoded di seed.
   *Lulus jika*: test fixture untuk tiap sumber; TOML rusak → `Unresolved`.
