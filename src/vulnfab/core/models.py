@@ -329,6 +329,7 @@ class SchemaModel:
     unresolved: list[Unresolved] = field(default_factory=list)
     configs: dict[str, ConfigDoc] = field(default_factory=dict)
     grant_events: list[GrantEvent] = field(default_factory=list)
+    dynamic_rls_blocks: list[tuple[str, int]] = field(default_factory=list)
     drift_source: SchemaModel | None = None  # live database (pg_dump) to compare against
     assumptions: list[str] = field(default_factory=list)
 

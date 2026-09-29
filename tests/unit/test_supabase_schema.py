@@ -227,15 +227,12 @@ def test_storage_buckets() -> None:
     assert [u.kind for u in m.unresolved] == ["dynamic_bucket"]
 
 
-def test_do_blocks_and_parse_errors_are_unresolved() -> None:
+def test_static_do_blocks_are_applied_and_parse_errors_are_unresolved() -> None:
     m = build(
         "do $$ begin create table x(i int); end $$;\ncreate table ok (i int);\ncreate tabl bad;"
     )
-    assert list(m.tables) == ["public.ok"]
-    assert sorted((u.kind, u.line) for u in m.unresolved) == [
-        ("do_block", 1),
-        ("sql_parse_error", 3),
-    ]
+    assert list(m.tables) == ["public.x", "public.ok"]  # static DDL inside DO is analysed
+    assert [(u.kind, u.line) for u in m.unresolved] == [("sql_parse_error", 3)]
 
 
 def test_drop_schema_cascades_in_model() -> None:

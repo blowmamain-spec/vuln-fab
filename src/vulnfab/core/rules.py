@@ -32,7 +32,7 @@ SCHEMA_CONDITION_NAMES = frozenset({"table", "policy", "function", "view", "buck
 
 WhereKind = Literal[
     "literal", "not_literal", "identifier", "fstring_or_concat", "not_fstring_or_concat",
-    "regex", "not_regex",
+    "unsafe_interpolation", "regex", "not_regex",
 ]  # fmt: skip
 
 

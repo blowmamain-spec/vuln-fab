@@ -7,6 +7,8 @@ as ``Unresolved`` so they show up in the coverage report.
 
 from __future__ import annotations
 
+import re
+from collections.abc import Iterator
 from dataclasses import replace
 from typing import Any
 
@@ -27,7 +29,7 @@ from vulnfab.core.models import (
     Unresolved,
     View,
 )
-from vulnfab.core.sqlparser import PglastParser, SqlParser, Statement
+from vulnfab.core.sqlparser import PglastParser, SqlParseError, SqlParser, Statement
 
 DEFAULT_SCHEMA = "public"
 ALL_TABLE_PRIVILEGES = frozenset(
@@ -559,6 +561,74 @@ class SchemaBuilder:
             self.model.buckets[name] = Bucket(name, is_public, path, stmt.line, stmt.end_line)
 
     def _on_DoStmt(self, stmt: Statement, path: str) -> None:
-        self.model.unresolved.append(
-            Unresolved("do_block", path, stmt.line, "DO block contents are not analysed")
-        )
+        """Apply the *static* SQL inside a DO block; note dynamic SQL as unresolved.
+
+        Idempotent-migration idioms such as ``IF NOT EXISTS (...) THEN CREATE POLICY ...``
+        contain plain DDL that PL/pgSQL executes; those statements are applied at the DO's
+        location. ``EXECUTE`` (loops with format()) cannot be resolved.
+        """
+        body, language = None, "plpgsql"
+        for opt in stmt.node.args or []:
+            if opt.defname == "as" and isinstance(opt.arg, A.String):
+                body = str(opt.arg.sval)
+            elif opt.defname == "language" and isinstance(opt.arg, A.String):
+                language = str(opt.arg.sval).lower()
+        if body is None or language != "plpgsql":
+            self.model.unresolved.append(
+                Unresolved("do_block", path, stmt.line, "DO block is not PL/pgSQL")
+            )
+            return
+        wrapper = f"create function vulnfab_do() returns void language plpgsql as $vulnfab${body}$vulnfab$;"  # noqa: E501
+        try:
+            parsed = self.parser.parse_plpgsql(wrapper)
+        except SqlParseError:
+            self.model.unresolved.append(
+                Unresolved("do_block", path, stmt.line, "DO block could not be parsed")
+            )
+            return
+        static_sql: list[str] = []
+        dynamic = False
+        for item in parsed:
+            for kind, text in _plpgsql_statements(item.raw):
+                if kind == "sql":
+                    static_sql.append(text)
+                else:
+                    dynamic = True
+        for sql in static_sql:
+            for inner in self.parser.parse_lenient(sql).statements:
+                self.apply(replace(inner, line=stmt.line, end_line=stmt.end_line), path)
+        if dynamic:
+            self.model.unresolved.append(
+                Unresolved("do_block", path, stmt.line, "DO block runs dynamic SQL (EXECUTE)")
+            )
+            if re.search(r"row\s+level\s+security|create\s+policy", body, re.I):
+                self.model.dynamic_rls_blocks.append((path, stmt.line))
+
+
+def _plpgsql_statements(node: Any) -> Iterator[tuple[str, str]]:
+    """Yield ("sql", text) for static statements and ("dynamic", text) for EXECUTE forms."""
+
+    def expr(holder: Any) -> str:
+        return str(((holder or {}).get("PLpgSQL_expr") or {}).get("query", ""))
+
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "PLpgSQL_stmt_execsql" and isinstance(value, dict):
+                yield "sql", expr(value.get("sqlstmt"))
+            elif (
+                key == "PLpgSQL_stmt_dynexecute"
+                and isinstance(value, dict)
+                or key == "PLpgSQL_stmt_dynfors"
+                and isinstance(value, dict)
+            ):
+                yield "dynamic", expr(value.get("query"))
+            elif (
+                key == "PLpgSQL_stmt_return_query"
+                and isinstance(value, dict)
+                and value.get("dynquery")
+            ):
+                yield "dynamic", expr(value.get("dynquery"))
+            yield from _plpgsql_statements(value)
+    elif isinstance(node, list):
+        for item in node:
+            yield from _plpgsql_statements(item)

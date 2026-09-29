@@ -76,6 +76,9 @@ def scan_command(
     rules_path: Annotated[
         list[Path] | None, typer.Option("--rules", help="Extra rule files/directories.")
     ] = None,
+    max_per_rule: Annotated[
+        int, typer.Option("--max-per-rule", min=0, help="Console: rows per rule (0 = all).")
+    ] = 10,
     schema_dump: Annotated[
         Path | None,
         typer.Option("--schema-dump", help="pg_dump --schema-only of the live database (drift)."),
@@ -115,9 +118,9 @@ def scan_command(
             sys.stdout.write(text)
     elif output:
         with output.open("w") as handle:
-            console_reporter.render(result, handle)
+            console_reporter.render(result, handle, max_per_rule)
     else:
-        console_reporter.render(result, sys.stdout)
+        console_reporter.render(result, sys.stdout, max_per_rule)
 
     if fail_on is not None and any(f.severity.rank >= fail_on.rank for f in result.findings):
         raise typer.Exit(EXIT_FINDINGS)

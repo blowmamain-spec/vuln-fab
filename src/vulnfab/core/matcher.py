@@ -347,6 +347,47 @@ def _core(node: Node) -> Node:
     return node
 
 
+# Interpolated values that are safe to put into HTML: escaped/sanitized/numeric.
+_SAFE_PART = re.compile(
+    r"(?is)^\s*(?:[\w$.]+\.)?(?:esc\w*|escape\w*|sanitiz\w*|encode\w*|purify\w*|safe\w*|"
+    r"clean\w*|number|parseint|parsefloat|tofixed|tolocale\w*|json\.stringify)\s*\("
+    r"|^\s*\d+(?:\.\d+)?\s*$|^\s*[\w$.]+\.(?:length|size|count)\s*$"
+)
+
+
+def _interpolated_parts(node: Node) -> list[Node]:
+    """Non-literal pieces of a template literal / ``+`` concatenation."""
+    if node.type == "template_string":
+        parts: list[Node] = []
+        for child in node.children:
+            if child.type == "template_substitution":
+                parts.extend(c for c in child.children if c.is_named)
+        return parts
+    if node.type == "parenthesized_expression":
+        inner = [c for c in node.children if c.is_named]
+        return _interpolated_parts(inner[0]) if inner else []
+    if node.type == "binary_expression":
+        op = next((c for c in node.children if not c.is_named), None)
+        if op is not None and _t(op) == "+":
+            out: list[Node] = []
+            for side in (node.child_by_field_name("left"), node.child_by_field_name("right")):
+                if side is None or is_literal(side):
+                    continue
+                nested = _interpolated_parts(side)
+                out.extend(
+                    nested
+                    if nested or side.type in ("template_string", "binary_expression")
+                    else [side]
+                )
+            return out
+    return []
+
+
+def has_unsafe_interpolation(node: Node) -> bool:
+    """A built string with at least one interpolated value that is not visibly escaped."""
+    return any(not _SAFE_PART.match(_t(part)) for part in _interpolated_parts(node))
+
+
 def check_where(clause: WhereClause, env: Env, language: str) -> bool:
     bound = env.get(clause.metavariable)
     if bound is None:
@@ -363,6 +404,8 @@ def check_where(clause: WhereClause, env: Env, language: str) -> bool:
         return is_dynamic_string(node, language)
     if kind == "not_fstring_or_concat":
         return not is_dynamic_string(node, language)
+    if kind == "unsafe_interpolation":
+        return has_unsafe_interpolation(node)
     assert clause.regex is not None
     found = re.search(clause.regex, _t(node)) is not None
     return found if kind == "regex" else not found

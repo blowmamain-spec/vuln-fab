@@ -96,13 +96,22 @@ def rls_missing(ctx: CheckContext) -> Iterator[SchemaHit]:
             continue
         if t.external and not t.rls_line:
             continue  # created outside the migrations and never toggled: unknown, not a finding
+        dynamic = ctx.model.dynamic_rls_blocks
+        note = (
+            f" A DO block with dynamic SQL that mentions RLS/policies "
+            f"({dynamic[0][0]}:{dynamic[0][1]}) may enable it; this could not be verified."
+            if dynamic
+            else ""
+        )
         yield SchemaHit(
             t.rls_file,
             t.rls_line,
             t.rls_end_line,
-            f"Table {t.qualified_name} is exposed through the API but Row Level Security is off.",
+            f"Table {t.qualified_name} is exposed through the API but Row Level Security is off."
+            + note,
             trace=(TraceStep(t.rls_file, t.rls_line, "schema", f"RLS off for {t.qualified_name}"),),
             symbol=t.qualified_name,
+            confidence=Confidence.LOW if dynamic else None,
         )
 
 

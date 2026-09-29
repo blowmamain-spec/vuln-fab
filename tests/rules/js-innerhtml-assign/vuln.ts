@@ -1,1 +1,1 @@
-(el as HTMLElement).innerHTML = user; // vuln: js-innerhtml-assign
+(el as HTMLElement).innerHTML = `<i>${user}</i>`; // vuln: js-innerhtml-assign

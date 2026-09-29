@@ -1,4 +1,10 @@
 el.innerHTML = "<b>static</b>";
+el.innerHTML = "";
 el.textContent = user;
 const html = el.innerHTML;
-el.innerText = user;
+el.innerHTML = `<td>${escapeHtml(a)}</td><td>${esc(b)}</td>`;
+el.innerHTML = `<b>${DOMPurify.sanitize(x)}</b>`;
+el.innerHTML = `${Number(n)} item, ${items.length} more, ${price.toFixed(2)}`;
+el.innerHTML = "<b>" + escapeHtml(name) + "</b>";
+el.innerHTML = html;
+el.innerHTML = render(x);

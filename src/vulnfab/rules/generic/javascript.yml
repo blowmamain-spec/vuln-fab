@@ -54,15 +54,34 @@ rules:
     cwe: [CWE-79]
     owasp: "A03:2021"
     title: "HTML injection through innerHTML/outerHTML"
-    message: "Assigning non-constant data to innerHTML can inject script."
+    message: "innerHTML receives a string built with interpolated values that are not visibly escaped."
+    pattern-either:
+      - "$EL.innerHTML = $X"
+      - "$EL.innerHTML += $X"
+      - "$EL.outerHTML = $X"
+    where:
+      - {metavariable: X, kind: unsafe_interpolation}
+    fix: "Escape every interpolated value (escapeHtml), use textContent, or sanitize with DOMPurify."
+    tests: {vulnerable: [vuln.js, vuln.ts], safe: [safe.js]}
+
+  - id: js-innerhtml-var
+    stack: generic
+    languages: [javascript, typescript, tsx]
+    severity: medium
+    confidence: low
+    cwe: [CWE-79]
+    owasp: "A03:2021"
+    title: "innerHTML assigned from a variable or call"
+    message: "innerHTML receives a non-constant value; check that it was escaped where it was built."
     pattern-either:
       - "$EL.innerHTML = $X"
       - "$EL.innerHTML += $X"
       - "$EL.outerHTML = $X"
     where:
       - {metavariable: X, kind: not_literal}
-    fix: "Use textContent, or sanitize with DOMPurify."
-    tests: {vulnerable: [vuln.js, vuln.ts], safe: [safe.js]}
+      - {metavariable: X, kind: not_fstring_or_concat}
+    fix: "Prefer textContent, or sanitize with DOMPurify before assigning."
+    tests: {vulnerable: [vuln.js], safe: [safe.js]}
 
   - id: js-document-write
     stack: generic
