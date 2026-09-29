@@ -1,0 +1,39 @@
+rules:
+  - id: lv-guarded-empty
+    kind: schema
+    stack: laravel
+    severity: high
+    confidence: medium
+    cwe: [CWE-915]
+    owasp: "A04:2021"
+    title: "Model is fully mass-assignable"
+    message: "$guarded = [] disables mass-assignment protection."
+    check: "vulnfab.plugins.laravel.checks:guarded_empty"
+    fix: "Declare an explicit $fillable list."
+    tests: {vulnerable: [model_vuln.php], safe: [model_safe.php]}
+
+  - id: lv-fillable-privileged
+    kind: schema
+    stack: laravel
+    severity: medium
+    confidence: medium
+    cwe: [CWE-915]
+    owasp: "A04:2021"
+    title: "Privileged attribute is mass-assignable"
+    message: "$fillable contains a privileged attribute."
+    check: "vulnfab.plugins.laravel.checks:fillable_privileged"
+    fix: "Remove role/admin/balance style attributes from $fillable and set them explicitly."
+    tests: {vulnerable: [model_vuln.php], safe: [model_safe.php]}
+
+  - id: lv-hidden-missing
+    kind: schema
+    stack: laravel
+    severity: medium
+    confidence: low
+    cwe: [CWE-200]
+    owasp: "A01:2021"
+    title: "Sensitive column not hidden from serialization"
+    message: "A model does not hide a sensitive column."
+    check: "vulnfab.plugins.laravel.checks:hidden_missing"
+    fix: "Add the column to $hidden."
+    tests: {vulnerable: [model_vuln.php], safe: [model_safe.php]}

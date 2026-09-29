@@ -72,6 +72,13 @@ def _schema_lines(rule: SchemaRule, path: Path) -> tuple[set[int], str | None]:
     if dest is None:
         return set(), f"{path.name}: cannot place this file in a {rule.stack} fixture repository"
     with tempfile.TemporaryDirectory() as tmp:
+        extra = path.parent / "_repo"  # extra files the schema needs (e.g. migrations)
+        if extra.is_dir():
+            for f in extra.rglob("*"):
+                if f.is_file():
+                    copy = Path(tmp) / f.relative_to(extra)
+                    copy.parent.mkdir(parents=True, exist_ok=True)
+                    copy.write_text(f.read_text(encoding="utf-8"), encoding="utf-8")
         target = Path(tmp) / dest
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")

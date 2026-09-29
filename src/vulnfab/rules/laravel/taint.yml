@@ -1,0 +1,37 @@
+rules:
+  - id: lv-mass-assign
+    kind: taint
+    stack: laravel
+    languages: [php]
+    severity: high
+    confidence: medium
+    cwe: [CWE-915]
+    owasp: "A04:2021"
+    title: "Whole request passed to a mass-assignment call"
+    message: "The complete request input reaches create()/update()/fill(); a client can set any fillable attribute (role, admin, owner)."
+    sources:
+      - "call request.all"
+      - "call Request::all"
+      - "call request.post"
+      - "call request.except"
+      - "call request.json"
+      - "call request.toArray"
+    sinks:
+      - "call *::create arg0"
+      - "call *::forceCreate arg0"
+      - "call *::firstOrCreate arg0"
+      - "call *::updateOrCreate arg0"
+      - "call *::insert arg0"
+      - "call *.create arg0"
+      - "call *.update arg0"
+      - "call *.fill arg0"
+      - "call *.forceFill arg0"
+    sanitizers:
+      - "call *.validated"
+      - "call *.only"
+      - "call *.safe"
+      - "call *.validate"
+      - "call Arr::only"
+      - "call array_intersect_key"
+    fix: "Pass $request->validated() or $request->only([...]) with an explicit list of columns."
+    tests: {vulnerable: [vuln.php], safe: [safe.php]}

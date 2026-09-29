@@ -1,0 +1,42 @@
+rules:
+  - id: lv-blade-raw
+    kind: scanner
+    stack: laravel
+    scanner: "vulnfab.plugins.laravel.blade:unescaped_output"
+    languages: [blade]
+    severity: high
+    confidence: medium
+    cwe: [CWE-79]
+    owasp: "A03:2021"
+    title: "Blade output printed without escaping"
+    message: "{!! !!} prints raw HTML."
+    fix: "Use {{ }}; if HTML is needed, sanitise it (HTMLPurifier) before printing."
+    tests: {vulnerable: [vuln.blade.php], safe: [safe.blade.php]}
+
+  - id: lv-blade-csrf
+    kind: scanner
+    stack: laravel
+    scanner: "vulnfab.plugins.laravel.blade:form_without_csrf"
+    languages: [blade]
+    severity: medium
+    confidence: medium
+    cwe: [CWE-352]
+    owasp: "A01:2021"
+    title: "State-changing form without @csrf"
+    message: "A POST/PUT/PATCH/DELETE form has no @csrf."
+    fix: "Add @csrf inside the form."
+    tests: {vulnerable: [vuln.blade.php], safe: [safe.blade.php]}
+
+  - id: lv-blade-php-echo
+    kind: scanner
+    stack: laravel
+    scanner: "vulnfab.plugins.laravel.blade:php_echo"
+    languages: [blade]
+    severity: medium
+    confidence: medium
+    cwe: [CWE-79]
+    owasp: "A03:2021"
+    title: "Raw PHP echo in a Blade view"
+    message: "A raw PHP echo bypasses Blade escaping."
+    fix: "Use {{ }} instead of <?= ?> or echo inside @php."
+    tests: {vulnerable: [vuln.blade.php], safe: [safe.blade.php]}

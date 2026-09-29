@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Iterable
+from dataclasses import replace
 from pathlib import Path
 
 from vulnfab.core.models import (
@@ -23,7 +24,7 @@ from vulnfab.core.models import (
 from vulnfab.core.parsing import ParseFailure, parse_file_cached
 from vulnfab.plugins.base import RepoView
 from vulnfab.plugins.laravel import eloquent, routes
-from vulnfab.plugins.laravel.migrations import SCHEMA, MigrationBuilder
+from vulnfab.plugins.laravel.migrations import SCHEMA, MigrationBuilder, table_for_class
 
 _MIGRATION_RE = re.compile(r"(?:^|.*/)database/migrations/[^/]+\.php$")
 _MODEL_RE = re.compile(r"(?:^|.*/)app/(?:Models/)?[^/]+\.php$|(?:^|.*/)app/Models/.+\.php$")
@@ -157,13 +158,53 @@ class LaravelPlugin:
     def refine(
         self, raw: list[tuple[Finding, str]], model: SchemaModel
     ) -> list[tuple[Finding, str]]:
-        return raw
+        """Rows without any owner relation are shared reference data: lower IDOR confidence."""
+        out: list[tuple[Finding, str]] = []
+        for finding, symbol in raw:
+            if finding.rule_id == "tphp-idor":
+                table = _queried_table(finding.snippet, model)
+                if table is not None and not _has_owner(table):
+                    finding = replace(
+                        finding,
+                        confidence=Confidence.LOW,
+                        message=f"{finding.message} (table {table.name} has no column tying rows "
+                        "to a user, so it may be shared reference data)",
+                    )
+            out.append((finding, symbol))
+        return out
 
     def fixture_path(self, filename: str) -> str | None:
         if filename.startswith("migration"):
             return "database/migrations/2024_01_01_000000_create_test.php"
+        if filename.endswith("Seeder.php"):
+            return f"database/seeders/{filename}"
         if "routes" in filename:
             return "routes/web.php"
         if filename.startswith("model"):
             return "app/Models/Model.php"
         return None
+
+
+_QUERIED = re.compile(r"(\w+)::(?:find|findOrFail|destroy|findOrNew|firstWhere)\(")
+_OWNER_COLUMN = re.compile(
+    r"^(user_id|owner_id|author_id|created_by|creator_id|account_id|member_id|customer_id|team_id)$",
+    re.I,
+)
+
+
+def _queried_table(snippet: str, model: SchemaModel):  # type: ignore[no-untyped-def]
+    match = _QUERIED.search(snippet)
+    if not match:
+        return None
+    cls = match.group(1)
+    for table in model.tables.values():
+        if table.extras.get("model") == cls:
+            return table
+    return model.tables.get(f"{SCHEMA}.{table_for_class(cls)}")
+
+
+def _has_owner(table) -> bool:  # type: ignore[no-untyped-def]
+    for column in table.columns:
+        if _OWNER_COLUMN.match(column.name) or (column.references or "") in ("users", "user"):
+            return True
+    return False

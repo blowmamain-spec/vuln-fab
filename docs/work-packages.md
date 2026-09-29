@@ -140,9 +140,9 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
   *Lulus jika*: fixture migration umum menghasilkan skema benar.
 - [x] **WP-7.2 Routes & entrypoint** (M) — dep: 6.5. `routes/*.php`, group/middleware, `Route::resource`, controller; `$request->*` sebagai source; route tanpa `auth`.
   *Lulus jika*: fixture grup middleware bersarang.
-- [ ] **WP-7.3 Parser Blade** (M) — dep: 0.3c. `{!! !!}` vs `{{ }}`, `@php` blok.
+- [x] **WP-7.3 Parser Blade** (M) — dep: 0.3c. `{!! !!}` vs `{{ }}`, `@php` blok.
   *Lulus jika*: fixture Blade dengan komentar/escaping.
-- [ ] **WP-7.4 Model Eloquent & rule pack** (L) — dep: 7.2, 5.7. Mass assignment, `$hidden`, `DB::raw`/`whereRaw`, `unserialize`, `APP_DEBUG`, seeder password, `lv-idor-find` (tier B).
+- [x] **WP-7.4 Model Eloquent & rule pack** (L) — dep: 7.2, 5.7. Mass assignment, `$hidden`, `DB::raw`/`whereRaw`, `unserialize`, `APP_DEBUG`, seeder password, `lv-idor-find` (tier B).
   *Lulus jika*: vuln + safe per rule.
 - [ ] **WP-7.5 Lab Laravel & Django + Gate M3** (L) — dep: 6.4, 7.4. Lab buatan sendiri + DVWA + django.nV; `benchmarks/results/m3.md`; tag `v0.3.0`.
   *Lulus jika*: gate M3 di rencana Bagian 17 terpenuhi.

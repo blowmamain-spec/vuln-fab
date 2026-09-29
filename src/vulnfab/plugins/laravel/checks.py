@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterator
 
 from vulnfab.core.models import Confidence, TraceStep
@@ -64,3 +65,68 @@ def csrf_exempt_route(ctx: CheckContext) -> Iterator[SchemaHit]:
             symbol=f"{entry.file}:{entry.handler}:{entry.route}",
             confidence=Confidence.MEDIUM if writes else Confidence.LOW,
         )
+
+
+PRIVILEGED_COLUMN = re.compile(
+    r"^(is_?admin|admin|is_?staff|is_?superuser|is_?super_?admin|role|roles|role_id|permissions?|"
+    r"balance|credits?|is_?verified|email_verified_at|verified|is_?active|banned|approved)$",
+    re.I,
+)
+
+
+def _model_hit(table, message: str, line: int, confidence: Confidence) -> SchemaHit:  # type: ignore[no-untyped-def]
+    file = table.extras.get("model_file", table.file)
+    return SchemaHit(
+        file,
+        line or table.extras.get("model_line", 1),
+        line or table.extras.get("model_line", 1),
+        message,
+        symbol=f"{file}:{table.extras.get('model', table.name)}",
+        confidence=confidence,
+    )
+
+
+def guarded_empty(ctx: CheckContext) -> Iterator[SchemaHit]:
+    for table in ctx.model.tables.values():
+        if table.extras.get("guarded") == [] and table.extras.get("model"):
+            privileged = [c.name for c in table.columns if PRIVILEGED_COLUMN.match(c.name)]
+            yield _model_hit(
+                table,
+                f"{table.extras['model']} sets $guarded = []: every column is mass-assignable, so "
+                "create()/update()/fill() with request data can set any attribute"
+                + (f" (including {', '.join(privileged)})." if privileged else "."),
+                table.extras.get("guarded_line", 0),
+                Confidence.HIGH if privileged else Confidence.MEDIUM,
+            )
+
+
+def fillable_privileged(ctx: CheckContext) -> Iterator[SchemaHit]:
+    for table in ctx.model.tables.values():
+        fillable = table.extras.get("fillable")
+        if not fillable or not table.extras.get("model"):
+            continue
+        bad = [f for f in fillable if PRIVILEGED_COLUMN.match(f)]
+        if bad:
+            yield _model_hit(
+                table,
+                f"{table.extras['model']}::$fillable contains {', '.join(bad)}: a request that "
+                "reaches create()/update() with all input can grant itself these attributes.",
+                table.extras.get("model_line", 0),
+                Confidence.MEDIUM,
+            )
+
+
+def hidden_missing(ctx: CheckContext) -> Iterator[SchemaHit]:
+    for table in ctx.model.tables.values():
+        if not table.extras.get("model"):
+            continue
+        hidden = set(table.extras.get("hidden") or [])
+        sensitive = [c.name for c in table.columns if c.sensitive_hint and c.name not in hidden]
+        if sensitive:
+            yield _model_hit(
+                table,
+                f"{table.extras['model']} does not hide {', '.join(sensitive)} from serialization: "
+                "returning the model (or a collection) from a route/API leaks them in JSON.",
+                table.extras.get("model_line", 0),
+                Confidence.LOW if table.extras.get("hidden") is not None else Confidence.MEDIUM,
+            )

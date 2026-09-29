@@ -1,0 +1,56 @@
+rules:
+  - id: lv-app-debug
+    kind: scanner
+    stack: laravel
+    scanner: "vulnfab.plugins.laravel.config:app_debug"
+    languages: [env, php]
+    severity: high
+    confidence: medium
+    cwe: [CWE-489, CWE-215]
+    owasp: "A05:2021"
+    title: "Debug mode enabled"
+    message: "APP_DEBUG is enabled."
+    fix: "Set APP_DEBUG=false in production."
+    tests: {vulnerable: [.env], safe: [.env.safe]}
+
+  - id: lv-app-key
+    kind: scanner
+    stack: laravel
+    scanner: "vulnfab.plugins.laravel.config:app_key_committed"
+    languages: [env]
+    severity: high
+    confidence: medium
+    cwe: [CWE-798, CWE-321]
+    owasp: "A02:2021"
+    title: "APP_KEY committed in an env file"
+    message: "APP_KEY is stored in a committed env file."
+    fix: "Remove the file from version control, rotate the key and generate a new one per environment."
+    tests: {vulnerable: [.env], safe: [.env.safe]}
+
+  - id: lv-csrf-wildcard
+    kind: scanner
+    stack: laravel
+    scanner: "vulnfab.plugins.laravel.config:csrf_except_wildcard"
+    languages: [php]
+    severity: high
+    confidence: high
+    cwe: [CWE-352]
+    owasp: "A01:2021"
+    title: "CSRF verification disabled for every route"
+    message: "VerifyCsrfToken::$except contains '*'."
+    fix: "List only the routes that must be exempt (webhooks) and authenticate them another way."
+    tests: {vulnerable: [VerifyCsrfToken.php], safe: [safe/VerifyCsrfToken.php]}
+
+  - id: lv-seeder-password
+    kind: scanner
+    stack: laravel
+    scanner: "vulnfab.plugins.laravel.config:seeder_weak_password"
+    languages: [php]
+    severity: medium
+    confidence: medium
+    cwe: [CWE-798, CWE-1392]
+    owasp: "A07:2021"
+    title: "Seeder creates an account with a default password"
+    message: "A seeder hashes a well-known password."
+    fix: "Generate a random password or read it from the environment; do not seed admin accounts in production."
+    tests: {vulnerable: [DatabaseSeeder.php], safe: [safe/DatabaseSeeder.php]}

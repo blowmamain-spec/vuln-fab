@@ -1010,6 +1010,26 @@ rules:
   - var _REQUEST
   - var _COOKIE
   - var _FILES
+  - call request.input
+  - call request.get
+  - call request.query
+  - call request.post
+  - call request.all
+  - call request.only
+  - call request.except
+  - call request.json
+  - call request.header
+  - call request.cookie
+  - call request.route
+  - call request.file
+  - call request.string
+  - call request.str
+  - call Request::input
+  - call Request::get
+  - call Request::query
+  - call Request::all
+  - call request
+  - field request.*
   sinks:
   - call mysqli_query arg1
   - call mysql_query arg0
@@ -1026,6 +1046,13 @@ rules:
   - call *.selectRaw arg0
   - call *.orderByRaw arg0
   - call *.havingRaw arg0
+  - call *::whereRaw arg0
+  - call *::selectRaw arg0
+  - call *::orderByRaw arg0
+  - call *::havingRaw arg0
+  - call *::fromRaw arg0
+  - call *.groupByRaw arg0
+  - call *.fromRaw arg0
   sanitizers:
   - call intval
   - call floatval
@@ -1064,6 +1091,26 @@ rules:
   - var _REQUEST
   - var _COOKIE
   - var _FILES
+  - call request.input
+  - call request.get
+  - call request.query
+  - call request.post
+  - call request.all
+  - call request.only
+  - call request.except
+  - call request.json
+  - call request.header
+  - call request.cookie
+  - call request.route
+  - call request.file
+  - call request.string
+  - call request.str
+  - call Request::input
+  - call Request::get
+  - call Request::query
+  - call Request::all
+  - call request
+  - field request.*
   sinks:
   - call system arg0
   - call exec arg0
@@ -1108,10 +1155,32 @@ rules:
   - var _REQUEST
   - var _COOKIE
   - var _FILES
+  - call request.input
+  - call request.get
+  - call request.query
+  - call request.post
+  - call request.all
+  - call request.only
+  - call request.except
+  - call request.json
+  - call request.header
+  - call request.cookie
+  - call request.route
+  - call request.file
+  - call request.string
+  - call request.str
+  - call Request::input
+  - call Request::get
+  - call Request::query
+  - call Request::all
+  - call request
+  - field request.*
   sinks:
   - call eval arg0
   - call assert arg0
   - call create_function arg1
+  - call Blade::render arg0
+  - call Blade::compileString arg0
   sanitizers:
   - call intval
   validators:
@@ -1146,6 +1215,26 @@ rules:
   - var _REQUEST
   - var _COOKIE
   - var _FILES
+  - call request.input
+  - call request.get
+  - call request.query
+  - call request.post
+  - call request.all
+  - call request.only
+  - call request.except
+  - call request.json
+  - call request.header
+  - call request.cookie
+  - call request.route
+  - call request.file
+  - call request.string
+  - call request.str
+  - call Request::input
+  - call Request::get
+  - call Request::query
+  - call Request::all
+  - call request
+  - field request.*
   sinks:
   - call include arg0
   - call include_once arg0
@@ -1161,6 +1250,14 @@ rules:
   - call copy arg0
   - call highlight_file arg0
   - call show_source arg0
+  - call Storage::get arg0
+  - call Storage::download arg0
+  - call Storage::delete arg0
+  - call Storage::put arg0
+  - call File::get arg0
+  - call File::delete arg0
+  - call *.download arg0
+  - call *.storeAs arg0
   sanitizers:
   - call basename
   - call intval
@@ -1201,6 +1298,26 @@ rules:
   - var _REQUEST
   - var _COOKIE
   - var _FILES
+  - call request.input
+  - call request.get
+  - call request.query
+  - call request.post
+  - call request.all
+  - call request.only
+  - call request.except
+  - call request.json
+  - call request.header
+  - call request.cookie
+  - call request.route
+  - call request.file
+  - call request.string
+  - call request.str
+  - call Request::input
+  - call Request::get
+  - call Request::query
+  - call Request::all
+  - call request
+  - field request.*
   sinks:
   - call curl_init arg0
   - call get_headers arg0
@@ -1247,6 +1364,26 @@ rules:
   - var _REQUEST
   - var _COOKIE
   - var _FILES
+  - call request.input
+  - call request.get
+  - call request.query
+  - call request.post
+  - call request.all
+  - call request.only
+  - call request.except
+  - call request.json
+  - call request.header
+  - call request.cookie
+  - call request.route
+  - call request.file
+  - call request.string
+  - call request.str
+  - call Request::input
+  - call Request::get
+  - call Request::query
+  - call Request::all
+  - call request
+  - field request.*
   sinks:
   - call unserialize arg0
   - call yaml_parse arg0
@@ -1277,6 +1414,26 @@ rules:
   - var _REQUEST
   - var _COOKIE
   - var _FILES
+  - call request.input
+  - call request.get
+  - call request.query
+  - call request.post
+  - call request.all
+  - call request.only
+  - call request.except
+  - call request.json
+  - call request.header
+  - call request.cookie
+  - call request.route
+  - call request.file
+  - call request.string
+  - call request.str
+  - call Request::input
+  - call Request::get
+  - call Request::query
+  - call Request::all
+  - call request
+  - field request.*
   sinks:
   - call echo args
   - call print arg0
@@ -1324,6 +1481,26 @@ rules:
   - var _REQUEST
   - var _COOKIE
   - var _FILES
+  - call request.input
+  - call request.get
+  - call request.query
+  - call request.post
+  - call request.all
+  - call request.only
+  - call request.except
+  - call request.json
+  - call request.header
+  - call request.cookie
+  - call request.route
+  - call request.file
+  - call request.string
+  - call request.str
+  - call Request::input
+  - call Request::get
+  - call Request::query
+  - call Request::all
+  - call request
+  - field request.*
   sinks:
   - call redirect arg0
   - call Redirect::to arg0
@@ -1366,6 +1543,26 @@ rules:
   - var _REQUEST
   - var _COOKIE
   - var _FILES
+  - call request.input
+  - call request.get
+  - call request.query
+  - call request.post
+  - call request.all
+  - call request.only
+  - call request.except
+  - call request.json
+  - call request.header
+  - call request.cookie
+  - call request.route
+  - call request.file
+  - call request.string
+  - call request.str
+  - call Request::input
+  - call Request::get
+  - call Request::query
+  - call Request::all
+  - call request
+  - field request.*
   - call request.input
   - call request.get
   - call request.query
