@@ -48,9 +48,9 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
 
 ## Fase 2: Rule engine
 
-- [ ] **WP-2.1 Skema rule + validator** (M) — dep: 0.2. Model pydantic sesuai `spec.md` §7; pesan error menyebut file, baris, dan field; `vulnfab rules list`.
+- [x] **WP-2.1 Skema rule + validator** (M) — dep: 0.2. Model pydantic sesuai `spec.md` §7; pesan error menyebut file, baris, dan field; `vulnfab rules list`.
   *Lulus jika*: test untuk tiap kelas kesalahan (id ganda, tanpa test safe, kind tak dikenal, field hilang).
-- [ ] **WP-2.2 Evaluator ekspresi aman** (S) — dep: 2.1. Whitelist node; tanpa pemanggilan fungsi, tanpa akses dunder.
+- [x] **WP-2.2 Evaluator ekspresi aman** (S) — dep: 2.1. Whitelist node; tanpa pemanggilan fungsi, tanpa akses dunder.
   *Lulus jika*: test adversarial (`__import__`, atribut dunder, komprehensi berat) semuanya ditolak.
 - [ ] **WP-2.3 Kompiler pola snippet → matcher** (L) — dep: 0.3b, 1.1. Metavariable, `...`, `pattern-not`, `pattern-inside`, `where`; adaptor tree-sitter Python/TS/PHP.
   *Lulus jika*: ≥ 30 kasus per bahasa (cocok/tidak cocok/tepi) lulus.
