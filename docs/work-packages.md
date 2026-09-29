@@ -136,7 +136,7 @@ Legenda: `⛔` butuh masukan dari pemilik proyek · `🔬` spike berbatas waktu 
 
 ## Fase 7: Plugin Laravel → **M3**
 
-- [ ] **WP-7.1 Migration Laravel → schema** (L) — dep: 6.5. `Schema::create/table`, `$table->…`, foreign key.
+- [x] **WP-7.1 Migration Laravel → schema** (L) — dep: 6.5. `Schema::create/table`, `$table->…`, foreign key.
   *Lulus jika*: fixture migration umum menghasilkan skema benar.
 - [ ] **WP-7.2 Routes & entrypoint** (M) — dep: 6.5. `routes/*.php`, group/middleware, `Route::resource`, controller; `$request->*` sebagai source; route tanpa `auth`.
   *Lulus jika*: fixture grup middleware bersarang.
