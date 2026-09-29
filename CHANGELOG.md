@@ -3,6 +3,7 @@
 ## Unreleased
 
 - SCA offline: `sca-known-vuln`, `--osv-db`, `--osv-scanner` (WP-8.2).
+- `--history` / `--history-limit`: secrets removed from the tree but still in git history (`sec-secret-history`, WP-8.3).
 
 ## 0.1.0 (M1: Supabase + TypeScript)
 - Pipeline: loader, plugin registry, tree-sitter parsing, reporters JSON/console, baseline, nosec, config.

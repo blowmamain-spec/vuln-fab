@@ -68,9 +68,20 @@ class ScanOptions:
     schema_dump: Path | None = None
     use_cache: bool = False  # opt-in for library callers; the CLI enables it by default
     jobs: int = 1
+    history: bool = False  # also scan git history for secrets removed from the tree
+    history_limit: int = 200
     osv_db: Path | None = None  # offline OSV advisories (dir/file) for lockfile checks
     osv_scanner: bool = False  # also run the optional osv-scanner binary
     since: str | None = None  # only report findings affected by changes since this git ref
+
+
+def _head(path: Path) -> str:
+    from vulnfab.core.gitdiff import GitError, _git
+
+    try:
+        return _git(path, "rev-parse", "HEAD").strip()
+    except GitError:
+        return ""
 
 
 def _load_plugin_rules(selected: list[registry.Selected], extra: list[Path] | None) -> list[object]:
@@ -188,6 +199,7 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
                 "dump": scan_cache.file_digest(options.schema_dump),
                 "osv": scan_cache.tree_digest(options.osv_db) if options.osv_db else "",
                 "osv_scanner": options.osv_scanner,
+                "history": [options.history_limit, _head(path)] if options.history else None,
             }
         )
         hit = scan_cache.load(path, key)
@@ -303,6 +315,13 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
             )
     except (CheckError, ScannerError) as exc:
         raise RuleLoadError([RuleError("engine", 1, None, str(exc))]) from exc
+
+    if options.history:
+        from vulnfab.scanners.history import history_findings
+
+        hist, notes = history_findings(path, texts, options.history_limit)
+        raw.extend((f, f"{f.file}:{f.message}") for f in hist)
+        coverage.assumptions.extend(notes)
 
     for sel in selected:
         refine = getattr(sel.plugin, "refine", None)

@@ -89,6 +89,12 @@ def scan_command(
         bool, typer.Option("--no-cache", help="Do not read or write the result cache.")
     ] = False,
     jobs: Annotated[int, typer.Option("--jobs", "-j", min=1, help="Worker processes.")] = 1,
+    history: Annotated[
+        bool, typer.Option("--history", help="Also scan git history for committed secrets.")
+    ] = False,
+    history_limit: Annotated[
+        int, typer.Option("--history-limit", min=1, help="Newest commits to scan with --history.")
+    ] = 200,
     osv_db: Annotated[
         Path | None,
         typer.Option("--osv-db", help="Offline OSV advisories (dir/file) to check lockfiles."),
@@ -122,6 +128,8 @@ def scan_command(
         use_cache=not no_cache,
         jobs=jobs,
         since=since,
+        history=history,
+        history_limit=history_limit,
         osv_db=osv_db,
         osv_scanner=osv_scanner,
     )

@@ -79,6 +79,13 @@ advisori OSV lokal (direktori/berkas `.json`/`.jsonl`). Tanpa jaringan, hasil de
 `--osv-scanner` menjalankan biner `osv-scanner` bila ada. Tanpa keduanya, lockfile dicatat
 di *coverage* sebagai "tidak diperiksa".
 
+## Rahasia di riwayat git
+
+`vulnfab scan . --history [--history-limit 200]` juga memeriksa baris yang *ditambahkan* di commit
+lama. Rahasia yang sudah dihapus dari pohon kerja tetapi masih ada di riwayat dilaporkan sebagai
+`sec-secret-history` (nilai disamarkan; rotasi kredensialnya). Rahasia yang masih ada di pohon kerja
+tidak diduplikasi. Pemindaian dibatasi ke N commit terbaru dan batasnya dicatat di *coverage*.
+
 ## CI
 
 GitHub Action (komposit) di root repo ini:
