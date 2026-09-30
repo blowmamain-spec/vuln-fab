@@ -3,7 +3,7 @@
 Dibuat otomatis oleh `scripts/gen_rule_docs.py` dari rule pack (vulnfab 1.0.x).
 **Jangan edit tangan**; perbarui rule YAML lalu jalankan skripnya. CI memeriksa kesinkronan.
 
-Total: 124 rule. Tingkat: **A** struktural/pasti, **B** pola kepemilikan (IDOR; confidence maksimum medium), **C** kandidat semantik (tersembunyi secara default).
+Total: 133 rule. Tingkat: **A** struktural/pasti, **B** pola kepemilikan (IDOR; confidence maksimum medium), **C** kandidat semantik (tersembunyi secara default).
 
 Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignores` di `.vulnfab.yml`, atau baseline.
 
@@ -203,7 +203,7 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 - Perbaikan: Add @login_required / LoginRequiredMixin (or permission_classes) and check ownership.
 - OWASP: [A01:2021](https://owasp.org/Top10/)
 
-## Stack `generic` (67 rule)
+## Stack `generic` (76 rule)
 
 | Rule | Jenis | Severity | Confidence | Tier | CWE |
 |---|---|---|---|---|---|
@@ -217,7 +217,10 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 | [`cfg-env-debug`](#cfg-env-debug) | scanner | medium | medium | — | [CWE-489](https://cwe.mitre.org/data/definitions/489.html) |
 | [`cfg-nginx-autoindex`](#cfg-nginx-autoindex) | scanner | medium | high | — | [CWE-548](https://cwe.mitre.org/data/definitions/548.html) |
 | [`cfg-nginx-cors-wildcard`](#cfg-nginx-cors-wildcard) | scanner | medium | medium | — | [CWE-942](https://cwe.mitre.org/data/definitions/942.html) |
+| [`env-public-secret`](#env-public-secret) | scanner | high | medium | A | [CWE-540](https://cwe.mitre.org/data/definitions/540.html), [CWE-522](https://cwe.mitre.org/data/definitions/522.html) |
 | [`env-service-role-client`](#env-service-role-client) | scanner | critical | high | A | [CWE-522](https://cwe.mitre.org/data/definitions/522.html) |
+| [`js-cookie-insecure`](#js-cookie-insecure) | pattern | medium | high | — | [CWE-1004](https://cwe.mitre.org/data/definitions/1004.html), [CWE-614](https://cwe.mitre.org/data/definitions/614.html) |
+| [`js-cors-wildcard-credentials`](#js-cors-wildcard-credentials) | pattern | medium | medium | — | [CWE-942](https://cwe.mitre.org/data/definitions/942.html) |
 | [`js-dangerous-html`](#js-dangerous-html) | pattern | high | medium | — | [CWE-79](https://cwe.mitre.org/data/definitions/79.html) |
 | [`js-document-write`](#js-document-write) | pattern | medium | medium | — | [CWE-79](https://cwe.mitre.org/data/definitions/79.html) |
 | [`js-eval`](#js-eval) | pattern | high | medium | — | [CWE-95](https://cwe.mitre.org/data/definitions/95.html) |
@@ -225,6 +228,8 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 | [`js-function-constructor`](#js-function-constructor) | pattern | high | medium | — | [CWE-95](https://cwe.mitre.org/data/definitions/95.html) |
 | [`js-innerhtml-assign`](#js-innerhtml-assign) | pattern | medium | medium | — | [CWE-79](https://cwe.mitre.org/data/definitions/79.html) |
 | [`js-innerhtml-var`](#js-innerhtml-var) | pattern | medium | low | — | [CWE-79](https://cwe.mitre.org/data/definitions/79.html) |
+| [`js-jwt-insecure`](#js-jwt-insecure) | pattern | high | high | — | [CWE-347](https://cwe.mitre.org/data/definitions/347.html) |
+| [`js-tls-verify-disabled`](#js-tls-verify-disabled) | pattern | high | high | — | [CWE-295](https://cwe.mitre.org/data/definitions/295.html) |
 | [`js-xss`](#js-xss) | pattern | medium | medium | — | [CWE-79](https://cwe.mitre.org/data/definitions/79.html) |
 | [`php-echo-request`](#php-echo-request) | pattern | medium | medium | — | [CWE-79](https://cwe.mitre.org/data/definitions/79.html) |
 | [`php-eval`](#php-eval) | pattern | high | medium | — | [CWE-95](https://cwe.mitre.org/data/definitions/95.html) |
@@ -250,10 +255,14 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 | [`tjs-codei`](#tjs-codei) | taint | critical | medium | — | [CWE-95](https://cwe.mitre.org/data/definitions/95.html) |
 | [`tjs-deser`](#tjs-deser) | taint | high | medium | — | [CWE-502](https://cwe.mitre.org/data/definitions/502.html) |
 | [`tjs-idor`](#tjs-idor) | taint | medium | medium | B | [CWE-639](https://cwe.mitre.org/data/definitions/639.html) |
+| [`tjs-nosqli`](#tjs-nosqli) | taint | high | medium | — | [CWE-943](https://cwe.mitre.org/data/definitions/943.html) |
+| [`tjs-nosqli-odm`](#tjs-nosqli-odm) | taint | high | low | — | [CWE-943](https://cwe.mitre.org/data/definitions/943.html) |
 | [`tjs-pathtrav`](#tjs-pathtrav) | taint | high | medium | — | [CWE-22](https://cwe.mitre.org/data/definitions/22.html) |
+| [`tjs-protopollution`](#tjs-protopollution) | taint | medium | low | — | [CWE-1321](https://cwe.mitre.org/data/definitions/1321.html) |
 | [`tjs-redirect`](#tjs-redirect) | taint | medium | medium | — | [CWE-601](https://cwe.mitre.org/data/definitions/601.html) |
 | [`tjs-sqli`](#tjs-sqli) | taint | high | medium | — | [CWE-89](https://cwe.mitre.org/data/definitions/89.html) |
 | [`tjs-ssrf`](#tjs-ssrf) | taint | high | medium | — | [CWE-918](https://cwe.mitre.org/data/definitions/918.html) |
+| [`tjs-ssti`](#tjs-ssti) | taint | high | medium | — | [CWE-1336](https://cwe.mitre.org/data/definitions/1336.html) |
 | [`tjs-xss`](#tjs-xss) | taint | medium | medium | — | [CWE-79](https://cwe.mitre.org/data/definitions/79.html) |
 | [`tphp-cmdi`](#tphp-cmdi) | taint | critical | medium | — | [CWE-78](https://cwe.mitre.org/data/definitions/78.html) |
 | [`tphp-codei`](#tphp-codei) | taint | critical | medium | — | [CWE-95](https://cwe.mitre.org/data/definitions/95.html) |
@@ -355,6 +364,14 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 - Perbaikan: Allow-list the specific origins that need access.
 - OWASP: [A05:2021](https://owasp.org/Top10/)
 
+### env-public-secret
+
+**Secret exposed through a public build-time environment variable** — A variable with a secret-like name uses a prefix that ships it to the browser.
+
+- Jenis: scanner — Text scanner over files (secrets, env files, templates).
+- Perbaikan: Remove the public prefix and read the value only in server-side code; rotate it.
+- OWASP: [A02:2021](https://owasp.org/Top10/)
+
 ### env-service-role-client
 
 **Supabase service_role key exposed through a public env variable** — A service_role key is placed in a variable that is bundled into the client.
@@ -362,6 +379,22 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 - Jenis: scanner — Text scanner over files (secrets, env files, templates).
 - Perbaikan: Use the anon key in the browser; keep service_role server-side only, without a public prefix.
 - OWASP: [A02:2021](https://owasp.org/Top10/)
+
+### js-cookie-insecure
+
+**Cookie set without HttpOnly/Secure** — The cookie options explicitly disable httpOnly or secure.
+
+- Jenis: pattern — Syntax pattern (tree-sitter); flags code that has the shape described.
+- Perbaikan: Set httpOnly: true and secure: true (and sameSite) for session cookies.
+- OWASP: [A05:2021](https://owasp.org/Top10/)
+
+### js-cors-wildcard-credentials
+
+**CORS allows any origin with credentials** — Reflecting any origin (or '*') together with credentials lets any site read authenticated responses.
+
+- Jenis: pattern — Syntax pattern (tree-sitter); flags code that has the shape described.
+- Perbaikan: Allow-list explicit origins when credentials are enabled.
+- OWASP: [A05:2021](https://owasp.org/Top10/)
 
 ### js-dangerous-html
 
@@ -415,6 +448,22 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 - Jenis: pattern — Syntax pattern (tree-sitter); flags code that has the shape described.
 - Perbaikan: Prefer textContent, or sanitize with DOMPurify before assigning.
 - OWASP: [A03:2021](https://owasp.org/Top10/)
+
+### js-jwt-insecure
+
+**JWT verified with no algorithm restriction or with 'none'** — Accepting the 'none' algorithm (or decoding without verification) lets attackers forge tokens.
+
+- Jenis: pattern — Syntax pattern (tree-sitter); flags code that has the shape described.
+- Perbaikan: Pin algorithms (e.g. ['HS256']) and do not ignore expiry.
+- OWASP: [A02:2021](https://owasp.org/Top10/)
+
+### js-tls-verify-disabled
+
+**TLS certificate verification disabled** — Certificate validation is turned off, allowing man-in-the-middle attacks.
+
+- Jenis: pattern — Syntax pattern (tree-sitter); flags code that has the shape described.
+- Perbaikan: Trust the right CA (NODE_EXTRA_CA_CERTS) instead of disabling verification.
+- OWASP: [A02:2021](https://owasp.org/Top10/)
 
 ### js-xss
 
@@ -590,7 +639,7 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 - Perbaikan: Avoid the shell; pass an argument list and validate input.
 - OWASP: [A03:2021](https://owasp.org/Top10/)
 - Menggantikan (bila alur data terbukti): `js-exec`, `ts-cmd-injection`
-- Sumber: `field req.query`, `field req.body`, `field req.params`, `field req.headers`, `field req.cookies`, `call req.param`, `field request.query`, `field request.body`, `field request.params`, `field %arg*.query`, `field %arg*.body`, `field %arg*.params`, `field %arg*.headers`, `field %arg*.cookies`
+- Sumber: `field req.query`, `call request.json`, `call req.json`, `call request.formData`, `call request.text`, `field request.nextUrl`, `call *.searchParams.get`, `call searchParams.get`, `param searchParams`, `field %arg*.searchParams`, `field req.body`, `field req.params`, `field req.headers`, `field req.cookies`, `call req.param`, `field request.query`, `field request.body`, `field request.params`, `field %arg*.query`, `field %arg*.body`, `field %arg*.params`, `field %arg*.headers`, `field %arg*.cookies`
 - Sink: `call exec arg0`, `call execSync arg0`, `call child_process.exec arg0`, `call child_process.execSync arg0`, `call cp.exec arg0`, `call shelljs.exec arg0`
 - Sanitizer: `call parseInt`, `call Number`, `call shellescape`, `call shell-quote.quote`, `call *.digest`, `call uuid`, `call uuidv4`, `call crypto.randomUUID`
 
@@ -602,7 +651,7 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 - Perbaikan: Never evaluate user input; use a parser or a fixed lookup.
 - OWASP: [A03:2021](https://owasp.org/Top10/)
 - Menggantikan (bila alur data terbukti): `js-eval`, `js-function-constructor`, `ts-dynamic-eval`
-- Sumber: `field req.query`, `field req.body`, `field req.params`, `field req.headers`, `field req.cookies`, `call req.param`, `field request.query`, `field request.body`, `field request.params`, `field %arg*.query`, `field %arg*.body`, `field %arg*.params`, `field %arg*.headers`, `field %arg*.cookies`
+- Sumber: `field req.query`, `call request.json`, `call req.json`, `call request.formData`, `call request.text`, `field request.nextUrl`, `call *.searchParams.get`, `call searchParams.get`, `param searchParams`, `field %arg*.searchParams`, `field location.search`, `field location.hash`, `field location.href`, `field window.location.search`, `field window.location.hash`, `field window.location.href`, `field document.URL`, `field document.referrer`, `field document.cookie`, `call localStorage.getItem`, `call sessionStorage.getItem`, `call params.get`, `call urlParams.get`, `field event.data`, `field req.body`, `field req.params`, `field req.headers`, `field req.cookies`, `call req.param`, `field request.query`, `field request.body`, `field request.params`, `field %arg*.query`, `field %arg*.body`, `field %arg*.params`, `field %arg*.headers`, `field %arg*.cookies`
 - Sink: `call eval arg0`, `call Function arg0`, `call new Function arg0`, `call vm.runInNewContext arg0`, `call vm.runInThisContext arg0`, `call vm.runInContext arg0`
 - Sanitizer: `call parseInt`, `call Number`, `call JSON.parse`, `call *.digest`, `call uuid`, `call uuidv4`, `call crypto.randomUUID`
 
@@ -613,7 +662,7 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 - Jenis: taint — Data-flow rule; reports only when untrusted data reaches the sink (trace included).
 - Perbaikan: Use a data-only format (JSON) and validate the result.
 - OWASP: [A03:2021](https://owasp.org/Top10/)
-- Sumber: `field req.query`, `field req.body`, `field req.params`, `field req.headers`, `field req.cookies`, `call req.param`, `field request.query`, `field request.body`, `field request.params`, `field %arg*.query`, `field %arg*.body`, `field %arg*.params`, `field %arg*.headers`, `field %arg*.cookies`
+- Sumber: `field req.query`, `call request.json`, `call req.json`, `call request.formData`, `call request.text`, `field request.nextUrl`, `call *.searchParams.get`, `call searchParams.get`, `param searchParams`, `field %arg*.searchParams`, `field req.body`, `field req.params`, `field req.headers`, `field req.cookies`, `call req.param`, `field request.query`, `field request.body`, `field request.params`, `field %arg*.query`, `field %arg*.body`, `field %arg*.params`, `field %arg*.headers`, `field %arg*.cookies`
 - Sink: `call serialize.unserialize arg0`, `call unserialize arg0`, `call v8.deserialize arg0`
 - Sanitizer: `call *.digest`, `call uuid`, `call uuidv4`, `call crypto.randomUUID`
 
@@ -624,9 +673,31 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 - Jenis: taint — Data-flow rule; reports only when untrusted data reaches the sink (trace included).
 - Perbaikan: Scope the query to the signed-in user (filter by owner) or compare the owner after loading.
 - OWASP: [A01:2021](https://owasp.org/Top10/)
-- Sumber: `field req.query`, `field req.body`, `field req.params`, `field req.headers`, `field req.cookies`, `call req.param`, `field request.query`, `field request.body`, `field request.params`, `field %arg*.query`, `field %arg*.body`, `field %arg*.params`, `field %arg*.headers`, `field %arg*.cookies`
+- Sumber: `field req.query`, `call request.json`, `call req.json`, `call request.formData`, `call request.text`, `field request.nextUrl`, `call *.searchParams.get`, `call searchParams.get`, `param searchParams`, `field %arg*.searchParams`, `field req.body`, `field req.params`, `field req.headers`, `field req.cookies`, `call req.param`, `field request.query`, `field request.body`, `field request.params`, `field %arg*.query`, `field %arg*.body`, `field %arg*.params`, `field %arg*.headers`, `field %arg*.cookies`
 - Sink: `call *.findByPk arg0`, `call *.findById arg0`, `call *.findByIdAndUpdate arg0`, `call *.findByIdAndDelete arg0`, `call *.findByIdAndRemove arg0`
 - Sanitizer: `call *.verify`, `call *.decode`, `call jwt.*`, `call *.digest`, `call uuid`, `call uuidv4`, `call crypto.randomUUID`
+
+### tjs-nosqli
+
+**NoSQL injection (tainted object reaches a query)** — Untrusted input flows into a MongoDB collection query; an attacker can inject operators such as $ne or $where.
+
+- Jenis: taint — Data-flow rule; reports only when untrusted data reaches the sink (trace included).
+- Perbaikan: Cast inputs to strings/numbers, validate the shape (zod/joi), or use express-mongo-sanitize.
+- OWASP: [A03:2021](https://owasp.org/Top10/)
+- Sumber: `field req.query`, `call request.json`, `call req.json`, `call request.formData`, `call request.text`, `field request.nextUrl`, `call *.searchParams.get`, `call searchParams.get`, `param searchParams`, `field %arg*.searchParams`, `field req.body`, `field req.params`, `field req.headers`, `field req.cookies`, `call req.param`, `field request.query`, `field request.body`, `field request.params`, `field %arg*.query`, `field %arg*.body`, `field %arg*.params`, `field %arg*.headers`, `field %arg*.cookies`
+- Sink: `call *Collection.find arg0`, `call *Collection.findOne arg0`, `call *Collection.findOneAndUpdate arg0`, `call *Collection.findOneAndDelete arg0`, `call *Collection.findOneAndReplace arg0`, `call *Collection.update arg0`, `call *Collection.updateOne arg0`, `call *Collection.updateMany arg0`, `call *Collection.remove arg0`, `call *Collection.deleteOne arg0`, `call *Collection.deleteMany arg0`, `call *Collection.countDocuments arg0`, `call *Collection.count arg0`, `call *Collection.aggregate arg0`, `call *collection.find arg0`, `call *collection.findOne arg0`, `call *collection.findOneAndUpdate arg0`, `call *collection.findOneAndDelete arg0`, `call *collection.findOneAndReplace arg0`, `call *collection.update arg0`, `call *collection.updateOne arg0`, `call *collection.updateMany arg0`, `call *collection.remove arg0`, `call *collection.deleteOne arg0`, `call *collection.deleteMany arg0`, `call *collection.countDocuments arg0`, `call *collection.count arg0`, `call *collection.aggregate arg0`, `call *Coll.find arg0`, `call *Coll.findOne arg0`, `call *Coll.findOneAndUpdate arg0`, `call *Coll.findOneAndDelete arg0`, `call *Coll.findOneAndReplace arg0`, `call *Coll.update arg0`, `call *Coll.updateOne arg0`, `call *Coll.updateMany arg0`, `call *Coll.remove arg0`, `call *Coll.deleteOne arg0`, `call *Coll.deleteMany arg0`, `call *Coll.countDocuments arg0`, `call *Coll.count arg0`, `call *Coll.aggregate arg0`, `call *coll.find arg0`, `call *coll.findOne arg0`, `call *coll.findOneAndUpdate arg0`, `call *coll.findOneAndDelete arg0`, `call *coll.findOneAndReplace arg0`, `call *coll.update arg0`, `call *coll.updateOne arg0`, `call *coll.updateMany arg0`, `call *coll.remove arg0`, `call *coll.deleteOne arg0`, `call *coll.deleteMany arg0`, `call *coll.countDocuments arg0`, `call *coll.count arg0`, `call *coll.aggregate arg0`
+- Sanitizer: `call String`, `call parseInt`, `call Number`, `call mongoSanitize`, `call sanitize`, `call mongo-sanitize`, `call *.toString`, `call ObjectId`, `call *.ObjectId`, `call *.digest`, `call uuid`, `call crypto.randomUUID`
+
+### tjs-nosqli-odm
+
+**NoSQL injection through a Mongoose/MongoDB model (tainted object reaches a query)** — Untrusted input flows into a database query filter; an attacker can inject operators such as $ne or $gt.
+
+- Jenis: taint — Data-flow rule; reports only when untrusted data reaches the sink (trace included).
+- Perbaikan: Cast inputs to strings/numbers, validate the shape (zod/joi), or use express-mongo-sanitize.
+- OWASP: [A03:2021](https://owasp.org/Top10/)
+- Sumber: `field req.query`, `call request.json`, `call req.json`, `call request.formData`, `call request.text`, `field request.nextUrl`, `call *.searchParams.get`, `call searchParams.get`, `param searchParams`, `field %arg*.searchParams`, `field req.body`, `field req.params`, `field req.headers`, `field req.cookies`, `call req.param`, `field request.query`, `field request.body`, `field request.params`, `field %arg*.query`, `field %arg*.body`, `field %arg*.params`, `field %arg*.headers`, `field %arg*.cookies`
+- Sink: `call *.find arg0`, `call *.findOne arg0`, `call *.findOneAndUpdate arg0`, `call *.findOneAndDelete arg0`, `call *.findOneAndReplace arg0`, `call *.updateOne arg0`, `call *.updateMany arg0`, `call *.deleteOne arg0`, `call *.deleteMany arg0`, `call *.countDocuments arg0`, `call *.count arg0`, `call *.aggregate arg0`, `call *.$where arg0`
+- Sanitizer: `call String`, `call parseInt`, `call Number`, `call mongoSanitize`, `call sanitize`, `call mongo-sanitize`, `call *.toString`, `call ObjectId`, `call *.ObjectId`, `call *.digest`, `call uuid`, `call crypto.randomUUID`
 
 ### tjs-pathtrav
 
@@ -635,9 +706,20 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 - Jenis: taint — Data-flow rule; reports only when untrusted data reaches the sink (trace included).
 - Perbaikan: Use a fixed base directory, reduce input to a basename and verify the resolved path.
 - OWASP: [A03:2021](https://owasp.org/Top10/)
-- Sumber: `field req.query`, `field req.body`, `field req.params`, `field req.headers`, `field req.cookies`, `call req.param`, `field request.query`, `field request.body`, `field request.params`, `field %arg*.query`, `field %arg*.body`, `field %arg*.params`, `field %arg*.headers`, `field %arg*.cookies`
+- Sumber: `field req.query`, `call request.json`, `call req.json`, `call request.formData`, `call request.text`, `field request.nextUrl`, `call *.searchParams.get`, `call searchParams.get`, `param searchParams`, `field %arg*.searchParams`, `field req.body`, `field req.params`, `field req.headers`, `field req.cookies`, `call req.param`, `field request.query`, `field request.body`, `field request.params`, `field %arg*.query`, `field %arg*.body`, `field %arg*.params`, `field %arg*.headers`, `field %arg*.cookies`
 - Sink: `call fs.readFile arg0`, `call fs.readFileSync arg0`, `call fs.createReadStream arg0`, `call fs.writeFile arg0`, `call fs.writeFileSync arg0`, `call fs.unlink arg0`, `call fs.unlinkSync arg0`, `call fs.appendFile arg0`, `call res.sendFile arg0`, `call res.download arg0`, `call fs.promises.readFile arg0`, `call fsp.readFile arg0`
 - Sanitizer: `call path.basename`, `call parseInt`, `call Number`, `call *.digest`, `call uuid`, `call uuidv4`, `call crypto.randomUUID`
+
+### tjs-protopollution
+
+**Prototype pollution (tainted object merged into another)** — Untrusted input is deep-merged or used as a property path; __proto__ / constructor keys can pollute Object.prototype.
+
+- Jenis: taint — Data-flow rule; reports only when untrusted data reaches the sink (trace included).
+- Perbaikan: Reject __proto__/constructor/prototype keys or use Object.create(null) targets and safe merge libraries.
+- OWASP: [A08:2021](https://owasp.org/Top10/)
+- Sumber: `field req.query`, `call request.json`, `call req.json`, `call request.formData`, `call request.text`, `field request.nextUrl`, `call *.searchParams.get`, `call searchParams.get`, `param searchParams`, `field %arg*.searchParams`, `field req.body`, `field req.params`, `field req.headers`, `field req.cookies`, `call req.param`, `field request.query`, `field request.body`, `field request.params`, `field %arg*.query`, `field %arg*.body`, `field %arg*.params`, `field %arg*.headers`, `field %arg*.cookies`
+- Sink: `call _.merge args`, `call lodash.merge args`, `call _.mergeWith args`, `call _.defaultsDeep args`, `call merge args`, `call deepmerge args`, `call _.set arg1`, `call _.setWith arg1`
+- Sanitizer: `call String`, `call parseInt`, `call Number`, `call mongoSanitize`, `call sanitize`, `call mongo-sanitize`, `call *.toString`, `call ObjectId`, `call *.ObjectId`, `call *.digest`, `call uuid`, `call crypto.randomUUID`
 
 ### tjs-redirect
 
@@ -646,8 +728,8 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 - Jenis: taint — Data-flow rule; reports only when untrusted data reaches the sink (trace included).
 - Perbaikan: Redirect only to allow-listed or relative internal targets.
 - OWASP: [A01:2021](https://owasp.org/Top10/)
-- Sumber: `field req.query`, `field req.body`, `field req.params`, `field req.headers`, `field req.cookies`, `call req.param`, `field request.query`, `field request.body`, `field request.params`, `field %arg*.query`, `field %arg*.body`, `field %arg*.params`, `field %arg*.headers`, `field %arg*.cookies`
-- Sink: `call res.redirect arg0`, `call res.location arg0`
+- Sumber: `field req.query`, `call request.json`, `call req.json`, `call request.formData`, `call request.text`, `field request.nextUrl`, `call *.searchParams.get`, `call searchParams.get`, `param searchParams`, `field %arg*.searchParams`, `field location.search`, `field location.hash`, `field location.href`, `field window.location.search`, `field window.location.hash`, `field window.location.href`, `field document.URL`, `field document.referrer`, `field document.cookie`, `call localStorage.getItem`, `call sessionStorage.getItem`, `call params.get`, `call urlParams.get`, `field event.data`, `field req.body`, `field req.params`, `field req.headers`, `field req.cookies`, `call req.param`, `field request.query`, `field request.body`, `field request.params`, `field %arg*.query`, `field %arg*.body`, `field %arg*.params`, `field %arg*.headers`, `field %arg*.cookies`
+- Sink: `call NextResponse.redirect arg0`, `call redirect arg0`, `call permanentRedirect arg0`, `call router.push arg0`, `call router.replace arg0`, `call location.assign arg0`, `call location.replace arg0`, `call window.location.assign arg0`, `call window.location.replace arg0`, `call window.open arg0`, `assign location`, `assign location.href`, `assign window.location`, `assign window.location.href`, `call res.redirect arg0`, `call res.location arg0`
 - Sanitizer: `call parseInt`, `call Number`, `call *.digest`, `call uuid`, `call uuidv4`, `call crypto.randomUUID`
 
 ### tjs-sqli
@@ -657,7 +739,7 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 - Jenis: taint — Data-flow rule; reports only when untrusted data reaches the sink (trace included).
 - Perbaikan: Use parameterised queries / bound parameters.
 - OWASP: [A03:2021](https://owasp.org/Top10/)
-- Sumber: `field req.query`, `field req.body`, `field req.params`, `field req.headers`, `field req.cookies`, `call req.param`, `field request.query`, `field request.body`, `field request.params`, `field %arg*.query`, `field %arg*.body`, `field %arg*.params`, `field %arg*.headers`, `field %arg*.cookies`
+- Sumber: `field req.query`, `call request.json`, `call req.json`, `call request.formData`, `call request.text`, `field request.nextUrl`, `call *.searchParams.get`, `call searchParams.get`, `param searchParams`, `field %arg*.searchParams`, `field req.body`, `field req.params`, `field req.headers`, `field req.cookies`, `call req.param`, `field request.query`, `field request.body`, `field request.params`, `field %arg*.query`, `field %arg*.body`, `field %arg*.params`, `field %arg*.headers`, `field %arg*.cookies`
 - Sink: `call *.query arg0`, `call *.raw arg0`, `call *.execute arg0`, `call *.$queryRawUnsafe arg0`, `call *.$executeRawUnsafe arg0`
 - Sanitizer: `call parseInt`, `call Number`, `call parseFloat`, `call *.digest`, `call uuid`, `call uuidv4`, `call crypto.randomUUID`
 
@@ -668,9 +750,20 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 - Jenis: taint — Data-flow rule; reports only when untrusted data reaches the sink (trace included).
 - Perbaikan: Allow-list hosts and schemes; never request user-supplied URLs directly.
 - OWASP: [A10:2021](https://owasp.org/Top10/)
-- Sumber: `field req.query`, `field req.body`, `field req.params`, `field req.headers`, `field req.cookies`, `call req.param`, `field request.query`, `field request.body`, `field request.params`, `field %arg*.query`, `field %arg*.body`, `field %arg*.params`, `field %arg*.headers`, `field %arg*.cookies`
+- Sumber: `field req.query`, `call request.json`, `call req.json`, `call request.formData`, `call request.text`, `field request.nextUrl`, `call *.searchParams.get`, `call searchParams.get`, `param searchParams`, `field %arg*.searchParams`, `field req.body`, `field req.params`, `field req.headers`, `field req.cookies`, `call req.param`, `field request.query`, `field request.body`, `field request.params`, `field %arg*.query`, `field %arg*.body`, `field %arg*.params`, `field %arg*.headers`, `field %arg*.cookies`
 - Sink: `call axios.get arg0`, `call axios.post arg0`, `call axios.put arg0`, `call axios.delete arg0`, `call axios arg0`, `call fetch arg0`, `call http.get arg0`, `call https.get arg0`, `call http.request arg0`, `call got arg0`, `call got.get arg0`, `call needle.get arg0`, `call superagent.get arg0`, `call request.get arg0`
 - Sanitizer: `call parseInt`, `call Number`, `call *.digest`, `call uuid`, `call uuidv4`, `call crypto.randomUUID`
+
+### tjs-ssti
+
+**Server-side template injection (tainted template name or source)** — Untrusted input selects or supplies a server-side template.
+
+- Jenis: taint — Data-flow rule; reports only when untrusted data reaches the sink (trace included).
+- Perbaikan: Never build templates from user input; pass data as the render context.
+- OWASP: [A03:2021](https://owasp.org/Top10/)
+- Sumber: `field req.query`, `call request.json`, `call req.json`, `call request.formData`, `call request.text`, `field request.nextUrl`, `call *.searchParams.get`, `call searchParams.get`, `param searchParams`, `field %arg*.searchParams`, `field req.body`, `field req.params`, `field req.headers`, `field req.cookies`, `call req.param`, `field request.query`, `field request.body`, `field request.params`, `field %arg*.query`, `field %arg*.body`, `field %arg*.params`, `field %arg*.headers`, `field %arg*.cookies`
+- Sink: `call res.render arg0`, `call ejs.render arg0`, `call pug.render arg0`, `call handlebars.compile arg0`, `call Handlebars.compile arg0`, `call nunjucks.renderString arg0`, `call _.template arg0`
+- Sanitizer: `call String`, `call parseInt`, `call Number`, `call mongoSanitize`, `call sanitize`, `call mongo-sanitize`, `call *.toString`, `call ObjectId`, `call *.ObjectId`, `call *.digest`, `call uuid`, `call crypto.randomUUID`
 
 ### tjs-xss
 
@@ -680,8 +773,8 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 - Perbaikan: Escape output for the HTML context or use a sanitising library.
 - OWASP: [A03:2021](https://owasp.org/Top10/)
 - Menggantikan (bila alur data terbukti): `js-innerhtml-assign`, `js-innerhtml-var`, `js-document-write`
-- Sumber: `field req.query`, `field req.body`, `field req.params`, `field req.headers`, `field req.cookies`, `call req.param`, `field request.query`, `field request.body`, `field request.params`, `field %arg*.query`, `field %arg*.body`, `field %arg*.params`, `field %arg*.headers`, `field %arg*.cookies`
-- Sink: `assign *.innerHTML`, `assign *.outerHTML`, `call document.write arg0`, `call document.writeln arg0`, `call *.insertAdjacentHTML arg1`, `call res.send arg0`, `call res.write arg0`
+- Sumber: `field req.query`, `call request.json`, `call req.json`, `call request.formData`, `call request.text`, `field request.nextUrl`, `call *.searchParams.get`, `call searchParams.get`, `param searchParams`, `field %arg*.searchParams`, `field location.search`, `field location.hash`, `field location.href`, `field window.location.search`, `field window.location.hash`, `field window.location.href`, `field document.URL`, `field document.referrer`, `field document.cookie`, `call localStorage.getItem`, `call sessionStorage.getItem`, `call params.get`, `call urlParams.get`, `field event.data`, `field req.body`, `field req.params`, `field req.headers`, `field req.cookies`, `call req.param`, `field request.query`, `field request.body`, `field request.params`, `field %arg*.query`, `field %arg*.body`, `field %arg*.params`, `field %arg*.headers`, `field %arg*.cookies`
+- Sink: `call *.html arg0`, `assign *.innerHTML`, `assign *.outerHTML`, `call document.write arg0`, `call document.writeln arg0`, `call *.insertAdjacentHTML arg1`, `call res.send arg0`, `call res.write arg0`
 - Sanitizer: `call escapeHtml`, `call escape`, `call DOMPurify.sanitize`, `call sanitizeHtml`, `call xss`, `call encodeURIComponent`, `call he.encode`, `call he.escape`, `call validator.escape`, `call _.escape`, `call parseInt`, `call Number`, `call JSON.stringify`, `call fetch`, `call axios.*`, `call axios`, `call fs.readFile`, `call fs.readFileSync`, `call fs.promises.readFile`, `call *.query`, `call *.findByPk`, `call *.findOne`, `call *.digest`, `call uuid`, `call uuidv4`, `call crypto.randomUUID`
 
 ### tphp-cmdi

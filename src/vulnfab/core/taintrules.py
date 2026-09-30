@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable
 from typing import Any
 
@@ -69,7 +70,10 @@ def taint_findings(
                 )
                 for file, function, line in truncated
             )
+        gate = re.compile(rule.file_matches) if rule.file_matches else None
         for hit in hits:
+            if gate is not None and not gate.search("\n".join(lines.get(hit.file, []))):
+                continue
             file_lines = lines.get(hit.file, [])
             text = file_lines[hit.line - 1].strip() if 0 < hit.line <= len(file_lines) else ""
             out.append(

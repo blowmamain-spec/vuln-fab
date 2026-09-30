@@ -3,6 +3,9 @@
 ## Unreleased
 
 - `vulnfab osv update DIR`: download OSV advisories (npm, PyPI, Packagist) for offline SCA; database loading limited to packages present in lockfiles; one finding per advisory; malicious-package advisories are critical.
+- JS/TS web coverage: Next.js sources (`request.json()`, `nextUrl.searchParams`, page `searchParams`), browser sources (`location.*`, `document.URL/referrer/cookie`, storage, `event.data`) for XSS/redirect/eval; client redirect sinks (`location.href = …`, `location.assign`, `window.open`, `NextResponse.redirect`, `redirect`, `router.push`); jQuery `.html()`.
+- New rules: `tjs-nosqli` (Mongo collections), `tjs-nosqli-odm` (Mongoose/MongoDB models, low confidence, gated on the library import), `tjs-ssti`, `tjs-protopollution`, `js-tls-verify-disabled`, `js-cookie-insecure`, `js-cors-wildcard-credentials`, `js-jwt-insecure`, `env-public-secret`.
+- Taint rules accept `file_matches` (regex on the sink file) to limit a rule to files that use the library it is about.
 
 ## 1.0.0
 

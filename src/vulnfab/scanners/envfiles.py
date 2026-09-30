@@ -28,3 +28,31 @@ def service_role_in_public_env(ctx: ScannerContext) -> Iterator[ScannerHit]:
                     snippet=f"{name}=…",
                     symbol=f"{sf.path}:{name}",
                 )
+
+
+PUBLIC_SECRET_ENV = re.compile(
+    rf"^\s*(?:export\s+)?({PUBLIC_PREFIX}_[A-Z0-9_]*(?:SECRET|PRIVATE|PASSWORD|PASSWD|ADMIN_KEY)"
+    r"[A-Z0-9_]*)\s*=\s*(\S.*)$"
+)
+_PLACEHOLDER = re.compile(r"(?i)^(?:your[_-].*|changeme|<.*>|x+|\*+|todo|example.*|)$")
+
+
+def secret_in_public_env(ctx: ScannerContext) -> Iterator[ScannerHit]:
+    for sf in ctx.files:
+        for number, line in enumerate(sf.text.split("\n"), start=1):
+            match = PUBLIC_SECRET_ENV.match(line)
+            if not match:
+                continue
+            value = re.split(r"\s+#", match.group(2))[0].strip("'\" ")
+            if _PLACEHOLDER.match(value):
+                continue
+            name = match.group(1)
+            yield ScannerHit(
+                sf.path,
+                number,
+                number,
+                f"{name} has a secret-looking name but a public build prefix: its value is "
+                "embedded in the client bundle and visible to every visitor.",
+                snippet=f"{name}=…",
+                symbol=f"{sf.path}:{name}",
+            )

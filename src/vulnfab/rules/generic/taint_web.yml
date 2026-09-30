@@ -1,0 +1,229 @@
+# Web-framework taint rules (Express, Next.js, Mongo). Sources mirror tjs-ssrf.
+rules:
+- id: tjs-nosqli
+  kind: taint
+  stack: generic
+  languages: &id001
+  - javascript
+  - typescript
+  - tsx
+  severity: high
+  confidence: medium
+  cwe: &id002
+  - CWE-943
+  owasp: A03:2021
+  title: NoSQL injection (tainted object reaches a query)
+  message: Untrusted input flows into a MongoDB collection query; an attacker can inject operators such
+    as $ne or $where.
+  sources: &id003
+  - field req.query
+  - call request.json
+  - call req.json
+  - call request.formData
+  - call request.text
+  - field request.nextUrl
+  - call *.searchParams.get
+  - call searchParams.get
+  - param searchParams
+  - field %arg*.searchParams
+  - field req.body
+  - field req.params
+  - field req.headers
+  - field req.cookies
+  - call req.param
+  - field request.query
+  - field request.body
+  - field request.params
+  - field %arg*.query
+  - field %arg*.body
+  - field %arg*.params
+  - field %arg*.headers
+  - field %arg*.cookies
+  sinks:
+  - call *Collection.find arg0
+  - call *Collection.findOne arg0
+  - call *Collection.findOneAndUpdate arg0
+  - call *Collection.findOneAndDelete arg0
+  - call *Collection.findOneAndReplace arg0
+  - call *Collection.update arg0
+  - call *Collection.updateOne arg0
+  - call *Collection.updateMany arg0
+  - call *Collection.remove arg0
+  - call *Collection.deleteOne arg0
+  - call *Collection.deleteMany arg0
+  - call *Collection.countDocuments arg0
+  - call *Collection.count arg0
+  - call *Collection.aggregate arg0
+  - call *collection.find arg0
+  - call *collection.findOne arg0
+  - call *collection.findOneAndUpdate arg0
+  - call *collection.findOneAndDelete arg0
+  - call *collection.findOneAndReplace arg0
+  - call *collection.update arg0
+  - call *collection.updateOne arg0
+  - call *collection.updateMany arg0
+  - call *collection.remove arg0
+  - call *collection.deleteOne arg0
+  - call *collection.deleteMany arg0
+  - call *collection.countDocuments arg0
+  - call *collection.count arg0
+  - call *collection.aggregate arg0
+  - call *Coll.find arg0
+  - call *Coll.findOne arg0
+  - call *Coll.findOneAndUpdate arg0
+  - call *Coll.findOneAndDelete arg0
+  - call *Coll.findOneAndReplace arg0
+  - call *Coll.update arg0
+  - call *Coll.updateOne arg0
+  - call *Coll.updateMany arg0
+  - call *Coll.remove arg0
+  - call *Coll.deleteOne arg0
+  - call *Coll.deleteMany arg0
+  - call *Coll.countDocuments arg0
+  - call *Coll.count arg0
+  - call *Coll.aggregate arg0
+  - call *coll.find arg0
+  - call *coll.findOne arg0
+  - call *coll.findOneAndUpdate arg0
+  - call *coll.findOneAndDelete arg0
+  - call *coll.findOneAndReplace arg0
+  - call *coll.update arg0
+  - call *coll.updateOne arg0
+  - call *coll.updateMany arg0
+  - call *coll.remove arg0
+  - call *coll.deleteOne arg0
+  - call *coll.deleteMany arg0
+  - call *coll.countDocuments arg0
+  - call *coll.count arg0
+  - call *coll.aggregate arg0
+  sanitizers: &id004
+  - call String
+  - call parseInt
+  - call Number
+  - call mongoSanitize
+  - call sanitize
+  - call mongo-sanitize
+  - call *.toString
+  - call ObjectId
+  - call *.ObjectId
+  - call *.digest
+  - call uuid
+  - call crypto.randomUUID
+  validators: &id005
+  - call *.isString
+  - call validator.*
+  - call *.isInt
+  - call *.isNumeric
+  - call isNaN
+  - call Number.isInteger
+  - call *.match
+  - call *.test
+  - call z.*
+  - call *.parse
+  - call *.safeParse
+  fix: Cast inputs to strings/numbers, validate the shape (zod/joi), or use express-mongo-sanitize.
+  tests:
+    vulnerable:
+    - vuln.js
+    safe:
+    - safe.js
+- id: tjs-nosqli-odm
+  file_matches: mongoose|require\(\s*['\"]mongodb|from\s+['\"]mongodb|\bmonk\b|mongojs
+  kind: taint
+  stack: generic
+  languages: *id001
+  severity: high
+  confidence: low
+  cwe: *id002
+  owasp: A03:2021
+  title: NoSQL injection through a Mongoose/MongoDB model (tainted object reaches a query)
+  message: Untrusted input flows into a database query filter; an attacker can inject operators such as
+    $ne or $gt.
+  sources: *id003
+  sinks:
+  - call *.find arg0
+  - call *.findOne arg0
+  - call *.findOneAndUpdate arg0
+  - call *.findOneAndDelete arg0
+  - call *.findOneAndReplace arg0
+  - call *.updateOne arg0
+  - call *.updateMany arg0
+  - call *.deleteOne arg0
+  - call *.deleteMany arg0
+  - call *.countDocuments arg0
+  - call *.count arg0
+  - call *.aggregate arg0
+  - call *.$where arg0
+  sanitizers: *id004
+  validators: *id005
+  fix: Cast inputs to strings/numbers, validate the shape (zod/joi), or use express-mongo-sanitize.
+  tests:
+    vulnerable:
+    - vuln.js
+    safe:
+    - safe.js
+    - safe_sql.js
+- id: tjs-ssti
+  kind: taint
+  stack: generic
+  languages:
+  - javascript
+  - typescript
+  - tsx
+  severity: high
+  confidence: medium
+  cwe:
+  - CWE-1336
+  owasp: A03:2021
+  title: Server-side template injection (tainted template name or source)
+  message: Untrusted input selects or supplies a server-side template.
+  sources: *id003
+  sinks:
+  - call res.render arg0
+  - call ejs.render arg0
+  - call pug.render arg0
+  - call handlebars.compile arg0
+  - call Handlebars.compile arg0
+  - call nunjucks.renderString arg0
+  - call _.template arg0
+  sanitizers: *id004
+  validators: *id005
+  fix: Never build templates from user input; pass data as the render context.
+  tests:
+    vulnerable:
+    - vuln.js
+    safe:
+    - safe.js
+- id: tjs-protopollution
+  kind: taint
+  stack: generic
+  languages:
+  - javascript
+  - typescript
+  - tsx
+  severity: medium
+  confidence: low
+  cwe:
+  - CWE-1321
+  owasp: A08:2021
+  title: Prototype pollution (tainted object merged into another)
+  message: Untrusted input is deep-merged or used as a property path; __proto__ / constructor keys can
+    pollute Object.prototype.
+  sources: *id003
+  sinks:
+  - call _.merge args
+  - call lodash.merge args
+  - call _.mergeWith args
+  - call _.defaultsDeep args
+  - call merge args
+  - call deepmerge args
+  - call _.set arg1
+  - call _.setWith arg1
+  sanitizers: *id004
+  validators: *id005
+  fix: Reject __proto__/constructor/prototype keys or use Object.create(null) targets and safe merge libraries.
+  tests:
+    vulnerable:
+    - vuln.js
+    safe:
+    - safe.js

@@ -180,9 +180,16 @@ class TaintRule(_LanguageRule):
     guards: list[str] = Field(default_factory=list)  # ownership evidence (tier B, IDOR)
     validators: list[str] = Field(default_factory=list)  # calls that validate when used in `if`
     escapers: list[str] = Field(default_factory=list)  # safe only inside a quoted literal
+    # only report sinks in files whose text matches this regex (e.g. the ORM the rule is about)
+    file_matches: str | None = None
 
     @model_validator(mode="after")
     def _non_empty(self) -> TaintRule:
+        if self.file_matches is not None:
+            try:
+                re.compile(self.file_matches)
+            except re.error as exc:
+                raise ValueError(f"bad file_matches regex: {exc}") from exc
         if not self.sources or not self.sinks:
             raise ValueError("taint rules need at least one source and one sink")
         from vulnfab.core.taintspec import SpecError, TaintSpec

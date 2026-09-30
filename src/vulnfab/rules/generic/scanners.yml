@@ -14,6 +14,21 @@ rules:
     fix: "Move the secret to an environment variable or secret manager and rotate it."
     tests: {vulnerable: [vuln.ts, vuln.py, .env.vuln], safe: [safe.ts, safe.py, .env.safe]}
 
+  - id: env-public-secret
+    stack: generic
+    kind: scanner
+    scanner: "vulnfab.scanners.envfiles:secret_in_public_env"
+    languages: [env]
+    severity: high
+    confidence: medium
+    tier: A
+    cwe: [CWE-540, CWE-522]
+    owasp: "A02:2021"
+    title: "Secret exposed through a public build-time environment variable"
+    message: "A variable with a secret-like name uses a prefix that ships it to the browser."
+    fix: "Remove the public prefix and read the value only in server-side code; rotate it."
+    tests: {vulnerable: [.env.vuln], safe: [.env.safe]}
+
   - id: env-service-role-client
     stack: generic
     kind: scanner

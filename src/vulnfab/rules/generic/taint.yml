@@ -567,6 +567,15 @@ rules:
   message: Untrusted input flows into a SQL statement without parameter binding.
   sources:
   - field req.query
+  - call request.json
+  - call req.json
+  - call request.formData
+  - call request.text
+  - field request.nextUrl
+  - call *.searchParams.get
+  - call searchParams.get
+  - param searchParams
+  - field %arg*.searchParams
   - field req.body
   - field req.params
   - field req.headers
@@ -622,6 +631,15 @@ rules:
   message: Untrusted input flows into an OS command.
   sources:
   - field req.query
+  - call request.json
+  - call req.json
+  - call request.formData
+  - call request.text
+  - field request.nextUrl
+  - call *.searchParams.get
+  - call searchParams.get
+  - param searchParams
+  - field %arg*.searchParams
   - field req.body
   - field req.params
   - field req.headers
@@ -682,6 +700,29 @@ rules:
   message: Untrusted input flows into dynamic code evaluation.
   sources:
   - field req.query
+  - call request.json
+  - call req.json
+  - call request.formData
+  - call request.text
+  - field request.nextUrl
+  - call *.searchParams.get
+  - call searchParams.get
+  - param searchParams
+  - field %arg*.searchParams
+  - field location.search
+  - field location.hash
+  - field location.href
+  - field window.location.search
+  - field window.location.hash
+  - field window.location.href
+  - field document.URL
+  - field document.referrer
+  - field document.cookie
+  - call localStorage.getItem
+  - call sessionStorage.getItem
+  - call params.get
+  - call urlParams.get
+  - field event.data
   - field req.body
   - field req.params
   - field req.headers
@@ -742,6 +783,15 @@ rules:
   message: Untrusted input flows into a file system path.
   sources:
   - field req.query
+  - call request.json
+  - call req.json
+  - call request.formData
+  - call request.text
+  - field request.nextUrl
+  - call *.searchParams.get
+  - call searchParams.get
+  - param searchParams
+  - field %arg*.searchParams
   - field req.body
   - field req.params
   - field req.headers
@@ -809,6 +859,15 @@ rules:
   message: Untrusted input flows into the URL of a server-side request.
   sources:
   - field req.query
+  - call request.json
+  - call req.json
+  - call request.formData
+  - call request.text
+  - field request.nextUrl
+  - call *.searchParams.get
+  - call searchParams.get
+  - param searchParams
+  - field %arg*.searchParams
   - field req.body
   - field req.params
   - field req.headers
@@ -877,6 +936,15 @@ rules:
   message: Untrusted input flows into an unsafe deserializer.
   sources:
   - field req.query
+  - call request.json
+  - call req.json
+  - call request.formData
+  - call request.text
+  - field request.nextUrl
+  - call *.searchParams.get
+  - call searchParams.get
+  - param searchParams
+  - field %arg*.searchParams
   - field req.body
   - field req.params
   - field req.headers
@@ -918,6 +986,29 @@ rules:
   message: Untrusted input flows into HTML output without escaping.
   sources:
   - field req.query
+  - call request.json
+  - call req.json
+  - call request.formData
+  - call request.text
+  - field request.nextUrl
+  - call *.searchParams.get
+  - call searchParams.get
+  - param searchParams
+  - field %arg*.searchParams
+  - field location.search
+  - field location.hash
+  - field location.href
+  - field window.location.search
+  - field window.location.hash
+  - field window.location.href
+  - field document.URL
+  - field document.referrer
+  - field document.cookie
+  - call localStorage.getItem
+  - call sessionStorage.getItem
+  - call params.get
+  - call urlParams.get
+  - field event.data
   - field req.body
   - field req.params
   - field req.headers
@@ -932,6 +1023,7 @@ rules:
   - field %arg*.headers
   - field %arg*.cookies
   sinks:
+  - call *.html arg0
   - assign *.innerHTML
   - assign *.outerHTML
   - call document.write arg0
@@ -998,6 +1090,29 @@ rules:
   message: Untrusted input flows into a redirect target.
   sources:
   - field req.query
+  - call request.json
+  - call req.json
+  - call request.formData
+  - call request.text
+  - field request.nextUrl
+  - call *.searchParams.get
+  - call searchParams.get
+  - param searchParams
+  - field %arg*.searchParams
+  - field location.search
+  - field location.hash
+  - field location.href
+  - field window.location.search
+  - field window.location.hash
+  - field window.location.href
+  - field document.URL
+  - field document.referrer
+  - field document.cookie
+  - call localStorage.getItem
+  - call sessionStorage.getItem
+  - call params.get
+  - call urlParams.get
+  - field event.data
   - field req.body
   - field req.params
   - field req.headers
@@ -1012,6 +1127,20 @@ rules:
   - field %arg*.headers
   - field %arg*.cookies
   sinks:
+  - call NextResponse.redirect arg0
+  - call redirect arg0
+  - call permanentRedirect arg0
+  - call router.push arg0
+  - call router.replace arg0
+  - call location.assign arg0
+  - call location.replace arg0
+  - call window.location.assign arg0
+  - call window.location.replace arg0
+  - call window.open arg0
+  - assign location
+  - assign location.href
+  - assign window.location
+  - assign window.location.href
   - call res.redirect arg0
   - call res.location arg0
   sanitizers:
@@ -1055,6 +1184,15 @@ rules:
     that the record belongs to the current user.
   sources:
   - field req.query
+  - call request.json
+  - call req.json
+  - call request.formData
+  - call request.text
+  - field request.nextUrl
+  - call *.searchParams.get
+  - call searchParams.get
+  - param searchParams
+  - field %arg*.searchParams
   - field req.body
   - field req.params
   - field req.headers

@@ -136,3 +136,70 @@ rules:
       - {metavariable: X, kind: not_literal}
     fix: "Do not bypass the sanitizer; render text or sanitise with DOMPurify first."
     tests: {vulnerable: [vuln.ts], safe: [safe.ts]}
+
+  - id: js-tls-verify-disabled
+    stack: generic
+    languages: [javascript, typescript, tsx]
+    severity: high
+    confidence: high
+    cwe: [CWE-295]
+    owasp: "A02:2021"
+    title: "TLS certificate verification disabled"
+    message: "Certificate validation is turned off, allowing man-in-the-middle attacks."
+    pattern-either:
+      - "new $C({ ..., rejectUnauthorized: false, ... })"
+      - "$F({ ..., rejectUnauthorized: false, ... })"
+      - "$F($A, { ..., rejectUnauthorized: false, ... })"
+      - "process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'"
+      - "process.env.NODE_TLS_REJECT_UNAUTHORIZED = \"0\""
+    fix: "Trust the right CA (NODE_EXTRA_CA_CERTS) instead of disabling verification."
+    tests: {vulnerable: [vuln.js], safe: [safe.js]}
+
+  - id: js-cookie-insecure
+    stack: generic
+    languages: [javascript, typescript, tsx]
+    severity: medium
+    confidence: high
+    cwe: [CWE-1004, CWE-614]
+    owasp: "A05:2021"
+    title: "Cookie set without HttpOnly/Secure"
+    message: "The cookie options explicitly disable httpOnly or secure."
+    pattern-either:
+      - "$R.cookie($N, $V, { ..., httpOnly: false, ... })"
+      - "$R.cookie($N, $V, { ..., secure: false, ... })"
+      - "session({ ..., cookie: { ..., secure: false, ... }, ... })"
+      - "session({ ..., cookie: { ..., httpOnly: false, ... }, ... })"
+    fix: "Set httpOnly: true and secure: true (and sameSite) for session cookies."
+    tests: {vulnerable: [vuln.js], safe: [safe.js]}
+
+  - id: js-cors-wildcard-credentials
+    stack: generic
+    languages: [javascript, typescript, tsx]
+    severity: medium
+    confidence: medium
+    cwe: [CWE-942]
+    owasp: "A05:2021"
+    title: "CORS allows any origin with credentials"
+    message: "Reflecting any origin (or '*') together with credentials lets any site read authenticated responses."
+    pattern-either:
+      - "cors({ ..., origin: true, ..., credentials: true, ... })"
+      - "cors({ ..., credentials: true, ..., origin: true, ... })"
+      - "cors({ ..., origin: '*', ..., credentials: true, ... })"
+      - "cors({ ..., credentials: true, ..., origin: '*', ... })"
+    fix: "Allow-list explicit origins when credentials are enabled."
+    tests: {vulnerable: [vuln.js], safe: [safe.js]}
+
+  - id: js-jwt-insecure
+    stack: generic
+    languages: [javascript, typescript, tsx]
+    severity: high
+    confidence: high
+    cwe: [CWE-347]
+    owasp: "A02:2021"
+    title: "JWT verified with no algorithm restriction or with 'none'"
+    message: "Accepting the 'none' algorithm (or decoding without verification) lets attackers forge tokens."
+    pattern-either:
+      - "jwt.verify($T, $S, { ..., algorithms: ['none'], ... })"
+      - "jwt.verify($T, $S, { ..., ignoreExpiration: true, ... })"
+    fix: "Pin algorithms (e.g. ['HS256']) and do not ignore expiry."
+    tests: {vulnerable: [vuln.js], safe: [safe.js]}

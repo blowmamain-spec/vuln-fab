@@ -40,6 +40,7 @@ string dibangun dengan nilai yang tak terlihat di-escape (template literal, f-st
   validators: ["call re.match"]        # dipakai di kondisi `if` -> operand dianggap tervalidasi
   guards: []                           # bukti kepemilikan (IDOR): fungsi yang memakainya tak dilaporkan
   escapers: ["call mysqli_real_escape_string"]  # aman hanya di dalam literal berkutip
+  file_matches: "(?i)mongoose"         # opsional: hanya laporkan sink di berkas yang teksnya cocok regex ini
   supersedes: [py-sql-execute-interp]  # menggantikan rule pola yang sama bila alur terbukti
 ```
 
