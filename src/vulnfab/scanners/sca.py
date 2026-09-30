@@ -38,6 +38,8 @@ class Package:
     name: str
     version: str
     needle: str  # text used to find the package's line in the lockfile
+    dev: bool = False  # only needed to build/test, not shipped
+    direct: bool | None = None  # declared by the project itself (None: unknown)
 
 
 def is_lockfile(sf: SourceFile) -> bool:
@@ -72,17 +74,43 @@ def parse_lockfile(sf: SourceFile) -> list[Package]:
 
 def _package_lock(data: dict[str, Any]) -> list[Package]:
     out: list[Package] = []
-    for path, meta in (data.get("packages") or {}).items():  # lockfileVersion 2/3
+    packages = data.get("packages") or {}
+    root_meta = packages.get("")
+    root: dict[str, Any] = root_meta if isinstance(root_meta, dict) else {}
+    declared = {
+        *(root.get("dependencies") or {}),
+        *(root.get("devDependencies") or {}),
+        *(root.get("optionalDependencies") or {}),
+    }
+    for path, meta in packages.items():  # lockfileVersion 2/3
         if not path or not isinstance(meta, dict) or "version" not in meta or meta.get("link"):
             continue
         name = meta.get("name") or path.rsplit("node_modules/", 1)[-1]
-        out.append(Package("npm", name, str(meta["version"]), f'"{path}"'))
+        top_level = path == f"node_modules/{name}"
+        out.append(
+            Package(
+                "npm",
+                name,
+                str(meta["version"]),
+                f'"{path}"',
+                dev=bool(meta.get("dev")),
+                direct=(top_level and name in declared) if root else None,
+            )
+        )
     if not out:  # lockfileVersion 1
 
         def walk(deps: dict[str, Any]) -> None:
             for name, meta in deps.items():
                 if isinstance(meta, dict) and "version" in meta:
-                    out.append(Package("npm", name, str(meta["version"]), f'"{name}"'))
+                    out.append(
+                        Package(
+                            "npm",
+                            name,
+                            str(meta["version"]),
+                            f'"{name}"',
+                            dev=bool(meta.get("dev")),
+                        )
+                    )
                     walk(meta.get("dependencies") or {})
 
         walk(data.get("dependencies") or {})
@@ -100,6 +128,7 @@ def _composer_lock(data: dict[str, Any]) -> list[Package]:
                         meta["name"],
                         str(meta["version"]).lstrip("v"),
                         f'"name": "{meta["name"]}"',
+                        dev=group == "packages-dev",
                     )
                 )
     return out
@@ -111,7 +140,11 @@ def _pipfile_lock(data: dict[str, Any]) -> list[Package]:
         for name, meta in (data.get(group) or {}).items():
             version = str((meta or {}).get("version", "")).lstrip("=")
             if version:
-                out.append(Package("PyPI", _normalise_py(name), version, f'"{name}"'))
+                out.append(
+                    Package(
+                        "PyPI", _normalise_py(name), version, f'"{name}"', dev=group == "develop"
+                    )
+                )
     return out
 
 
@@ -277,36 +310,80 @@ def known_vulnerabilities(ctx: ScannerContext) -> Iterator[ScannerHit]:
         return
     database = load_database(str(db_path), wanted)
     for sf in lockfiles:
-        seen: set[tuple[str, str, str]] = set()
+        # one entry per (name, version): several lockfile paths may resolve to the same release
+        merged: dict[tuple[str, str], Package] = {}
+        dev_only: dict[tuple[str, str], bool] = {}
+        direct_any: dict[tuple[str, str], bool | None] = {}
         for pkg in parsed[sf.path]:
+            k = (pkg.name, pkg.version)
+            merged.setdefault(k, pkg)
+            dev_only[k] = dev_only.get(k, True) and pkg.dev
+            if pkg.direct is not None:
+                direct_any[k] = bool(direct_any.get(k)) or pkg.direct
+        for k, pkg in merged.items():
             key = (
                 pkg.ecosystem,
                 _normalise_py(pkg.name) if pkg.ecosystem == "PyPI" else pkg.name.lower(),
             )
+            hits_by_id: dict[str, tuple[dict[str, Any], list[str]]] = {}
             for match in database.get(key, []):
                 record, affected = match["record"], match["affected"]
-                if (
-                    not _affected(pkg.version, affected)
-                    or (pkg.name, pkg.version, record["id"]) in seen
-                ):
-                    continue
-                seen.add((pkg.name, pkg.version, record["id"]))
-                aliases = [a for a in record.get("aliases") or [] if a.startswith("CVE-")]
-                fixed = _fixed_versions(affected)
-                line = _line_of(sf.text, pkg.needle)
-                yield ScannerHit(
-                    sf.path,
-                    line,
-                    line,
-                    f"{pkg.name} {pkg.version} has a known vulnerability: {record['id']}"
-                    + (f" ({', '.join(aliases)})" if aliases else "")
-                    + (f" — {record['summary']}" if record.get("summary") else "")
-                    + (f". Fixed in {', '.join(fixed)}." if fixed else "."),
-                    snippet=f"{pkg.name}@{pkg.version} {record['id']}",
-                    symbol=f"{sf.path}:{pkg.name}@{pkg.version}:{record['id']}",
-                    confidence=Confidence.HIGH,
-                    severity=_severity(record),
-                )
+                if _affected(pkg.version, affected):
+                    hits_by_id.setdefault(record["id"], (record, []))[1].extend(
+                        _fixed_versions(affected)
+                    )
+            if not hits_by_id:
+                continue
+            yield _package_hit(
+                sf, pkg, hits_by_id, dev_only[k], direct_any.get(k) if k in direct_any else None
+            )
+
+
+def _lower(severity: Severity) -> Severity:
+    order = [Severity.CRITICAL, Severity.HIGH, Severity.MEDIUM, Severity.LOW]
+    i = order.index(severity) if severity in order else len(order) - 1
+    return order[min(i + 1, len(order) - 1)]
+
+
+def _package_hit(
+    sf: SourceFile,
+    pkg: Package,
+    found: dict[str, tuple[dict[str, Any], list[str]]],
+    dev: bool,
+    direct: bool | None,
+) -> ScannerHit:
+    ranked = sorted(found.values(), key=lambda rf: (-_severity(rf[0]).weight, rf[0]["id"]))
+    severity = _severity(ranked[0][0])
+    if dev:
+        severity = _lower(severity)
+    fixes = sorted({v for _, fx in ranked for v in fx}, key=version_key)
+    listed = []
+    for record, _ in ranked[:4]:
+        aliases = [a for a in record.get("aliases") or [] if a.startswith("CVE-")]
+        listed.append(record["id"] + (f" ({aliases[0]})" if aliases else ""))
+    more = f" and {len(ranked) - 4} more" if len(ranked) > 4 else ""
+    kind = ", ".join(
+        [
+            "development dependency" if dev else "runtime dependency",
+            {True: "declared by the project", False: "transitive", None: "origin unknown"}[direct],
+        ]
+    )
+    n = len(ranked)
+    summary = ranked[0][0].get("summary")
+    line = _line_of(sf.text, pkg.needle)
+    return ScannerHit(
+        sf.path,
+        line,
+        line,
+        f"{pkg.name} {pkg.version} ({kind}) has {n} known "
+        f"vulnerabilit{'ies' if n != 1 else 'y'}: {', '.join(listed)}{more}."
+        + (f" Worst: {summary}." if summary else "")
+        + (f" Upgrade to >= {fixes[-1]}." if fixes else " No fixed version is published."),
+        snippet=f"{pkg.name}@{pkg.version}",
+        symbol=f"{sf.path}:{pkg.name}@{pkg.version}",
+        confidence=Confidence.HIGH,
+        severity=severity,
+    )
 
 
 def osv_scanner_hits(root: Path, files: list[SourceFile]) -> tuple[list[ScannerHit], AdapterStatus]:
