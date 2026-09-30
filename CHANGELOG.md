@@ -6,6 +6,8 @@
 - JS/TS web coverage: Next.js sources (`request.json()`, `nextUrl.searchParams`, page `searchParams`), browser sources (`location.*`, `document.URL/referrer/cookie`, storage, `event.data`) for XSS/redirect/eval; client redirect sinks (`location.href = …`, `location.assign`, `window.open`, `NextResponse.redirect`, `redirect`, `router.push`); jQuery `.html()`.
 - New rules: `tjs-nosqli` (Mongo collections), `tjs-nosqli-odm` (Mongoose/MongoDB models, low confidence, gated on the library import), `tjs-ssti`, `tjs-protopollution`, `js-tls-verify-disabled`, `js-cookie-insecure`, `js-cors-wildcard-credentials`, `js-jwt-insecure`, `env-public-secret`.
 - Field feedback (real project, reviewer with repo access): `js-innerhtml-assign` now understands `items.map(x => `...${escapeHtml(x)}...`).join("")`, ternaries and `a || ''`; secrets in git-ignored untracked files are reported at low confidence with an accurate message; `$_FILES[..]['tmp_name']` is not user input; `.vulnfab.yml` accepts `taint: {sanitizers: [...], validators: [...]}` for project-specific helpers.
+- SCA: one finding per package (all advisories listed, highest fixed version), `devDependencies` lowered one severity level, direct/transitive labels for package-lock.
+- `--format html-triage`: interactive report with filters and TP/FP/DUP verdicts exportable to the `vulnfab triage` file format.
 - Taint rules accept `file_matches` (regex on the sink file) to limit a rule to files that use the library it is about.
 
 ## 1.0.0

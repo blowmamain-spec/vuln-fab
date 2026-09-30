@@ -34,6 +34,7 @@ class OutputFormat(StrEnum):
     json = "json"
     sarif = "sarif"
     html = "html"
+    html_triage = "html-triage"
 
 
 def _version_callback(value: bool) -> None:
@@ -148,6 +149,7 @@ def scan_command(
             OutputFormat.json: json_reporter.render,
             OutputFormat.sarif: sarif.render,
             OutputFormat.html: html_reporter.render,
+            OutputFormat.html_triage: html_reporter.render_triage,
         }
         text = renderers[format](result)
         if output:
