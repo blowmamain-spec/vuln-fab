@@ -196,7 +196,10 @@ def _affected(version: str, entry: dict[str, Any]) -> bool:
 
 
 @lru_cache(maxsize=4)
-def load_database(path: str) -> dict[tuple[str, str], list[dict[str, Any]]]:
+def load_database(
+    path: str, wanted: frozenset[str] | None = None
+) -> dict[tuple[str, str], list[dict[str, Any]]]:
+    """Index advisories by (ecosystem, package). ``wanted`` (lower-cased names) limits parsing."""
     root = Path(path)
     records: list[dict[str, Any]] = []
     files = sorted(root.rglob("*.json*")) if root.is_dir() else [root]
@@ -204,7 +207,12 @@ def load_database(path: str) -> dict[tuple[str, str], list[dict[str, Any]]]:
         try:
             text = f.read_text(encoding="utf-8")
             if f.suffix == ".jsonl":
-                records.extend(json.loads(line) for line in text.splitlines() if line.strip())
+                for line in text.splitlines():
+                    if not line.strip():
+                        continue
+                    if wanted is not None and not any(n in line.lower() for n in wanted):
+                        continue
+                    records.append(json.loads(line))
                 continue
             data = json.loads(text)
         except (OSError, ValueError):
@@ -232,6 +240,8 @@ def load_database(path: str) -> dict[tuple[str, str], list[dict[str, Any]]]:
 
 
 def _severity(record: dict[str, Any]) -> Severity:
+    if str(record.get("id", "")).startswith("MAL-"):
+        return Severity.CRITICAL  # known-malicious package
     label = str((record.get("database_specific") or {}).get("severity", "")).upper()
     return SEVERITY_BY_LABEL.get(label, Severity.MEDIUM)
 
@@ -260,12 +270,15 @@ def known_vulnerabilities(ctx: ScannerContext) -> Iterator[ScannerHit]:
     db_path = ctx.settings.get("osv_db")
     if not db_path:
         return
-    database = load_database(str(db_path))
-    for sf in ctx.files:
-        if not is_lockfile(sf):
-            continue
+    lockfiles = [sf for sf in ctx.files if is_lockfile(sf)]
+    parsed = {sf.path: parse_lockfile(sf) for sf in lockfiles}
+    wanted = frozenset(p.name.lower() for pkgs in parsed.values() for p in pkgs)
+    if not wanted:
+        return
+    database = load_database(str(db_path), wanted)
+    for sf in lockfiles:
         seen: set[tuple[str, str, str]] = set()
-        for pkg in parse_lockfile(sf):
+        for pkg in parsed[sf.path]:
             key = (
                 pkg.ecosystem,
                 _normalise_py(pkg.name) if pkg.ecosystem == "PyPI" else pkg.name.lower(),
@@ -289,7 +302,7 @@ def known_vulnerabilities(ctx: ScannerContext) -> Iterator[ScannerHit]:
                     + (f" ({', '.join(aliases)})" if aliases else "")
                     + (f" — {record['summary']}" if record.get("summary") else "")
                     + (f". Fixed in {', '.join(fixed)}." if fixed else "."),
-                    snippet=f"{pkg.name}@{pkg.version}",
+                    snippet=f"{pkg.name}@{pkg.version} {record['id']}",
                     symbol=f"{sf.path}:{pkg.name}@{pkg.version}:{record['id']}",
                     confidence=Confidence.HIGH,
                     severity=_severity(record),

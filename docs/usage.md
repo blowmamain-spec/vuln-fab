@@ -76,6 +76,10 @@ baru. Pindai ulang repo yang tidak berubah biasanya < 1 detik.
 `vulnfab scan . --osv-db ./osv-advisories` mencocokkan versi di `package-lock.json`, `composer.lock`,
 `Pipfile.lock`, `poetry.lock`, `uv.lock` dan `requirements*.txt` (versi terkunci `==`) dengan dump
 advisori OSV lokal (direktori/berkas `.json`/`.jsonl`). Tanpa jaringan, hasil deterministik.
+Database dibuat sekali (perlu internet) dan diperbarui kapan saja dengan
+`vulnfab osv update ./osv-advisories` (`-e npm -e PyPI -e Packagist` untuk memilih ekosistem);
+pemindaian setelah itu tetap offline. Hanya paket yang ada di lockfile yang dimuat, jadi
+dump npm (~230 ribu advisori) tetap cepat (~2 dtk).
 `--osv-scanner` menjalankan biner `osv-scanner` bila ada. Tanpa keduanya, lockfile dicatat
 di *coverage* sebagai "tidak diperiksa".
 

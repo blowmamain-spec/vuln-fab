@@ -19,6 +19,7 @@ from vulnfab.core.suppress import BaselineError
 from vulnfab.plugins.registry import UnknownStackError
 from vulnfab.reporters import console as console_reporter
 from vulnfab.reporters import html_reporter, json_reporter, sarif
+from vulnfab.scanners import osvupdate
 
 app = typer.Typer(add_completion=False, help="Multi-stack SAST scanner.", no_args_is_help=True)
 
@@ -285,6 +286,32 @@ def ir_command(
         typer.echo(f"error: {exc}", err=True)
         raise typer.Exit(EXIT_USAGE) from exc
     typer.echo(format_module(module), nl=False)
+
+
+osv_app = typer.Typer(help="Manage the offline OSV advisory database.", no_args_is_help=True)
+app.add_typer(osv_app, name="osv")
+
+
+@osv_app.command("update")
+def osv_update(
+    dest: Annotated[Path, typer.Argument(help="Directory to create or refresh.")],
+    ecosystem: Annotated[
+        list[str] | None,
+        typer.Option("--ecosystem", "-e", help="npm, PyPI, Packagist (repeatable; default all)."),
+    ] = None,
+    base_url: Annotated[
+        str, typer.Option("--base-url", help="Mirror of the OSV bucket.")
+    ] = osvupdate.BASE_URL,
+) -> None:
+    """Download OSV advisories once (needs network); scans then use --osv-db DEST offline."""
+    try:
+        counts = osvupdate.update(dest, tuple(ecosystem or osvupdate.ECOSYSTEMS), base_url)
+    except osvupdate.OsvUpdateError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+    for eco, n in counts.items():
+        typer.echo(f"{eco}: {n} advisories")
+    typer.echo(f"scan with: vulnfab scan <path> --osv-db {dest}")
 
 
 triage_app = typer.Typer(

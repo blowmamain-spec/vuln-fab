@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- `vulnfab osv update DIR`: download OSV advisories (npm, PyPI, Packagist) for offline SCA; database loading limited to packages present in lockfiles; one finding per advisory; malicious-package advisories are critical.
+
 ## 1.0.0
 
 - SCA offline: `sca-known-vuln`, `--osv-db`, `--osv-scanner` (WP-8.2).
