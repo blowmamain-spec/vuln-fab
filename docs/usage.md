@@ -60,6 +60,27 @@ file_timeout: 10
 
 `.vulnfabignore` (sintaks seperti `.gitignore`) juga dibaca.
 
+## Laporan HTML interaktif untuk triase
+
+`vulnfab scan . --format html-triage -o triage.html` membuat halaman mandiri dengan filter (severity,
+rule, pencarian), tombol **TP / FP / DUP** dan kolom alasan per temuan. Penilaian tersimpan di
+browser (localStorage) dan tombol **Export verdicts** mengunduh `vulnfab-verdicts.json` dalam format
+yang sama dengan `vulnfab triage`. Halaman ini memuat satu skrip statis tanpa data pindaian dan CSP
+yang melarang akses jaringan; format `html` biasa tetap tanpa skrip.
+
+## Sanitizer dan validator milik proyek
+
+Kalau proyekmu punya fungsi pembersih/validasi sendiri, beri tahu taint engine di `.vulnfab.yml`:
+
+```yaml
+taint:
+  sanitizers: ["call escapeHtml", "call clean_path"]  # hasil panggilan dianggap bersih
+  validators: ["call path_aman"]                       # dipakai di `if`: operand dianggap tervalidasi
+```
+
+Entri berlaku untuk semua rule taint. Tulis hanya fungsi yang benar-benar aman; entri yang salah
+akan menyembunyikan temuan yang asli.
+
 ## Mode diff dan cache
 
 `vulnfab scan . --since origin/main` memindai seluruh repo lalu melaporkan hanya: berkas yang berubah, berkas yang

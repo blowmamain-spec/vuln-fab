@@ -215,6 +215,16 @@ def _receiver_is_source(spec: TaintSpec, callee: str) -> bool:
     return receiver is not None and matches_path(spec.sources, "field", receiver)
 
 
+def _is_upload_tmp_name(op: Operand, path: str | None) -> bool:
+    return (
+        isinstance(op, Index)
+        and isinstance(op.key, Const)
+        and op.key.value == "tmp_name"
+        and path is not None
+        and path.split(".")[0] in ("_FILES", "HTTP_POST_FILES")
+    )
+
+
 def _writes(body: tuple[Instr, ...], path: str) -> bool:
     for instr in _walk(body):
         dst = getattr(instr, "dst", None)
@@ -241,6 +251,8 @@ class FunctionAnalyzer:
     def read(self, op: Operand, state: State, line: int) -> Taint | None:
         spec = self.ctx.spec
         path = access_path(op)
+        if _is_upload_tmp_name(op, path):
+            return None  # PHP itself picks the temp path; only the client-supplied fields are input
         if path is not None:
             for prefix in reversed(path_prefixes(path)):  # most specific first
                 if prefix in state:

@@ -95,3 +95,24 @@ def test_empty_report_and_grouping() -> None:
     )
     page = html_reporter.render(many)
     assert page.index("High") < page.index("Low")
+
+
+def test_triage_page_has_one_static_script_and_no_scan_data_in_it() -> None:
+    page = html_reporter.render_triage(hostile_result())
+    assert page.lower().count("<script") == 1  # hostile text is escaped, not a tag
+    start = page.index("<script>") + len("<script>")
+    script = page[start : page.index("</script>", start)]
+    assert script == html_reporter.SCRIPT
+    assert "Content-Security-Policy" in page and "connect-src" not in page
+    assert "default-src 'none'" in page
+    audit = Audit()
+    audit.feed(page)
+    assert audit.event_attrs == [] and audit.urls == []
+    assert HOSTILE not in page.replace(html_reporter.SCRIPT, "")
+
+
+def test_triage_page_marks_findings_for_the_script() -> None:
+    page = html_reporter.render_triage(hostile_result())
+    assert "data-fp=" in page and "data-rule='tpy-xss'" in page
+    assert "Export verdicts" in page
+    assert "data-fp=" not in html_reporter.render(hostile_result())

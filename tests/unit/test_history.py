@@ -59,3 +59,21 @@ def test_history_limit_note_and_non_git(tmp_path: Path) -> None:
     (plain / "a.py").write_text("x = 1\n")
     result = scan(plain, ScanOptions(history=True))
     assert any("history was NOT scanned" in a for a in result.coverage.assumptions)
+
+
+def test_gitignored_secret_file_is_softened(tmp_path: Path) -> None:
+    from vulnfab.core.models import Confidence
+
+    repo = tmp_path / "ign"
+    repo.mkdir()
+    git(repo, "init", "-q")
+    (repo / ".gitignore").write_text(".env.test\n")
+    (repo / ".env.test").write_text(f"AWS_KEY={FAKE}\n")
+    (repo / "cfg.py").write_text(f"KEY = '{FAKE}'\n")
+    git(repo, "add", ".gitignore", "cfg.py")
+    git(repo, "commit", "-qm", "x")
+    result = scan(repo, ScanOptions(min_confidence=Confidence.LOW))
+    by_file = {f.file: f for f in result.findings if f.rule_id == "sec-secret-hardcoded"}
+    assert by_file[".env.test"].confidence == Confidence.LOW
+    assert "git-ignored" in by_file[".env.test"].message
+    assert by_file["cfg.py"].confidence == Confidence.HIGH

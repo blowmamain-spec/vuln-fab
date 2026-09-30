@@ -1,6 +1,6 @@
 [project]
 name = "vulnfab"
-version = "1.0.0"
+version = "1.1.0"
 description = "Multi-stack static application security testing (SAST) scanner: Supabase/Postgres, Django, Laravel, TypeScript."
 readme = "README.md"
 requires-python = ">=3.11"

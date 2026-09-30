@@ -110,3 +110,71 @@ def test_osv_scanner_adapter_missing_and_fake(tmp_path: Path, monkeypatch) -> No
     result = scan(repo, ScanOptions(osv_scanner=True))
     assert [a.status for a in result.coverage.adapters] == ["ok"]
     assert any("OSV-FAKE-1" in f.message for f in result.findings)
+
+
+def _multi_db(tmp_path: Path) -> Path:
+    db = tmp_path / "db"
+    db.mkdir()
+    records = []
+    for n, (sev, fixed) in enumerate([("CRITICAL", "1.5.0"), ("HIGH", "1.4.0"), ("LOW", "1.2.0")]):
+        records.append(
+            {
+                "id": f"GHSA-grp-000{n}",
+                "aliases": [f"CVE-2099-000{n}"],
+                "summary": f"issue {n}",
+                "database_specific": {"severity": sev},
+                "affected": [
+                    {
+                        "package": {"ecosystem": "npm", "name": "tarlike"},
+                        "ranges": [
+                            {"type": "SEMVER", "events": [{"introduced": "0"}, {"fixed": fixed}]}
+                        ],
+                    }
+                ],
+            }
+        )
+    (db / "npm.jsonl").write_text("\n".join(json.dumps(r) for r in records) + "\n")
+    return db
+
+
+def _lock(dev: bool, direct: bool) -> str:
+    entry = {"version": "1.0.0", **({"dev": True} if dev else {})}
+    return json.dumps(
+        {
+            "lockfileVersion": 3,
+            "packages": {
+                "": {"devDependencies": {"tarlike": "^1"} if direct else {"other": "1"}},
+                "node_modules/tarlike": entry,
+                "node_modules/other/node_modules/tarlike": entry,
+            },
+        }
+    )
+
+
+def test_advisories_are_grouped_per_package(tmp_path: Path) -> None:
+    repo = tmp_path / "g"
+    repo.mkdir()
+    (repo / "package-lock.json").write_text(_lock(dev=False, direct=True))
+    findings = [
+        f
+        for f in scan(repo, ScanOptions(osv_db=_multi_db(tmp_path))).findings
+        if f.rule_id == "sca-known-vuln"
+    ]
+    assert len(findings) == 1  # 3 advisories x 2 lockfile paths -> one finding
+    f = findings[0]
+    assert f.severity.value == "critical"
+    assert "3 known vulnerabilities" in f.message and "Upgrade to >= 1.5.0" in f.message
+    assert "runtime dependency" in f.message and "declared by the project" in f.message
+
+
+def test_dev_dependencies_are_downgraded_and_transitive_is_labelled(tmp_path: Path) -> None:
+    repo = tmp_path / "d"
+    repo.mkdir()
+    (repo / "package-lock.json").write_text(_lock(dev=True, direct=False))
+    findings = [
+        f
+        for f in scan(repo, ScanOptions(osv_db=_multi_db(tmp_path))).findings
+        if f.rule_id == "sca-known-vuln"
+    ]
+    assert findings[0].severity.value == "high"  # critical lowered one step
+    assert "development dependency" in findings[0].message and "transitive" in findings[0].message

@@ -456,13 +456,13 @@
       "file": "supabase/migrations/20240102000000_functions_views_grants.sql",
       "line_start": 58,
       "line_end": 65,
-      "class": "business-idor",
+      "class": "definer-no-auth",
       "cwe": [
         "CWE-639"
       ],
-      "tier": "C",
-      "in_scope": false,
-      "note": "cancel_order tidak memeriksa pemilik"
+      "tier": "B",
+      "in_scope": true,
+      "note": "cancel_order tidak memeriksa pemilik (auth.uid())"
     },
     {
       "id": "T011",

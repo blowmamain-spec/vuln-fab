@@ -118,3 +118,12 @@ def affected_files(changed: set[str], files: dict[str, tuple[str, str]]) -> tupl
                 affected.add(dependent)
                 frontier.append(dependent)
     return affected, False
+
+
+def local_only_files(root: Path) -> set[str]:
+    """Untracked files ignored by git (never committed). Empty outside a git work tree."""
+    try:
+        out = _git(root, "ls-files", "--others", "--ignored", "--exclude-standard", "-z")
+    except GitError:
+        return set()
+    return {p for p in out.split("\0") if p}

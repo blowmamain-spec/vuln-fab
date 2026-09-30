@@ -41,6 +41,34 @@
     "50e67023336b9fc2c81a3b72f536b26f": {
       "verdict": "tp",
       "note": "key dari body masuk ke nama berkas (dampak terbatas)"
+    },
+    "3785ef161f86ed0769b41b54f94baa18": {
+      "verdict": "tp",
+      "note": "findOne({_id: req.body.id}) tanpa validasi tipe"
+    },
+    "0a901652d6c7ea0f3dfb1bc1f225d966": {
+      "verdict": "tp",
+      "note": "update({_id: req.body.id}) tanpa validasi tipe (bisa menyentuh banyak dokumen)"
+    },
+    "5a864ee5f4957accd5d61a1f7fa505d3": {
+      "verdict": "tp",
+      "note": "findOne({_id: req.body.id}) tanpa validasi tipe"
+    },
+    "5c0e8fea16c951ef8837b6cfe764e175": {
+      "verdict": "tp",
+      "note": "update({_id: req.body.id}) tanpa validasi tipe"
+    },
+    "7f20ffe6321cd0b74e442f416669992d": {
+      "verdict": "tp",
+      "note": "$where dengan string hasil konkatenasi input (JS di sisi DB)"
+    },
+    "3b491f10788ec7b1bb50f9aca080624f": {
+      "verdict": "tp",
+      "note": "$where dengan template string berisi input"
+    },
+    "838ac12850a26c8e17d2e06518d28da7": {
+      "verdict": "fp",
+      "note": "req.params.id selalu string di Express, tidak bisa membawa operator; masalahnya otorisasi, bukan NoSQLi"
     }
   }
 }

@@ -1,0 +1,9 @@
+.git
+.venv
+dist
+benchmarks/targets
+benchmarks/labs/private
+**/__pycache__
+.pytest_cache
+.mypy_cache
+.ruff_cache
