@@ -8,6 +8,7 @@
 - Field feedback (real project, reviewer with repo access): `js-innerhtml-assign` now understands `items.map(x => `...${escapeHtml(x)}...`).join("")`, ternaries and `a || ''`; secrets in git-ignored untracked files are reported at low confidence with an accurate message; `$_FILES[..]['tmp_name']` is not user input; `.vulnfab.yml` accepts `taint: {sanitizers: [...], validators: [...]}` for project-specific helpers.
 - SCA: one finding per package (all advisories listed, highest fixed version), `devDependencies` lowered one severity level, direct/transitive labels for package-lock.
 - `--format html-triage`: interactive report with filters and TP/FP/DUP verdicts exportable to the `vulnfab triage` file format.
+- `sb-definer-no-auth`: SECURITY DEFINER RPC that writes data or takes the caller's identity as an argument but never consults `auth.uid()`/`auth.jwt()` (deliberately public RPCs need their own validation; see the message). Lab label `cancel_order` moved from tier C (out of scope) to tier B.
 - Taint rules accept `file_matches` (regex on the sink file) to limit a rule to files that use the library it is about.
 
 ## 1.0.0

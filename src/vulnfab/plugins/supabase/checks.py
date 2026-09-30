@@ -224,6 +224,52 @@ def definer_no_path(ctx: CheckContext) -> Iterator[SchemaHit]:
             )
 
 
+_AUTH_REF = re.compile(
+    r"auth\s*\.\s*(?:uid|jwt|role|email)\s*\(|request\.jwt|current_setting\s*\(\s*'(?:request|role)|"
+    r"session_user|current_user|get_my_|is_admin|has_role|is_staff",
+    re.I,
+)
+_WRITES = re.compile(r"\b(?:update|delete\s+from|insert\s+into|truncate)\b", re.I)
+_IDENTITY_PARAM = re.compile(
+    r"(?:^|_)(?:user|akun|account|owner|member|profile|actor|caller|staff|admin)(?:_id|_uuid)?$",
+    re.I,
+)
+_COMMENT = re.compile(r"--[^\n]*|/\*.*?\*/", re.S)
+
+
+def definer_no_auth(ctx: CheckContext) -> Iterator[SchemaHit]:
+    """SECURITY DEFINER RPC that writes (or takes the caller's identity as an argument) but never
+    consults auth.uid()/auth.jwt(): the caller decides who they are."""
+    exposed = exposed_schemas(ctx.model)
+    for fn in ctx.model.functions.values():
+        if not fn.security_definer or fn.schema not in exposed:
+            continue
+        if re.search(r"returns\s+trigger", fn.sql or "", re.I):
+            continue
+        body = _COMMENT.sub(" ", fn.body or "")
+        if not body.strip() or _AUTH_REF.search(body):
+            continue
+        writes = bool(_WRITES.search(body))
+        identity = [n for n in fn.param_names if _IDENTITY_PARAM.search(n.lstrip("p_"))]
+        if not (writes or identity):
+            continue
+        detail = (
+            f"takes the caller's identity as an argument ({', '.join(identity)}) and "
+            if identity
+            else ""
+        )
+        yield SchemaHit(
+            fn.file,
+            fn.line,
+            fn.end_line,
+            f"Function {fn.schema}.{fn.name} is SECURITY DEFINER, {detail}"
+            f"{'modifies data ' if writes else 'reads data '}without checking auth.uid(): any "
+            "client that can call the RPC can act as any user it names. Ignore this if the RPC is "
+            "a deliberate public entry point with its own validation and rate limit.",
+            symbol=f"{fn.schema}.{fn.name}",
+        )
+
+
 def view_no_invoker(ctx: CheckContext) -> Iterator[SchemaHit]:
     exposed = exposed_schemas(ctx.model)
     for view in ctx.model.views.values():

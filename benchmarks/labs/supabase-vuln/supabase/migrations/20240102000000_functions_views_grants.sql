@@ -54,7 +54,7 @@ end;
 $$;
 
 -- Tingkat C (semantik): definer melewati RLS tanpa memeriksa kepemilikan pesanan.
--- @lab vuln business-idor cwe=CWE-639 tier=C in_scope=false lines=8 :: cancel_order tidak memeriksa pemilik
+-- @lab vuln definer-no-auth cwe=CWE-639 tier=B lines=8 :: cancel_order tidak memeriksa pemilik (auth.uid())
 create function public.cancel_order(order_id bigint)
 returns void
 language sql

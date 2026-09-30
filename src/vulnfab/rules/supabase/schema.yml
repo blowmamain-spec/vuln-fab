@@ -83,6 +83,20 @@ rules:
     fix: "Add SET search_path = '' and schema-qualify every object."
     tests: {vulnerable: [vuln.sql], safe: [safe.sql]}
 
+  - id: sb-definer-no-auth
+    stack: supabase
+    kind: schema
+    severity: medium
+    confidence: medium
+    tier: B
+    cwe: [CWE-639, CWE-862]
+    owasp: "A01:2021"
+    title: "SECURITY DEFINER RPC that never checks auth.uid()"
+    message: "The function bypasses RLS and does not identify the caller from the JWT."
+    check: "vulnfab.plugins.supabase.checks:definer_no_auth"
+    fix: "Derive the caller with auth.uid() inside the function instead of trusting an argument, or revoke EXECUTE from anon/authenticated."
+    tests: {vulnerable: [vuln.sql], safe: [safe.sql]}
+
   - id: sb-view-no-invoker
     stack: supabase
     kind: schema

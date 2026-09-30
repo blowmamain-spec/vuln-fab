@@ -8,13 +8,13 @@ django.nV, Juice Shop, NodeGoat dan catatan bias ada di `m2.md` / `m3.md`.
 
 | Target | Waktu (dtk) | Temuan | Recall | Precision | Decoy terpicu | Belum di-review |
 |---|---:|---:|---:|---:|---:|---:|
-| supabase-vuln | 0.4 | 25 | 100% (25/25) | 100% (TP 25, FP 0) | 0 | 0 |
+| supabase-vuln | 0.3 | 26 | 100% (26/26) | 100% (TP 26, FP 0) | 0 | 0 |
 | django-vuln | 0.3 | 22 | 100% (21/21) | 100% (TP 21, FP 0) | 0 | 0 |
 | laravel-vuln | 0.2 | 21 | 100% (20/20) | 100% (TP 20, FP 0) | 0 | 0 |
-| nodegoat | 1.0 | 8 | 100% (5/5) | 100% (TP 5, FP 0) | 0 | 0 |
-| juice-shop | 38.6 | 121 | 100% (7/7) | 87% (TP 20, FP 3) | 0 | 0 |
-| dvwa | 2.4 | 41 | 86% (24/28) | 97% (TP 30, FP 1) | 0 | 0 |
-| django-nv | 8.3 | 60 | 94% (29/31) | 100% (TP 30, FP 0) | 0 | 0 |
+| nodegoat | 0.8 | 8 | 100% (5/5) | 100% (TP 5, FP 0) | 0 | 0 |
+| juice-shop | 38.2 | 121 | 100% (7/7) | 87% (TP 20, FP 3) | 0 | 0 |
+| dvwa | 2.1 | 41 | 86% (24/28) | 97% (TP 30, FP 1) | 0 | 0 |
+| django-nv | 9.4 | 60 | 94% (29/31) | 100% (TP 30, FP 0) | 0 | 0 |
 
 ## Per rule (gabungan semua target, hanya kelas yang berlabel)
 
@@ -49,6 +49,7 @@ django.nV, Juice Shop, NodeGoat dan catatan bias ada di `m2.md` / `m3.md`.
 | lv-seeder-password | medium | 1 | 0 | 100% | 70% | ok |
 | sb-config-signup | medium | 1 | 0 | 100% | 70% | ok |
 | sb-default-priv | medium | 1 | 0 | 100% | 70% | ok |
+| sb-definer-no-auth | medium | 1 | 0 | 100% | 70% | ok |
 | sb-definer-no-path | high | 1 | 0 | 100% | 80% | ok |
 | sb-dynamic-sql | high | 1 | 0 | 100% | 80% | ok |
 | sb-edge-no-jwt | high | 1 | 0 | 100% | 80% | ok |

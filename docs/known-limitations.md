@@ -37,3 +37,6 @@ dilaporkan default.
 
 Verdict pada `benchmarks/verdicts/` dan label bertanda `reviewer` di `benchmarks/truth/` ditulis oleh pembuat
 alat dan belum ditinjau independen; lihat catatan bias di `benchmarks/results/m2.md` dan `m3.md`.
+
+- Otorisasi hanya di sisi klien (mis. `if (role !== 'admin') location.href = ...`) tidak dideteksi; yang menentukan adalah RLS/policy dan `auth.uid()` di RPC. `sb-definer-no-auth` hanya melihat fungsi SQL, bukan alur halaman.
+- `sb-definer-no-auth` tidak memodelkan `REVOKE EXECUTE`: RPC publik yang disengaja (formulir pendaftaran) bisa terlapor dan perlu dinilai manual.

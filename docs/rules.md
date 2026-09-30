@@ -3,7 +3,7 @@
 Dibuat otomatis oleh `scripts/gen_rule_docs.py` dari rule pack (vulnfab 1.0.x).
 **Jangan edit tangan**; perbarui rule YAML lalu jalankan skripnya. CI memeriksa kesinkronan.
 
-Total: 133 rule. Tingkat: **A** struktural/pasti, **B** pola kepemilikan (IDOR; confidence maksimum medium), **C** kandidat semantik (tersembunyi secara default).
+Total: 134 rule. Tingkat: **A** struktural/pasti, **B** pola kepemilikan (IDOR; confidence maksimum medium), **C** kandidat semantik (tersembunyi secara default).
 
 Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignores` di `.vulnfab.yml`, atau baseline.
 
@@ -1121,12 +1121,13 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 - Perbaikan: Generate a random password or read it from the environment; do not seed admin accounts in production.
 - OWASP: [A07:2021](https://owasp.org/Top10/)
 
-## Stack `supabase` (16 rule)
+## Stack `supabase` (17 rule)
 
 | Rule | Jenis | Severity | Confidence | Tier | CWE |
 |---|---|---|---|---|---|
 | [`sb-config-signup`](#sb-config-signup) | schema | medium | high | A | [CWE-287](https://cwe.mitre.org/data/definitions/287.html) |
 | [`sb-default-priv`](#sb-default-priv) | schema | medium | high | A | [CWE-732](https://cwe.mitre.org/data/definitions/732.html) |
+| [`sb-definer-no-auth`](#sb-definer-no-auth) | schema | medium | medium | B | [CWE-639](https://cwe.mitre.org/data/definitions/639.html), [CWE-862](https://cwe.mitre.org/data/definitions/862.html) |
 | [`sb-definer-no-path`](#sb-definer-no-path) | schema | high | high | A | [CWE-426](https://cwe.mitre.org/data/definitions/426.html) |
 | [`sb-dynamic-sql`](#sb-dynamic-sql) | schema | high | medium | A | [CWE-89](https://cwe.mitre.org/data/definitions/89.html) |
 | [`sb-edge-no-jwt`](#sb-edge-no-jwt) | schema | high | medium | A | [CWE-306](https://cwe.mitre.org/data/definitions/306.html) |
@@ -1156,6 +1157,14 @@ Menekan satu temuan: komentar `# nosec: <rule-id>` di barisnya, `per_file_ignore
 
 - Jenis: schema — Reads the database/config model built from migrations or settings.
 - Perbaikan: Remove the default grant; grant per table.
+- OWASP: [A01:2021](https://owasp.org/Top10/)
+
+### sb-definer-no-auth
+
+**SECURITY DEFINER RPC that never checks auth.uid()** — The function bypasses RLS and does not identify the caller from the JWT.
+
+- Jenis: schema — Reads the database/config model built from migrations or settings.
+- Perbaikan: Derive the caller with auth.uid() inside the function instead of trusting an argument, or revoke EXECUTE from anon/authenticated.
 - OWASP: [A01:2021](https://owasp.org/Top10/)
 
 ### sb-definer-no-path
