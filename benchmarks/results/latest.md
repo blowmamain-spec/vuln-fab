@@ -1,6 +1,6 @@
 # Hasil benchmark terbaru
 
-Dibuat oleh `benchmarks/run_all.py` · vulnfab 1.0.0 · 2026-09-29.
+Dibuat oleh `benchmarks/run_all.py` · vulnfab 1.0.0 · 2026-09-30.
 Label lab ditulis oleh pembuat rule (gerbang regresi, bukan bukti akurasi); label DVWA,
 django.nV, Juice Shop, NodeGoat dan catatan bias ada di `m2.md` / `m3.md`.
 
@@ -8,13 +8,13 @@ django.nV, Juice Shop, NodeGoat dan catatan bias ada di `m2.md` / `m3.md`.
 
 | Target | Waktu (dtk) | Temuan | Recall | Precision | Decoy terpicu | Belum di-review |
 |---|---:|---:|---:|---:|---:|---:|
-| supabase-vuln | 0.3 | 25 | 100% (25/25) | 100% (TP 25, FP 0) | 0 | 0 |
+| supabase-vuln | 0.4 | 25 | 100% (25/25) | 100% (TP 25, FP 0) | 0 | 0 |
 | django-vuln | 0.3 | 22 | 100% (21/21) | 100% (TP 21, FP 0) | 0 | 0 |
 | laravel-vuln | 0.2 | 21 | 100% (20/20) | 100% (TP 20, FP 0) | 0 | 0 |
-| nodegoat | 0.7 | 8 | 100% (5/5) | 100% (TP 5, FP 0) | 0 | 0 |
-| juice-shop | 27.7 | 107 | 100% (7/7) | 88% (TP 14, FP 2) | 0 | 0 |
-| dvwa | 2.4 | 41 | 86% (24/28) | 97% (TP 30, FP 1) | 0 | 0 |
-| django-nv | 7.0 | 60 | 94% (29/31) | 100% (TP 30, FP 0) | 0 | 0 |
+| nodegoat | 1.0 | 8 | 100% (5/5) | 100% (TP 5, FP 0) | 0 | 0 |
+| juice-shop | 45.8 | 121 | 100% (7/7) | 87% (TP 20, FP 3) | 0 | 0 |
+| dvwa | 2.5 | 41 | 86% (24/28) | 97% (TP 30, FP 1) | 0 | 0 |
+| django-nv | 10.5 | 60 | 94% (29/31) | 100% (TP 30, FP 0) | 0 | 0 |
 
 ## Per rule (gabungan semua target, hanya kelas yang berlabel)
 
@@ -66,6 +66,7 @@ django.nV, Juice Shop, NodeGoat dan catatan bias ada di `m2.md` / `m3.md`.
 | tjs-cmdi | critical | 1 | 0 | 100% | 90% | ok |
 | tjs-codei | critical | 4 | 0 | 100% | 90% | ok |
 | tjs-idor | medium | 1 | 0 | 100% | 70% | ok |
+| tjs-nosqli | high | 6 | 1 | 86% | 80% | ok |
 | tjs-pathtrav | high | 2 | 0 | 100% | 80% | ok |
 | tjs-redirect | medium | 1 | 0 | 100% | 70% | ok |
 | tjs-sqli | high | 2 | 0 | 100% | 80% | ok |
