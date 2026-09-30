@@ -60,6 +60,19 @@ file_timeout: 10
 
 `.vulnfabignore` (sintaks seperti `.gitignore`) juga dibaca.
 
+## Sanitizer dan validator milik proyek
+
+Kalau proyekmu punya fungsi pembersih/validasi sendiri, beri tahu taint engine di `.vulnfab.yml`:
+
+```yaml
+taint:
+  sanitizers: ["call escapeHtml", "call clean_path"]  # hasil panggilan dianggap bersih
+  validators: ["call path_aman"]                       # dipakai di `if`: operand dianggap tervalidasi
+```
+
+Entri berlaku untuk semua rule taint. Tulis hanya fungsi yang benar-benar aman; entri yang salah
+akan menyembunyikan temuan yang asli.
+
 ## Mode diff dan cache
 
 `vulnfab scan . --since origin/main` memindai seluruh repo lalu melaporkan hanya: berkas yang berubah, berkas yang

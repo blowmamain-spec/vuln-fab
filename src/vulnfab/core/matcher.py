@@ -428,9 +428,100 @@ def _interpolated_parts(node: Node) -> list[Node]:
     return []
 
 
+def _callback_results(fn: Node) -> list[Node] | None:
+    """Returned expressions of an arrow/function callback (``None`` if not statically known)."""
+    body = fn.child_by_field_name("body")
+    if body is None:
+        return None
+    if body.type != "statement_block":
+        return [body]
+    results: list[Node] = []
+    stack = list(body.children)
+    while stack:
+        node = stack.pop()
+        if node.type == "return_statement":
+            values = [c for c in node.children if c.is_named]
+            if not values:
+                return None
+            results.append(values[0])
+        elif node.type not in ("arrow_function", "function_expression", "function_declaration"):
+            stack.extend(node.children)
+    return results or None
+
+
+def _part_is_safe(node: Node, depth: int = 0) -> bool:
+    """Is an interpolated value visibly escaped, numeric, or built only from safe pieces?"""
+    if depth > 6:
+        return False
+    text = _t(node)
+    if _SAFE_PART.match(text) or is_literal(node):
+        return True
+    kind = node.type
+    if kind == "parenthesized_expression":
+        inner = [c for c in node.children if c.is_named]
+        return bool(inner) and _part_is_safe(inner[0], depth + 1)
+    if kind == "template_string" or (kind in ("binary_expression",) and _interpolated_parts(node)):
+        return not any(not _part_is_safe(p, depth + 1) for p in _interpolated_parts(node))
+    if kind == "ternary_expression" or kind == "conditional_expression":
+        branches = [
+            node.child_by_field_name("consequence"),
+            node.child_by_field_name("alternative"),
+        ]
+        return all(b is not None and _part_is_safe(b, depth + 1) for b in branches)
+    if kind == "binary_expression":
+        op = next((c for c in node.children if not c.is_named), None)
+        symbol = _t(op) if op is not None else ""
+        left, right = node.child_by_field_name("left"), node.child_by_field_name("right")
+        if symbol in ("||", "??") and left is not None and right is not None:
+            return _part_is_safe(left, depth + 1) and _part_is_safe(right, depth + 1)
+        if symbol == "&&" and right is not None:  # `cond && escapeHtml(x)`
+            return _part_is_safe(right, depth + 1)
+        return False
+    if kind == "call_expression":
+        fn = node.child_by_field_name("function")
+        if fn is not None and fn.type == "member_expression":
+            prop = fn.child_by_field_name("property")
+            recv = fn.child_by_field_name("object")
+            if prop is not None and _t(prop) == "join" and recv is not None:
+                return _mapped_html_is_safe(recv, depth + 1)
+    return False
+
+
+def _mapped_html_is_safe(node: Node, depth: int) -> bool:
+    """``items.map(x => `<li>${escapeHtml(x)}</li>`)``: safe when the callback builds safe HTML."""
+    if node.type != "call_expression":
+        return False
+    fn = node.child_by_field_name("function")
+    args = node.child_by_field_name("arguments")
+    if fn is None or args is None or fn.type != "member_expression":
+        return False
+    prop = fn.child_by_field_name("property")
+    if prop is None or _t(prop) != "map":
+        return False
+    callbacks = [c for c in args.children if c.type in ("arrow_function", "function_expression")]
+    if len(callbacks) != 1:
+        return False
+    results = _callback_results(callbacks[0])
+    return results is not None and all(_part_is_safe(r, depth) for r in results)
+
+
 def has_unsafe_interpolation(node: Node) -> bool:
     """A built string with at least one interpolated value that is not visibly escaped."""
-    return any(not _SAFE_PART.match(_t(part)) for part in _interpolated_parts(node))
+    if node.type == "call_expression" and _is_map_join(node):
+        return not _part_is_safe(node)
+    return any(not _part_is_safe(part) for part in _interpolated_parts(node))
+
+
+def _is_map_join(node: Node) -> bool:
+    fn = node.child_by_field_name("function")
+    if fn is None or fn.type != "member_expression":
+        return False
+    prop, recv = fn.child_by_field_name("property"), fn.child_by_field_name("object")
+    if prop is None or _t(prop) != "join" or recv is None or recv.type != "call_expression":
+        return False
+    inner = recv.child_by_field_name("function")
+    name = inner.child_by_field_name("property") if inner is not None else None
+    return name is not None and _t(name) == "map"
 
 
 def check_where(clause: WhereClause, env: Env, language: str) -> bool:

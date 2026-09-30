@@ -16,6 +16,27 @@ class ConfigError(Exception):
     pass
 
 
+class TaintConfig(BaseModel):
+    """Project-specific sanitizers/validators added to every taint rule."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    sanitizers: list[str] = Field(default_factory=list)  # e.g. "call escapeHtml"
+    validators: list[str] = Field(default_factory=list)  # e.g. "call path_aman" (used in `if`)
+
+    @field_validator("sanitizers", "validators")
+    @classmethod
+    def _valid_entries(cls, v: list[str]) -> list[str]:
+        from vulnfab.core.taintspec import SpecError, parse_matcher
+
+        for entry in v:
+            try:
+                parse_matcher(entry)
+            except SpecError as exc:
+                raise ValueError(str(exc)) from exc
+        return v
+
+
 class ScanConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -26,6 +47,7 @@ class ScanConfig(BaseModel):
     per_file_ignores: dict[str, list[str]] = Field(default_factory=dict)
     max_file_kb: int | None = Field(default=None, ge=1)
     file_timeout: float | None = Field(default=None, gt=0)
+    taint: TaintConfig = Field(default_factory=TaintConfig)
 
     @field_validator("exclude", "disable_rules")
     @classmethod

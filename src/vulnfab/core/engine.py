@@ -11,7 +11,7 @@ from vulnfab.core import cache as scan_cache
 from vulnfab.core import scoring
 from vulnfab.core.config import ScanConfig, load_config
 from vulnfab.core.fingerprint import FingerprintAllocator
-from vulnfab.core.gitdiff import GitError, affected_files, changed_files
+from vulnfab.core.gitdiff import GitError, affected_files, changed_files, local_only_files
 from vulnfab.core.loader import DEFAULT_MAX_FILE_BYTES, Repo
 from vulnfab.core.lower import lower_file
 from vulnfab.core.matcher import CompiledRule
@@ -73,6 +73,21 @@ class ScanOptions:
     osv_db: Path | None = None  # offline OSV advisories (dir/file) for lockfile checks
     osv_scanner: bool = False  # also run the optional osv-scanner binary
     since: str | None = None  # only report findings affected by changes since this git ref
+
+
+LOCAL_ONLY_RULES = {"sec-secret-hardcoded"}
+
+
+def _local_only_note(f: Finding) -> Finding:
+    """A secret in a git-ignored, untracked file was never committed: report it, but softer."""
+    if f.rule_id not in LOCAL_ONLY_RULES:
+        return f
+    return replace(
+        f,
+        confidence=Confidence.LOW,
+        message="Secret-looking value in a git-ignored local file (not committed). Rotate it if "
+        "the file was shared or backed up another way.",
+    )
 
 
 def _head(path: Path) -> str:
@@ -168,6 +183,18 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
         for r in _load_plugin_rules(selected, options.extra_rule_paths)
         if getattr(r, "id", "") not in set(config.disable_rules)
     ]
+    if config.taint.sanitizers or config.taint.validators:
+        rules = [
+            r.model_copy(
+                update={
+                    "sanitizers": [*r.sanitizers, *config.taint.sanitizers],
+                    "validators": [*r.validators, *config.taint.validators],
+                }
+            )
+            if isinstance(r, TaintRule)
+            else r
+            for r in rules
+        ]
     crules: list[CompiledRule] = compile_pattern_rules(rules)
     schema_rules = [r for r in rules if isinstance(r, SchemaRule)]
     scanner_rules = [r for r in rules if isinstance(r, ScannerRule)]
@@ -185,6 +212,7 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
             raise RuleLoadError([RuleError("--since", 1, None, str(exc))]) from exc
         affected, _ = affected_files(changed, {f.path: (f.language, f.text) for f in loaded.files})
         scope = (affected, changed)
+    local_only = local_only_files(path)
     key = ""
     if options.use_cache:
         key = scan_cache.scan_key(
@@ -199,6 +227,7 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
                 "dump": scan_cache.file_digest(options.schema_dump),
                 "osv": scan_cache.tree_digest(options.osv_db) if options.osv_db else "",
                 "osv_scanner": options.osv_scanner,
+                "local_only": sorted(local_only & set(texts)),
                 "history": [options.history_limit, _head(path)] if options.history else None,
             }
         )
@@ -338,6 +367,7 @@ def _scan(path: Path, options: ScanOptions) -> ScanResult:
     for finding, symbol in sorted(raw, key=lambda i: (i[0].file, i[0].line, i[0].rule_id)):
         fingerprint = allocator.allocate(finding.rule_id, finding.file, finding.snippet, symbol)
         findings.append(replace(finding, fingerprint=fingerprint))
+    findings = [_local_only_note(f) if f.file in local_only else f for f in findings]
     findings = scoring.dedupe(findings)
     findings = scoring.apply_supersedes(findings, supersedes)
     weak = scoring.weak_pattern_rules(supersedes, {r.id: set(r.languages) for r in taint_rules})
